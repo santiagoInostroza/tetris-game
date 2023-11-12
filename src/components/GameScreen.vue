@@ -1,341 +1,561 @@
 <script setup>
-import {HEIGHT_TOP, HEIGHT_JOYSTICK,HEIGHT_CANVAS, BLOCK_SIZE, BOARD_WIDTH, BOARD_HEIGHT, EVENT_MOVEMENTS, ISMOVIL, ISDESKTOP} from '/src/utils/consts.js';
-import { ref, onMounted, onBeforeUnmount, reactive, defineEmits } from 'vue';
-import { PIECES, DIFFICULTY } from '/src/utils/pieces.js';
-
-const difficulty = ref(DIFFICULTY.EASY);
-const pieces = ref(PIECES[difficulty.value]);
+    import {ISMOBILE, ISDESKTOP, HEIGHT_JOYSTICK,HEIGHT_CANVAS, BLOCK_SIZE, BOARD_WIDTH, BOARD_HEIGHT, EVENT_MOVEMENTS, SCREENWIDTH, CANVAS_WIDTH} from '/src/utils/consts.js';
+    import { ref, onMounted, onBeforeUnmount, reactive, defineEmits } from 'vue';
+    import { PIECES, DIFFICULTY } from '/src/utils/pieces.js';
 
 
-const emit = defineEmits(['gameOver'])
+    const difficulty = ref(DIFFICULTY.HARD);
+    const pieces = ref(PIECES[difficulty.value]);
 
-const gameOver = () => {
-    emit('gameOver')
-    board.forEach((row) => row.fill(0));
-    score.value = 0;
-    alert('Game Over');
-}
+    const emit = defineEmits(['gameOver'])
 
-const canvas  = ref(null);
-const context = ref(null);
-
-const score = ref(0);
-let time = ref(0);
-
-const createBoard = (width, height) => {
-  return Array.from({ length: height }, () => new Array(width).fill(0))
-}
-
-const getNewPiece = () => {
-//   return  pieces.value[Math.floor(Math.random() * pieces.value.length)]
-return [
-    [1, 1, 1, 1],
-    [0, 0, 0, 0],
-    [0, 0, 0, 0],
-    [0, 0, 0, 0],
-  ];
-}
-
-const board = createBoard(BOARD_WIDTH, BOARD_HEIGHT);
-
-const piece = reactive({
-  position: { x: 5, y: 5 },
-  matrix: pieces.value[Math.floor(Math.random() * pieces.value.length)],
-});
-
-let dropCounter = 0;
-let lastTime = 0;
-let animationFrameId;
-
-
-
-onMounted(() => {
-    piece.matrix = getNewPiece();
-    canvas.value.width = BLOCK_SIZE * BOARD_WIDTH;
-    canvas.value.height = BLOCK_SIZE * BOARD_HEIGHT;
-    context.value = canvas.value.getContext('2d');
-    context.value.scale(BLOCK_SIZE, BLOCK_SIZE);
-    startGame();
-
-    window.addEventListener('keydown', handleKeyDown);
-});
-
-onBeforeUnmount(() => {
-  window.cancelAnimationFrame(animationFrameId);
-
-  window.removeEventListener('keydown', handleKeyDown);
-});
-
-
-const startGame = () => {
-  // Inicia el loop del juego
-  animationFrameId = window.requestAnimationFrame(update);
-  // Añadir otros inicializadores aquí si es necesario
-
-}
-
-const update = (timestamp = 0) => {
-  time = Math.floor(timestamp / 1000)
-  // Actualiza el estado del juego
-  const deltaTime = timestamp - lastTime;
-  lastTime = timestamp;
-  dropCounter += deltaTime;
-  if (dropCounter > 1000) {
-    drop();
-  }
-  draw();
-  window.requestAnimationFrame(update);
-}
-
-const drop = () => {
-  piece.position.y++;
-  if (checkCollision()) {
-      piece.position.y--
-      solidifyPiece()
-      removeLines()
+    const gameOver = () => {
+        emit('gameOver')
+        board.forEach((row) => row.fill(0));
+        score.value = 0;
+        alert('Game Over');
     }
-  dropCounter = 0;
-}
 
-function drawRoundedSquare(ctx, x, y, width, height, radius, color) {
-  ctx.beginPath();
-  ctx.moveTo(x + radius, y);
-  ctx.lineTo(x + width - radius, y);
-  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-  ctx.lineTo(x + width, y + height - radius);
-  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-  ctx.lineTo(x + radius, y + height);
-  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-  ctx.lineTo(x, y + radius);
-  ctx.quadraticCurveTo(x, y, x + radius, y);
-  ctx.closePath();
+    const canvas  = ref(null);
+    const context = ref(null);
 
-  ctx.fillStyle = color;
-  ctx.fill();
-}
+    const score = ref(0);
+    const time = ref('00:00:00')
 
-
-
-const drawSquare = (ctx, x, y, color) => {
-  const gradient = ctx.createLinearGradient(x, y, x + 1, y + 1);
-  gradient.addColorStop(0, color);
-  gradient.addColorStop(1, 'white');
-
-  ctx.fillStyle = gradient;
-  ctx.shadowBlur = 20;
-  ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
-  ctx.fillRect(x, y, 1, 1);
-
-  // Reset shadow after drawing
-  ctx.shadowBlur = 0;
-};
-
-const draw = () => {
-  // Dibuja el fondo del juego
-  context.value.fillStyle = '#000';
-  context.value.fillRect(0, 0, canvas.value.width, canvas.value.height);
-
-  // Dibuja el tablero
-  board.forEach((row, y) => {
-    row.forEach((value, x) => {
-      if (value > 0) {
-        drawSquare(context.value, x, y, 'blue');
-        // drawRoundedSquare(context.value, x, y, 1, 1, 0.2, 'blue');
-      }
-    });
-  });
-
-  // Dibuja las piezas
-  piece.matrix.forEach((row, y) => {
-    row.forEach((value, x) => {
-      if (value > 0) {
-        drawSquare(context.value, piece.position.x + x, piece.position.y + y, 'green');
-        // drawRoundedSquare(context.value, piece.position.x + x, piece.position.y + y, 1, 1, 0.2, 'green');
+    const createBoard = (width, height) => {
+        return Array.from({ length: height }, () => new Array(width).fill(0))
     }
+
+    const getTwoPieces = () => {
+        return  pieces.value[Math.floor(Math.random() * pieces.value.length)]
+        // return pieces.value[4]
+    }
+
+    const getNewPiece = () => {
+        return  pieces.value[Math.floor(Math.random() * pieces.value.length)]
+        // return pieces.value[4]
+    }
+
+    const board = createBoard(BOARD_WIDTH, BOARD_HEIGHT);
+
+    const piece = reactive({
+        position: { x: 5, y: 5 },
+        matrix: pieces.value[Math.floor(Math.random() * pieces.value.length)],
     });
-  });
-};
+
+    let dropCounter = 0;
+    let lastTime = 0;
+    let animationFrameId;
+
+    const isPaused = ref(true);
+    
+    let activeGameTime = 0; // Tiempo total de juego activo
+    let lastUpdateTime = 0; // Última vez que se actualizó el juego
+
+   
+
+    onMounted(() => {
+        piece.matrix = getNewPiece();
+        canvas.value.width = BLOCK_SIZE * BOARD_WIDTH;
+        canvas.value.height = BLOCK_SIZE * BOARD_HEIGHT;
+        context.value = canvas.value.getContext('2d');
+        context.value.scale(BLOCK_SIZE, BLOCK_SIZE);
+        startGame();
+        
+        window.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('keyup', handleKeyUp);
+       
+    });
+
+    onBeforeUnmount(() => {
+        window.cancelAnimationFrame(animationFrameId);
+
+        window.removeEventListener('keydown', handleKeyDown);
+        window.removeEventListener('keyup', handleKeyUp);
+    });
 
 
-const checkCollision = () => {
-    return piece.matrix.find((row, y) => {
-        return row.find((value, x) => {
-        return value !== 0 &&  board[piece.position.y + y] ?. [piece.position.x + x] !== 0
+    const startGame = () => {
+        // Inicia el loop del juego
+        isPaused.value = false;
+        animationFrameId = window.requestAnimationFrame(update);
+        // Añadir otros inicializadores aquí si es necesario
+
+    }
+
+    const formatTime = (totalSeconds) => {
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+
+        // Añade ceros iniciales si los números son menores de 10
+        const hoursFormatted = hours.toString().padStart(2, '0');
+        const minutesFormatted = minutes.toString().padStart(2, '0');
+        const secondsFormatted = seconds.toString().padStart(2, '0');
+
+        // Formato de salida: "HH:MM:SS"
+        return `${hoursFormatted}:${minutesFormatted}:${secondsFormatted}`;
+    };
+
+    const pause = () => {
+        if (!isPaused.value) {
+            window.cancelAnimationFrame(animationFrameId);
+            isPaused.value = true;
+        } else {
+            lastUpdateTime = performance.now();
+            animationFrameId = window.requestAnimationFrame(update);
+            isPaused.value = false;
+        }
+    };
+
+
+   
+
+    const update = (timestamp) => {
+        if (!isPaused.value) {
+            if (lastUpdateTime === 0) {
+                lastUpdateTime = timestamp;
+            }
+
+            const deltaTime = timestamp - lastUpdateTime;
+            activeGameTime += deltaTime; // Incrementar solo el tiempo de juego activo
+
+            const secondsElapsed = Math.floor(activeGameTime / 1000);
+            time.value = formatTime(secondsElapsed);
+
+            dropCounter += deltaTime;
+            if (dropCounter > 1000) {
+                down();
+                dropCounter = 0;
+            }
+            draw();
+        }
+
+        lastUpdateTime = timestamp;
+        animationFrameId = window.requestAnimationFrame(update);
+    };
+
+   
+
+
+
+    const drawSquare = (ctx, x, y, color, borderWidth = 0.08) => {
+        const size = 1; // Tamaño del cuadrado
+        const gradient = ctx.createLinearGradient(x, y, x + size, y + size);
+        gradient.addColorStop(0, color);
+        gradient.addColorStop(1, 'white');
+
+        // Establecer el color de relleno y aplicar sombra
+        ctx.fillStyle = gradient;
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
+        
+        // Dibujar el cuadrado
+        ctx.fillRect(x, y, size, size);
+
+        // Resetear la sombra
+        ctx.shadowBlur = 0;
+
+        // Establecer el estilo y el grosor del borde
+        ctx.strokeStyle = 'white'; // Color del borde
+        ctx.lineWidth = borderWidth; // Grosor del borde
+
+        // Dibujar el borde del cuadrado
+        ctx.strokeRect(x - borderWidth / 2, y - borderWidth / 2, size + borderWidth, size + borderWidth);
+    };
+
+
+    let shouldShowScore = true;
+    let linePosition = 0;
+  
+
+    const draw = () => {
+
+        // Dibuja el fondo del juego
+        context.value.fillStyle = 'black';
+        context.value.fillRect(0, 0, canvas.value.width, canvas.value.height);      
+        
+        
+        // Dibuja el tablero
+        board.forEach((row, y) => {
+            row.forEach((value, x) => {
+                if (value > 0) {
+                    drawSquare(context.value, x, y, 'blue');
+                }
+            });
+        });
+        
+        
+        // // Dibuja las piezas
+        piece.matrix.forEach((row, y) => {
+            row.forEach((value, x) => {
+                if (value > 0) {
+                    drawSquare(context.value, piece.position.x + x, piece.position.y + y, 'green');
+                }
+            });
+        });
+
+        if(shouldShowScore){
+            showScoreOnCompletedLines()
+        } 
+
+
+    };
+
+    
+    
+    const showScoreOnCompletedLines = () => {
+        const text = `+ ${score.value}`;
+        const textX = 5; // Centrar el texto en el ancho del tablero
+        const textY = linePosition; // Ajustar la posición y al centro de la fila completada
+
+        // Establecer el estilo de la fuente para hacerla más gruesa
+        context.value.font = `bold 2px 'Comic Sans MS'`; // Fuente más gruesa
+
+        // Primero, dibujar el borde del texto
+        context.value.strokeStyle = 'white'; // Color del borde
+        context.value.lineWidth = 0.2; // Ancho del borde
+        context.value.strokeText(text, textX, textY);
+
+        // Luego, rellenar el texto
+        context.value.fillStyle = 'orange'; // Color morado claro
+        context.value.fillText(text, textX, textY);
+    };
+
+
+ 
+
+    const checkCollision = () => {
+        return piece.matrix.find((row, y) => {
+            return row.find((value, x) => {
+            return value !== 0 &&  board[piece.position.y + y] ?. [piece.position.x + x] !== 0
+            })
         })
     }
-    )
-}
 
 
-// Manejador de eventos para pulsaciones de tecla
-function handleKeyDown(event) {
-    if (event.key === EVENT_MOVEMENTS.LEFT) {
-        left();
-    } else if (event.key === EVENT_MOVEMENTS.RIGHT) {
-        right();
-    } else if (event.key === EVENT_MOVEMENTS.DOWN) {
-        down();
-    } else if (event.key === EVENT_MOVEMENTS.ROTATE) {
-        rotate();
-    } else  if (event.key === EVENT_MOVEMENTS.SPACE) {
-        speedDown();   
+
+    let keysPressed = {};
+
+    function handleKeyDown(event) {
+        keysPressed[event.key] = true; // Marcar la tecla como presionada
+
+        if (keysPressed[EVENT_MOVEMENTS.LEFT]) {
+            left();
+        } else if (keysPressed[EVENT_MOVEMENTS.RIGHT]) {
+            right();
+        }
+        if (keysPressed[EVENT_MOVEMENTS.DOWN]) {
+            down();
+            dropCounter = 0;
+        }
+
+        if (event.key === EVENT_MOVEMENTS.ROTATE) {
+            rotate();
+        } else if (event.
+        key === EVENT_MOVEMENTS.SPACE) {
+            speedDown();   
+        } 
     }
-}
 
-const rotate = () => {
-  const matrix = piece.matrix;
-  const N = matrix.length - 1;
-  const result = matrix.map((row, i) =>
-    row.map((val, j) => matrix[N - j][i])
-  );
-  piece.matrix = result;
-  if (checkCollision()) {
-    piece.matrix = matrix;
-  }
-};
-
-const solidifyPiece = () => {
-  piece.matrix.forEach((row, y) => {
-    row.forEach((value, x) => {
-      if (value > 0) {
-        board[piece.position.y + y][piece.position.x + x] = value;
-      }
-    });
-  });
-    piece.matrix = getNewPiece();
-    piece.position.y = 0;
-    piece.position.x = Math.floor((BOARD_WIDTH - piece.matrix[0].length) / 2);
-    if (checkCollision()) {
-      gameOver();
+    function handleKeyUp(event) {
+        delete keysPressed[event.key]; // Marcar la tecla como no presionada
+        if (keysPressed[EVENT_MOVEMENTS.DOWN]) {
+            down();
+            dropCounter = 0;
+        }
     }
-};
 
-const removeLines = () => {
-  let lines = 0;
-  board.forEach((row, y) => {
-    if (row.every((value) => value > 0)) {
-      lines++;
-      board.splice(y, 1);
-      board.unshift(Array(BOARD_WIDTH).fill(0));
+    // left
+    let isMovingLeft = false;
+    let speed =120;
+
+    function startMovingLeft() {
+        isMovingLeft = true;
+        moveLeftContinuously();
     }
-  });
-  if (lines > 0) {
-    score.value += lines * 10;
-  }
-};
 
-const down = () => {
-  piece.position.y++;
-  if (checkCollision()) {
-    piece.position.y--;
-    solidifyPiece();
-    removeLines();
-  }
-};
-
-const left = () => {
-  piece.position.x--;
-  if (checkCollision()) {
-    piece.position.x++;
-  }
-};
-
-const right = () => {
-  piece.position.x++;
-  if (checkCollision()) {
-    piece.position.x--;
-  }
-};
-
-const pause = () => {
-  if (animationFrameId) {
-    window.cancelAnimationFrame(animationFrameId);
-    animationFrameId = null;
-  } else {
-    animationFrameId = window.requestAnimationFrame(update);
-  }
-};
-
-const restart = () => {
-  board.forEach((row) => row.fill(0));
-  score.value = 0;
-  startGame();
-};
-
-const setDifficulty = (newDifficulty) => {
-  difficulty.value = newDifficulty;
-  pieces.value = PIECES[difficulty.value];
-  restart();
-};
-
-const speedDown = () => {
-    let enter = false;
-    while (!enter) {
-    piece.position.y++;
-    if (checkCollision()) {
-      enter = true;
-      piece.position.y--;
-      solidifyPiece();
-      removeLines();
+    function stopMovingLeft() {
+        isMovingLeft = false;
     }
-  }
-};
+
+    function moveLeftContinuously() {
+        if (isMovingLeft) {
+            left();
+            setTimeout(moveLeftContinuously, speed); // Ajusta este valor según la rapidez con la que quieras que se mueva
+        }
+    }
+
+    // right
+    let isMovingRight = false;
+
+    function startMovingRight() {
+        isMovingRight = true;
+        moveRightContinuously();
+    }
+
+    function stopMovingRight() {
+        isMovingRight = false;
+    }
+
+    function moveRightContinuously() {
+        if (isMovingRight) {
+            right();
+            setTimeout(moveRightContinuously, speed); // Ajusta este valor según la rapidez con la que quieras que se mueva
+        }
+    }
+
+    // down
+    let isMovingDown = false;
+
+    function startMovingDown() {
+        isMovingDown = true;
+        moveDownContinuously();
+    }
+
+    function stopMovingDown() {
+        isMovingDown = false;
+    }
+
+    function moveDownContinuously() {
+        if (isMovingDown) {
+            down();
+            setTimeout(moveDownContinuously, speed); // Ajusta este valor según la rapidez con la que quieras que se mueva
+        }
+    }
+
+
+    const rotate = () => {
+        const matrix = piece.matrix;
+        const N = matrix.length - 1;
+        const result = matrix.map((row, i) =>
+            row.map((val, j) => matrix[N - j][i])
+        );
+        piece.matrix = result;
+        if (checkCollision()) {
+            piece.matrix = matrix;
+        }
+        
+    };
+
+    const solidifyPiece = () => {
+       
+        piece.matrix.forEach((row, y) => {
+            row.forEach((value, x) => {
+            if (value > 0) {
+                board[piece.position.y + y][piece.position.x + x] = value;
+            }
+            });
+        });
+        piece.matrix = getNewPiece();
+        piece.position.y = 0;
+        piece.position.x = Math.floor((BOARD_WIDTH - piece.matrix[0].length) / 2);
+        if (checkCollision()) {
+        gameOver();
+        }
+    };
+
+    
+    const removeLines = () => {
+        let lines = 0;
+        board.forEach((row, y) => {
+            if (row.every((value) => value > 0)) {
+                lines++;
+                linePosition = y;
+                board.splice(y, 1);
+                board.unshift(Array(BOARD_WIDTH).fill(0));
+            }
+        });
+        if (lines > 0) {
+            score.value += (lines * 10) ** 2;
+            shouldShowScore = true;
+            setTimeout(() => {
+                shouldShowScore = false;
+                linePosition = 0;
+            }, 1200);
+            
+        }
+       
+    };
+
+   
 
 
 
 
 
 
+    const down = () => {
+        piece.position.y++;
+        if (checkCollision()) {
+            piece.position.y--;
+            solidifyPiece();
+            removeLines();
+        }
+
+    };
+
+    const left = () => {
+        piece.position.x--;
+        if (checkCollision()) {
+            piece.position.x++;
+        }
+    };
+
+    const right = () => {
+        piece.position.x++;
+        if (checkCollision()) {
+            piece.position.x--;
+        }
+    };
+
+    const restart = () => {
+        board.forEach((row) => row.fill(0));
+        score.value = 0;
+        startGame();
+    };
+
+    const setDifficulty = (newDifficulty) => {
+        difficulty.value = newDifficulty;
+        pieces.value = PIECES[difficulty.value];
+        restart();
+    };
+
+    const speedDown = () => {
+        let enter = false;
+        while (!enter) {
+            piece.position.y++;
+            if (checkCollision()) {
+                enter = true;
+                piece.position.y--;
+                solidifyPiece();
+                removeLines();
+            }
+        }
+    };
 </script>
 
 <template>
     <div class="grid justify-center">
-        <article class=""  :style="{ height: HEIGHT_TOP + 'px' }">
-            <div class="flex flex-col">
-                <strong> Dificultad: <span ref="difficulty"></span></strong>
-                <strong> Puntaje: <span>{{ score }}</span> </strong>
-                <strong> Tiempo: <span ref="time"></span> </strong>
-            <!-- <strong> Nivel: <span id="lines"></span>  </strong>
-                <strong> Posición: <span id="lines"></span> </strong> -->
+        <article v-if="ISMOBILE && isPaused">
+            <div class="w-screen h-screen absolute bg-gray-800 opacity-90 z-10 left-0 top-0">
+            </div>
+            <div class="absolute left-0 top-0 h-full w-full z-10 grid items-center justify-center">
+                <!-- titulo opciones -->
+                <h2 class="font-bold text-3xl text-gray-300 text-center mb-4 p-4 ">OPCIONES</h2>
+                
+                <div class="shadow border p-4 rounded-xl text-sm bg-gradient-to-r from-gray-400 to-gray-500 border-shine">
+                    <div class="grid grid-cols-2 gap-4 items-center text-xl">
+                        <p class="text-center font-bold uppercase">Dificultad</p>
+                        <div class="text-center ">
+                            <p v-if="difficulty == DIFFICULTY.EASY" >FACIL</p>
+                            <p v-if="difficulty == DIFFICULTY.MEDIUM">MEDIA</p>
+                            <p v-if="difficulty == DIFFICULTY.HARD">DIFICIL</p>
+                        </div>
+                    </div>
+                    
+                </div>
+                
+
+                <article class="flex gap-4 flex-col items-center justify-center">
+                    <button @click="pause" class="text-xl md:text-2xl border rounded-2xl p-3 w-72 md:w-[35rem] bg-gradient-to-r from-green-600 to-green-800  border-shine font-extrabold" >REANUDAR</button>
+                    <div class="flex gap-4 flex-col md:flex-row">
+                        <button @click="gameOver" class="text-xl md:text-2xl border rounded-2xl p-4 w-72 md:w-[17rem] bg-gradient-to-r from-red-600 to-red-800 border-shine font-extrabold">IR AL MENU</button>
+                    </div>
+                </article>
+
+
+
+            </div>
+
+        </article>
+        <article v-if="ISMOBILE" class="shadow rounded py-2" :style="{width: CANVAS_WIDTH + 'px'}" >
+            <div class="flex justify-between w-full">
+                <!-- SCORE-->
+                <div class="p-1 border-4 border-shine rounded-xl relative w-32 mt-4 text-center bg-gradient-to-r from-blue-600 to-blue-800 grid items-center">
+                    <span class="absolute top-0 -mt-4 font-bold left-0 right-0 mx-auto ">Puntaje</span>
+                    <span class="text-3xl font-extrabold">{{ score }}</span>
+                </div>
+                <!-- TIME -->
+                <div class="p-2 border-4 border-shine rounded-xl relative w-32 mt-4 text-center bg-gradient-to-r from-blue-600 to-blue-800 grid items-center">
+                    <span class="absolute top-0 -mt-4 font-bold left-0 right-0 mx-auto t">Tiempo</span>
+                    <span class="text-xl font-bold">{{ time }}</span>
+                </div>
             </div>
         </article>
         
-        <article class="flex gap-4" :style="{ height: HEIGHT_CANVAS + 'px' }">
+        <article class="grid justify-center mt-2" :style="{ height: HEIGHT_CANVAS + 'px' }">
             <div class="" >
-                <canvas ref="canvas"></canvas>
-            </div>
-            <div class="border h-20 w-20" >
+                <canvas class="border-shine rounded-xl  bg-blue-400" ref="canvas"></canvas>
             </div>
         </article>
-        <article v-if="ISMOVIL" id="buttons_movil" class=" flex justify-between items-center" :style="{ height: HEIGHT_JOYSTICK + 'px' }">
-            <div>
-                <button @click="rotate()" class="text-7xl ml-16">▲</button>
-                <div class="flex-between ml-3 -mt-3">
-                    <button @click="left()" class="text-7xl rotate-90">▼ </button>
-                    <button @click="right()" class="text-7xl rotate-90 ml-[3.25rem]">▲</button>
+        <article v-if="ISMOBILE" id="buttons_movil" class=" flex justify-between items-stretch mt-5 gap-4" :style="{ height: HEIGHT_JOYSTICK + 'px' }">
+            <div class="h-50 w-50 ">
+                <div class="grid justify-center">
+                    <button @click="rotate()" class="deep-button w-16 h-16 rounded-full border-shine">▲</button>
                 </div>
-                <button @click="down()" class="text-7xl ml-16 -mt-5">▼ </button>
+                <div class="flex-between -mt-4">
+                    <button  @touchstart="startMovingLeft"  @touchend="stopMovingLeft" class="text-7xl deep-button rotate-90 w-16 h-16 rounded-full border-shine">▼</button>
+                    <button  @touchstart="startMovingRight" @touchend="stopMovingRight"  class="text-7xl deep-button rotate-90 ml-[3rem] w-16 h-16 rounded-full border-shine">▲</button>
+                </div>
+                <div class="grid justify-center -mt-4">
+                    <button @touchstart=startMovingDown @touchend=stopMovingDown class="text-7xl deep-button w-16 h-16 rounded-full border-shine">▼ </button>
+                </div>
             </div>
-            <div class="pr-4">
-                <button @click="speedDown()" class="text-9xl">○</button>
+            <div class="grid content-between">
+                <button @click="pause" class="w-22 h-8 rounded-xl deep-button border-shine p-1 ">OPCIONES</button>
+                <button @click="speedDown()" class="rounded-full deep-button w-20 h-20 border-shine" style=""></button>
             </div>
         </article>
     </div>
 </template>
 
 <style scoped>
-canvas {
-  border-radius: 15px; /* Redondea las esquinas del canvas */
-  border: solid 2px #ffffff; /* Crea un borde sólido blanco */
-  
-  /* Agrega un brillo alrededor del canvas */
-  box-shadow: 
-    0 0 5px #ffffff,
-    0 0 10px #ffffff,
-    /* 0 0 15px #ff00de, */
-    /* 0 0 20px #ff00de,  */
-    /* 0 0 25px #ff00de, */
-    /* 0 0 30px #ff00de, */
-    /* 0 0 35px #ff00de; */
+
+
+
+
+.deep-button {
+  background: linear-gradient(145deg,   lightgray, white,white, lightgray);
+ 
+  box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.4), 
+              inset 1px 1px 5px rgba(255, 255, 255, 0.7), 
+              inset -1px -1px 5px rgba(0, 0, 0, 0.4);
+  color: #333;
+  cursor: pointer;
+  font-size: 16px;
+  text-align: center;
+  transition: all 0.3s ease;
+  user-select: none; /* Evita que el texto del botón se seleccione */
+  color: black;
+  font-weight: 700;
 }
+
+.deep-button:hover {
+  box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.4), 
+              inset 1px 1px 5px rgba(255, 255, 255, 0.7), 
+              inset -1px -1px 5px rgba(0, 0, 0, 0.4);
+}
+
+.deep-button-exit {
+  background: linear-gradient(145deg, #b62828, #fd0101);
+  box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.4), 
+              inset 1px 1px 5px rgba(255, 255, 255, 0.7), 
+              inset -1px -1px 5px rgba(0, 0, 0, 0.4);
+  color: #333;
+  cursor: pointer;
+  font-size: 16px;
+  text-align: center;
+  transition: all 0.3s ease;
+  user-select: none; /* Evita que el texto del botón se seleccione */
+  color: black;
+  font-weight: 700;
+}
+
+.deep-button:active {
+  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.4), 
+              inset 1px 1px 5px rgba(255, 255, 255, 0.7);
+
+}
+
 </style>

@@ -6,6 +6,11 @@ export default {
   ],
   theme: {
     extend: {},
+    fontFamily: {
+      'sans': ['Roboto', 'sans-serif'],
+      'display': ['Oswald',],
+      'body': ['"Open Sans"',],
+    },
   },
   plugins: [],
 }
