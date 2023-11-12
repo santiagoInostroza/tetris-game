@@ -492,7 +492,7 @@
         <article v-if="ISMOBILE" id="buttons_movil" class=" flex justify-between items-stretch mt-5 gap-4" :style="{ height: HEIGHT_JOYSTICK + 'px' }">
             <div class="h-50 w-50 ">
                 <div class="grid justify-center">
-                    <button @click="rotate()" class="deep-button w-16 h-16 rounded-full border-shine">▲</button>
+                    <button @click="speedDown()" class="deep-button w-16 h-16 rounded-full border-shine">▲</button>
                 </div>
                 <div class="flex-between -mt-4">
                     <button  @touchstart="startMovingLeft"  @touchend="stopMovingLeft" class="text-7xl deep-button rotate-90 w-16 h-16 rounded-full border-shine">▼</button>
@@ -504,7 +504,7 @@
             </div>
             <div class="grid content-between">
                 <button @click="pause" class="w-22 h-8 rounded-xl deep-button border-shine p-1 ">OPCIONES</button>
-                <button @click="speedDown()" class="rounded-full deep-button w-20 h-20 border-shine" style=""></button>
+                <button @click="rotate()" class="rounded-full deep-button w-20 h-20 border-shine" style=""></button>
             </div>
         </article>
     </div>

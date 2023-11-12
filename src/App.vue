@@ -70,7 +70,7 @@ const gameOver = () => {
 }
 .bg {
     /* The image used */
-    background-image: url("src/assets/img/bg4.png");
+    background-image: url("/src/assets/img/bg4.png");
     /* difuminado */
     background-color: rgba(0, 0, 0, 0.5);
 
@@ -85,7 +85,7 @@ const gameOver = () => {
 
 .bg_dif {
     /* La imagen utilizada */
-    background-image: url("src/assets/img/bg4.png");
+    background-image: url("/src/assets/img/bg4.png");
 
     /* Color de fondo con opacidad */
     background-color: rgba(0, 0, 0, 0.5);
