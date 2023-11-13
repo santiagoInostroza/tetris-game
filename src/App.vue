@@ -5,8 +5,8 @@ import GameScreen from './components/GameScreen.vue'
 import { ref } from 'vue'
 
 let theme = ref('db')
-let showMainScreen = ref(true)
-let showMenuScreen = ref(false)
+let showMainScreen = ref(false)
+let showMenuScreen = ref(true)
 let showGameScreen = ref(false)
 
 

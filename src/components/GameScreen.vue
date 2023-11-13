@@ -4,7 +4,7 @@
     import { PIECES, DIFFICULTY } from '/src/utils/pieces.js';
 
 
-    const difficulty = ref(DIFFICULTY.HARD);
+    const difficulty = ref(DIFFICULTY.MEDIUM);
     const pieces = ref(PIECES[difficulty.value]);
 
     const emit = defineEmits(['gameOver'])
@@ -311,6 +311,8 @@
     function startMovingDown() {
         isMovingDown = true;
         moveDownContinuously();
+        dropCounter = 0;
+
     }
 
     function stopMovingDown() {
@@ -321,8 +323,29 @@
         if (isMovingDown) {
             down();
             setTimeout(moveDownContinuously, speed); // Ajusta este valor según la rapidez con la que quieras que se mueva
+            
         }
     }
+
+    // rotate
+    let isRotating = false;
+
+    function startRotating() {
+        isRotating = true;
+        rotateContinuously();
+    }
+
+    function stopRotating() {
+        isRotating = false;
+    }
+
+    function rotateContinuously() {
+        if (isRotating) {
+            rotate();
+            setTimeout(rotateContinuously, speed *2); // Ajusta este valor según la rapidez con la que quieras que se mueva
+        }
+    }
+
 
 
     const rotate = () => {
@@ -377,12 +400,6 @@
         }
        
     };
-
-   
-
-
-
-
 
 
     const down = () => {
@@ -490,21 +507,27 @@
             </div>
         </article>
         <article v-if="ISMOBILE" id="buttons_movil" class=" flex justify-between items-stretch mt-5 gap-4" :style="{ height: HEIGHT_JOYSTICK + 'px' }">
-            <div class="h-50 w-50 ">
-                <div class="grid justify-center">
-                    <button @click="speedDown()" class="deep-button w-16 h-16 rounded-full border-shine">▲</button>
-                </div>
-                <div class="flex-between -mt-4">
-                    <button  @touchstart="startMovingLeft"  @touchend="stopMovingLeft" class="text-7xl deep-button rotate-90 w-16 h-16 rounded-full border-shine">▼</button>
-                    <button  @touchstart="startMovingRight" @touchend="stopMovingRight"  class="text-7xl deep-button rotate-90 ml-[3rem] w-16 h-16 rounded-full border-shine">▲</button>
+            <div class="h-50 w-50 mt-4">
+                <div class="flex-between">
+                    <button  @touchstart="startMovingLeft"  @touchend="stopMovingLeft" class="text-7xl deep-button rotate-90 w-20 h-20 rounded-full border-shine">▼</button>
+                    <button  @touchstart="startMovingRight" @touchend="stopMovingRight"  class="text-7xl deep-button rotate-90 ml-[3rem] w-20 h-20 rounded-full border-shine">▲</button>
                 </div>
                 <div class="grid justify-center -mt-4">
-                    <button @touchstart=startMovingDown @touchend=stopMovingDown class="text-7xl deep-button w-16 h-16 rounded-full border-shine">▼ </button>
+                    <button @touchstart=startMovingDown @touchend=stopMovingDown class="text-7xl deep-button w-20 h-20 rounded-full border-shine">▼ </button>
                 </div>
             </div>
-            <div class="grid content-between">
-                <button @click="pause" class="w-22 h-8 rounded-xl deep-button border-shine p-1 ">OPCIONES</button>
-                <button @click="rotate()" class="rounded-full deep-button w-20 h-20 border-shine" style=""></button>
+            <div class="grid content-between justify-end ">
+                <div class="flex gap-2">
+                    <button @click="pause" class="w-22 h-8 rounded-xl deep-button border-shine p-1 ">OPCIONES</button>
+                    <button @click="speedDown()" class="rounded-full deep-button w-12 h-12 border-shine grid mt-8" style="">
+                        <span class="mt-1">▼</span>
+                        <span class="-mt-4">▼</span>
+                    </button>
+                </div>
+                <div class="text-center mb-4">
+                    <button
+                    @touchstart="startRotating" @touchend="stopRotating" class="rounded-full deep-button w-16 h-16 border-shine ml-6 rotate-180 pb-2" style="font-size: 40px;">↻</button>
+                </div>
             </div>
         </article>
     </div>
