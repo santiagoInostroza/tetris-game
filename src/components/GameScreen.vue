@@ -399,7 +399,7 @@
             setTimeout(() => {
                 shouldShowScore = false;
                 linePosition = 0;
-                
+
             }, 1200);
             
         }
@@ -508,14 +508,15 @@
                 </div>
             </div>
         </article>
-        
+        <!-- CANVAS -->
         <article class="grid justify-center mt-2" :style="{ height: HEIGHT_CANVAS + 'px' }">
             <div class="" >
                 <canvas class="border-shine rounded-xl  bg-blue-400" ref="canvas"></canvas>
             </div>
         </article>
-        <article v-if="ISMOBILE" id="buttons_movil" class=" flex justify-between items-stretch mt-5 gap-4">
-            <div class="h-50 w-50 mt-4">
+        <!-- JOYSTICK -->
+        <article v-if="ISMOBILE" id="buttons_movil" class=" flex justify-between items-stretch my-5 gap-4 px-4">
+            <div class="h-50 w-50">
                 <div class="flex-between">
                     <button  @touchstart="startMovingLeft"  @touchend="stopMovingLeft" class="text-7xl deep-button rotate-90 w-20 h-20 rounded-full border-shine">▼</button>
                     <button  @touchstart="startMovingRight" @touchend="stopMovingRight"  class="text-7xl deep-button rotate-90 ml-[3rem] w-20 h-20 rounded-full border-shine">▲</button>
@@ -524,17 +525,14 @@
                     <button @touchstart=startMovingDown @touchend=stopMovingDown class="text-7xl deep-button w-20 h-20 rounded-full border-shine">▼ </button>
                 </div>
             </div>
-            <div class="grid content-between justify-end ">
-                <div class="flex gap-2">
-                    <button @click="pause" class="w-22 h-8 rounded-xl deep-button border-shine p-1 ">PAUSAR</button>
-                    <button @click="speedDown()" class="rounded-full deep-button w-12 h-12 border-shine grid mt-8" style="">
-                        <span class="mt-1">▼</span>
-                        <span class="-mt-4">▼</span>
+            <div class="grid content-between justify-end">
+                <button @click="pause" class="w-16 h-6 rounded-xl deep-button border-shine -ml-4" style="font-size: 12px;">PAUSAR</button>
+                <div class="ml-12">
+                    <button @click="speedDown()" class="rounded-full deep-button w-12 h-12 border-shine grid" style="">
+                        <span class="mt-1">▼</span><span class="-mt-4">▼</span>
                     </button>
                 </div>
-                <div class="text-center mb-4">
-                    <button @touchstart="startRotating" @touchend="stopRotating" class="rounded-full deep-button w-16 h-16 border-shine ml-6 rotate-180 pb-2" style="font-size: 40px;">↻</button>
-                </div>
+                <button @touchstart="startRotating" @touchend="stopRotating" class="rounded-full deep-button w-16 h-16 border-shine rotate-180 grid -ml-4" style="font-size: 35px;">↻</button>
             </div>
         </article>
     </div>
