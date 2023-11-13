@@ -455,8 +455,10 @@
 
 <template>
     <div class="grid justify-center">
+
+        <!-- MODAL -->
         <article v-if="ISMOBILE && isPaused">
-            <div class="w-screen h-screen absolute bg-gray-800 opacity-90 z-10 left-0 top-0">
+            <div class="w-screen h-screen absolute bg-gray-800 opacity-90 z-10 left-0 top-0 ">
             </div>
             <div class="absolute left-0 top-0 h-full w-full z-10 grid items-center justify-center">
                 <!-- titulo opciones -->
@@ -485,10 +487,9 @@
 
 
             </div>
-
         </article>
         <article v-if="ISMOBILE" class="shadow rounded py-2" :style="{width: CANVAS_WIDTH + 'px'}" >
-            <div class="flex justify-between w-full">
+            <div class="flex justify-between w-screen px-4">
                 <!-- SCORE-->
                 <div class="p-1 border-4 border-shine rounded-xl relative w-32 mt-4 text-center bg-gradient-to-r from-blue-600 to-blue-800 grid items-center">
                     <span class="absolute top-0 -mt-4 font-bold left-0 right-0 mx-auto ">Puntaje</span>

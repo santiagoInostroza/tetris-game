@@ -9,8 +9,8 @@ const startGame = () => {
 
 </script>
 <template>
-    <div class="flex flex-col justify-between items-center h-screen pb-28">
-        <div class="flex flex-col gap-8 md:gap-4">
+    <div class="flex flex-col gap-12 justify-between items-center h-screen pb-28">
+        <article class="flex flex-col gap-8 md:gap-4">
             <h1 class="shining game_name text-center">TETRIS</h1>
             <article class="grid justify-center ">
                 <h2 class="moving-text w-max p-4 text-3xl font-extrabold">Top 3</h2>
@@ -33,7 +33,7 @@ const startGame = () => {
                     </table>
                 </div>
             </article>
-        </div>
+        </article>
         <article class="flex gap-4 flex-col items-center justify-center">
             <button @click="startGame()" class="text-xl md:text-2xl border rounded-2xl p-3 w-72 md:w-[35rem] bg-gradient-to-r from-green-600 to-green-800  border-shine font-extrabold" >JUGAR</button>
             <div class="flex gap-4 flex-col md:flex-row">
