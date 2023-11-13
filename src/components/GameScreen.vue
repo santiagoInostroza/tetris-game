@@ -20,6 +20,7 @@
     const context = ref(null);
 
     const score = ref(0);
+    const newScore = ref(0);
     const time = ref('00:00:00')
 
     const createBoard = (width, height) => {
@@ -205,7 +206,7 @@
     
     
     const showScoreOnCompletedLines = () => {
-        const text = `+ ${score.value}`;
+        const text = `+ ${newScore.value}`;
         const textX = 5; // Centrar el texto en el ancho del tablero
         const textY = linePosition; // Ajustar la posición y al centro de la fila completada
 
@@ -391,11 +392,14 @@
             }
         });
         if (lines > 0) {
-            score.value += (lines * 10) ** 2;
+            newScore.value = (lines * 10) ** 2;
+            score.value += newScore.value;
             shouldShowScore = true;
+
             setTimeout(() => {
                 shouldShowScore = false;
                 linePosition = 0;
+                
             }, 1200);
             
         }
@@ -510,7 +514,7 @@
                 <canvas class="border-shine rounded-xl  bg-blue-400" ref="canvas"></canvas>
             </div>
         </article>
-        <article v-if="ISMOBILE" id="buttons_movil" class=" flex justify-between items-stretch mt-5 gap-4" :style="{ height: HEIGHT_JOYSTICK + 'px' }">
+        <article v-if="ISMOBILE" id="buttons_movil" class=" flex justify-between items-stretch mt-5 gap-4">
             <div class="h-50 w-50 mt-4">
                 <div class="flex-between">
                     <button  @touchstart="startMovingLeft"  @touchend="stopMovingLeft" class="text-7xl deep-button rotate-90 w-20 h-20 rounded-full border-shine">▼</button>
