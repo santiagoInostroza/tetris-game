@@ -488,7 +488,9 @@
 
             </div>
         </article>
-        <article v-if="ISMOBILE" class="shadow rounded py-2" :style="{width: CANVAS_WIDTH + 'px'}" >
+
+
+        <article v-if="ISMOBILE" class="shadow rounded py-2">
             <div class="flex justify-between w-screen px-4">
                 <!-- SCORE-->
                 <div class="p-1 border-4 border-shine rounded-xl relative w-32 mt-4 text-center bg-gradient-to-r from-blue-600 to-blue-800 grid items-center">
