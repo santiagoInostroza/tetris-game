@@ -343,7 +343,7 @@
     function rotateContinuously() {
         if (isRotating) {
             rotate();
-            setTimeout(rotateContinuously, speed *2); // Ajusta este valor según la rapidez con la que quieras que se mueva
+            setTimeout(rotateContinuously, speed *4); // Ajusta este valor según la rapidez con la que quieras que se mueva
         }
     }
 
@@ -476,7 +476,7 @@
                 
 
                 <article class="flex gap-4 flex-col items-center justify-center">
-                    <button @click="pause" class="text-xl md:text-2xl border rounded-2xl p-3 w-72 md:w-[35rem] bg-gradient-to-r from-green-600 to-green-800  border-shine font-extrabold" >REANUDAR</button>
+                    <button @click="pause" class="text-xl md:text-2xl border rounded-2xl p-3 w-72 md:w-[35rem] bg-gradient-to-r from-green-600 to-green-800  border-shine font-extrabold" >CONTINUAR</button>
                     <div class="flex gap-4 flex-col md:flex-row">
                         <button @click="gameOver" class="text-xl md:text-2xl border rounded-2xl p-4 w-72 md:w-[17rem] bg-gradient-to-r from-red-600 to-red-800 border-shine font-extrabold">IR AL MENU</button>
                     </div>
@@ -526,8 +526,7 @@
                     </button>
                 </div>
                 <div class="text-center mb-4">
-                    <button
-                    @touchstart="startRotating" @touchend="stopRotating" class="rounded-full deep-button w-16 h-16 border-shine ml-6 rotate-180 pb-2" style="font-size: 40px;">↻</button>
+                    <button @touchstart="startRotating" @touchend="stopRotating" class="rounded-full deep-button w-16 h-16 border-shine ml-6 rotate-180 pb-2" style="font-size: 40px;">↻</button>
                 </div>
             </div>
         </article>
