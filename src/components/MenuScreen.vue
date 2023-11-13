@@ -9,7 +9,7 @@ const startGame = () => {
 
 </script>
 <template>
-    <div class="flex flex-col justify-between items-center h-screen pb-20">
+    <div class="flex flex-col justify-between items-center h-screen pb-28">
         <div class="flex flex-col gap-8 md:gap-4">
             <h1 class="shining game_name text-center">TETRIS</h1>
             <article class="grid justify-center ">
