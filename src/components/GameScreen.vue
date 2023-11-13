@@ -317,13 +317,14 @@
 
     function stopMovingDown() {
         isMovingDown = false;
+        dropCounter = 0;
     }
 
     function moveDownContinuously() {
         if (isMovingDown) {
             down();
             setTimeout(moveDownContinuously, speed); // Ajusta este valor según la rapidez con la que quieras que se mueva
-            
+            dropCounter = 0;
         }
     }
 
@@ -518,7 +519,7 @@
             </div>
             <div class="grid content-between justify-end ">
                 <div class="flex gap-2">
-                    <button @click="pause" class="w-22 h-8 rounded-xl deep-button border-shine p-1 ">OPCIONES</button>
+                    <button @click="pause" class="w-22 h-8 rounded-xl deep-button border-shine p-1 ">PAUSAR</button>
                     <button @click="speedDown()" class="rounded-full deep-button w-12 h-12 border-shine grid mt-8" style="">
                         <span class="mt-1">▼</span>
                         <span class="-mt-4">▼</span>
