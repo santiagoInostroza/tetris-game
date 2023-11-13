@@ -539,10 +539,6 @@
 </template>
 
 <style scoped>
-
-
-
-
 .deep-button {
   background: linear-gradient(145deg,   lightgray, white,white, lightgray);
  
