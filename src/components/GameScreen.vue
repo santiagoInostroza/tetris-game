@@ -27,9 +27,19 @@
 
 
 // CONSTANTS    
-    const emit = defineEmits(['gameOver'])
+    const emit = defineEmits(['gameOver', 'menu']);
 
-  
+
+    const gameOver = () => {
+        // emit('gameOver')
+        isGameOver.value = true;
+        pause();
+    }
+
+    const menu = () => {
+        emit('menu')
+    }
+
     const pieces = ref(PIECES[difficulty.value]);
 
 
@@ -43,7 +53,12 @@
     const board = createBoard(BOARD_WIDTH, BOARD_HEIGHT);
   
     const isPaused = ref(true);
+    const isGameOver = ref(false);
 
+    const piece = reactive({
+        position: { x: 5, y: 5 },
+        matrix: {},
+    });
 
 // VARIABLES
     let dropCounter = 0;
@@ -52,19 +67,15 @@
     let activeGameTime = 0; // Tiempo total de juego activo
     let lastUpdateTime = 0; // Última vez que se actualizó el juego
 
-    const piece = reactive({
-        position: { x: 5, y: 5 },
-        matrix: {},
-    });
 
     const keyDownHandler = (event) => handleKeyDown(event, board, piece, { solidifyPiece, removeLines, updateDropCounter });  
 
     onMounted(() => {
-        piece.matrix = getNewPiece(pieces.value);
         canvas.value.width = BLOCK_SIZE * BOARD_WIDTH;
         canvas.value.height = BLOCK_SIZE * BOARD_HEIGHT;
         context.value = canvas.value.getContext('2d');
         context.value.scale(BLOCK_SIZE, BLOCK_SIZE);
+        piece.matrix = getNewPiece(pieces.value);
         startGame();
         
         // window.addEventListener('keydown', handleKeyDown);
@@ -92,10 +103,39 @@
     const startGame = () => {
         // Inicia el loop del juego
         isPaused.value = false;
+        isGameOver.value = false;
         animationFrameId = window.requestAnimationFrame(update);
         // Añadir otros inicializadores aquí si es necesario
 
     }
+
+
+    const restartGame = () => {
+        // Restablecer puntuación y estados relacionados con el juego
+        score.value = 0;
+        newScore.value = 0;
+        activeGameTime = 0;
+        lastUpdateTime = 0;
+        dropCounter = 0;
+        shouldShowScore = false;
+        linePosition = 0;
+
+        // Restablecer el tablero a su estado inicial
+        board.splice(0, board.length, ...createBoard(BOARD_WIDTH, BOARD_HEIGHT));
+
+        // Restablecer la pieza actual
+        piece.matrix = getNewPiece(pieces.value);
+        piece.position.x = Math.floor((BOARD_WIDTH - piece.matrix[0].length) / 2);
+        piece.position.y = 0;
+
+        // Reiniciar el estado de pausa y finalización del juego
+        isPaused.value = false;
+        isGameOver.value = false;
+
+        // Iniciar el ciclo de animación del juego
+        animationFrameId = window.requestAnimationFrame(update);
+    };
+
 
     const update = (timestamp) => {
         if (!isPaused.value) {
@@ -118,7 +158,10 @@
         }
 
         lastUpdateTime = timestamp;
-        animationFrameId = window.requestAnimationFrame(update);
+
+        if (!isGameOver.value) {
+            animationFrameId = window.requestAnimationFrame(update);
+        }
     };
 
 
@@ -217,7 +260,7 @@
     <div class="grid justify-center">
 
         <!-- MODAL -->
-        <article v-if="ISMOBILE && isPaused">
+        <article v-if="ISMOBILE && isPaused && !isGameOver">
             <div class="w-screen h-screen absolute bg-gray-800 opacity-90 z-10 left-0 top-0 ">
             </div>
             <div class="absolute left-0 top-0 h-full w-full z-10 grid items-center justify-center">
@@ -240,7 +283,7 @@
                 <article class="flex gap-4 flex-col items-center justify-center">
                     <button @click="pause" class="text-xl md:text-2xl border rounded-2xl p-3 w-72 md:w-[35rem] bg-gradient-to-r from-green-600 to-green-800  border-shine font-extrabold" >CONTINUAR</button>
                     <div class="flex gap-4 flex-col md:flex-row">
-                        <button @click="gameOver" class="text-xl md:text-2xl border rounded-2xl p-4 w-72 md:w-[17rem] bg-gradient-to-r from-red-600 to-red-800 border-shine font-extrabold">IR AL MENU</button>
+                        <button @click="menu" class="text-xl md:text-2xl border rounded-2xl p-4 w-72 md:w-[17rem] bg-gradient-to-r from-red-600 to-red-800 border-shine font-extrabold">IR AL MENU</button>
                     </div>
                 </article>
 
@@ -249,7 +292,7 @@
             </div>
         </article>
 
-
+        <!-- SCORE AND TIME -->
         <article v-if="ISMOBILE" class="shadow rounded py-2">
             <div class="flex justify-between w-screen px-4">
                 <!-- SCORE-->
@@ -264,12 +307,14 @@
                 </div>
             </div>
         </article>
+
         <!-- CANVAS -->
         <article class="grid justify-center mt-2" :style="{ height: HEIGHT_CANVAS + 'px' }">
             <div class="" >
                 <canvas class="border-shine rounded-xl  bg-blue-400" ref="canvas"></canvas>
             </div>
         </article>
+
         <!-- JOYSTICK -->
         <article v-if="ISMOBILE" id="buttons_movil" class=" flex justify-between items-stretch my-5 gap-4 px-4">
             <div class="h-50 w-50">
@@ -290,6 +335,31 @@
                     </button>
                 </div>
                 <button @touchstart="startMovement(board, piece, DIRECTIONS.ROTATE)" @touchend="stopMovement(DIRECTIONS.ROTATE)" class="rounded-full deep-button w-16 h-16 border-shine rotate-180 grid -ml-4" style="font-size: 35px;">↻</button>
+            </div>
+        </article>
+
+        <!-- GAME OVER -->
+        <article v-if="isGameOver">
+            <div class="w-screen h-screen absolute bg-gray-800 opacity-90 z-10 left-0 top-0 ">
+            </div>
+            <div class="absolute left-0 top-0 h-full w-full z-10 grid items-center justify-center">
+                <!-- titulo opciones -->
+                <h2 class="font-bold text-3xl text-gray-300 text-center mb-4 p-4 ">GAME OVER</h2>
+                
+                <div class="shadow border p-4 rounded-xl text-sm bg-gradient-to-r from-gray-400 to-gray-500 border-shine">
+                    <div class="grid grid-cols-2 gap-4 items-center text-xl">
+                        <p class="text-center font-bold uppercase">Puntaje</p>
+                        <div class="text-center ">
+                            <p>{{ score }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <article class="flex gap-4 flex-col items-center justify-center">
+                    <button @click="menu" class="text-xl md:text-2xl border rounded-2xl p-3 w-72 md:w-[35rem] bg-gradient-to-r from-red-600 to-red-800 border-shine font-extrabold" >IR AL MENU</button>
+                    <button @click="restartGame" class="text-xl md:text-2xl border rounded-2xl p-3 w-72 md:w-[35rem] bg-gradient-to-r from-green-600 to-green-800  border-shine font-extrabold" >VOLVER A JUGAR</button>
+                </article>
+
             </div>
         </article>
     </div>

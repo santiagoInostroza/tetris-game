@@ -63,7 +63,7 @@ const menu = () => {
     </section>
 
     <section v-if="showGameScreen" id="game_screen" class="bg_dif">
-      <GameScreen @gameOver="gameOver"/>
+      <GameScreen @gameOver="gameOver" @menu="menu" />
     </section>
 
     <!-- CONFIGURACION -->
