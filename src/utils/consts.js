@@ -28,11 +28,3 @@ export const EVENT_MOVEMENTS = {
     SPACE: ' ',
 }
 
-export const DIRECTIONS = {
-    LEFT: 'left',
-    RIGHT: 'right',
-    DOWN: 'down',
-    ROTATE: 'rotate',
-    SPACE: 'space',
-}
-

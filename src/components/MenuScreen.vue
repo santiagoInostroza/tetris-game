@@ -7,14 +7,9 @@ const startGame = () => {
     emit('startGame')
 }
 
-const setConfig = () => {
-    emit('setConfig')
-}
-
 </script>
 <template>
-    <div class="flex flex-col gap-12
-     justify-between items-center h-screen pb-28">
+    <div class="flex flex-col gap-12 justify-between items-center h-screen pb-28">
         <article class="flex flex-col gap-8 md:gap-4">
             <h1 class="shining game_name text-center">TETRIS</h1>
             <article class="grid justify-center ">
@@ -42,8 +37,8 @@ const setConfig = () => {
         <article class="flex gap-4 flex-col items-center justify-center">
             <button @click="startGame()" class="text-xl md:text-2xl border rounded-2xl p-3 w-72 md:w-[35rem] bg-gradient-to-r from-green-600 to-green-800  border-shine font-extrabold" >JUGAR</button>
             <div class="flex gap-4 flex-col md:flex-row">
-              <button @click="setConfig()" class="text-xl md:text-2xl border rounded-2xl p-3 w-72 md:w-[17rem] bg-gradient-to-r from-blue-600 to-blue-800 border-shine font-extrabold">CONFIGURACIÓN</button>
-              <button class="text-xl md:text-2xl border rounded-2xl p-3 w-72 md:w-[17rem] bg-gradient-to-r from-blue-600 to-blue-800 border-shine font-extrabold">PUNTAJES</button>
+              <button class="text-xl md:text-2xl border rounded-2xl p-4 w-72 md:w-[17rem] bg-gradient-to-r from-blue-600 to-blue-800 border-shine font-extrabold">CONFIGURACIÓN</button>
+              <button class="text-xl md:text-2xl border rounded-2xl p-4 w-72 md:w-[17rem] bg-gradient-to-r from-blue-600 to-blue-800 border-shine font-extrabold">PUNTAJES</button>
             </div>
         </article>
     </div>
