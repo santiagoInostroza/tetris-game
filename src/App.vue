@@ -2,12 +2,14 @@
 import MainScreen from './components/MainScreen.vue'
 import MenuScreen from './components/MenuScreen.vue'
 import GameScreen from './components/GameScreen.vue'
+import ConfigScreen from './components/ConfigScreen.vue'
 import { ref } from 'vue'
 
 let theme = ref('db')
 let showMainScreen = ref(false)
 let showMenuScreen = ref(true)
 let showGameScreen = ref(false)
+let showConfigScreen = ref(false)
 
 
 const setTheme = (newTheme) => {
@@ -15,18 +17,35 @@ const setTheme = (newTheme) => {
     showMainScreen.value = false
     showMenuScreen.value = true
     showGameScreen.value = false
+    showConfigScreen.value = false
 }
 
 const startGame = () => {
     showMainScreen.value = false
     showMenuScreen.value = false
     showGameScreen.value = true
+    showConfigScreen.value = false
 }
 
 const gameOver = () => {
     showMainScreen.value = false
     showMenuScreen.value = true
     showGameScreen.value = false
+    showConfigScreen.value = false
+}
+
+const setConfig = () => {
+    showMainScreen.value = false
+    showMenuScreen.value = false
+    showGameScreen.value = false
+    showConfigScreen.value = true
+}
+
+const menu = () => {
+    showMainScreen.value = false
+    showMenuScreen.value = true
+    showGameScreen.value = false
+    showConfigScreen.value = false
 }
 
 
@@ -40,11 +59,16 @@ const gameOver = () => {
     </section>
 
     <section v-if="showMenuScreen" id="menu_screen" class="bg">
-      <MenuScreen :theme="theme" @startGame="startGame"/>
+      <MenuScreen :theme="theme" @startGame="startGame" @setConfig="setConfig"/>
     </section>
 
     <section v-if="showGameScreen" id="game_screen" class="bg_dif">
-      <GameScreen @gameOver="gameOver"/>
+      <GameScreen @gameOver="gameOver" @menu="menu" />
+    </section>
+
+    <!-- CONFIGURACION -->
+    <section v-if="showConfigScreen" id="config_screen" class="bg_dif">
+      <ConfigScreen :theme="theme" @menu="menu"/>
     </section>
 
   </div>

@@ -93,10 +93,6 @@ export const PIECES = {
     HARD: PIECES_EASY.concat(PIECES_MEDIUM).concat(PIECES_HARD)
 }
 
-export const DIFFICULTY = {
-    EASY: 'EASY',
-    MEDIUM: 'MEDIUM',
-    HARD: 'HARD',
-}
+
 
 
