@@ -3,6 +3,7 @@ import MainScreen from './components/MainScreen.vue'
 import MenuScreen from './components/MenuScreen.vue'
 import GameScreen from './components/GameScreen.vue'
 import ConfigScreen from './components/ConfigScreen.vue'
+import ScoreScreen from './components/ScoreScreen.vue'
 import { ref } from 'vue'
 
 let theme = ref('db')
@@ -10,6 +11,7 @@ let showMainScreen = ref(false)
 let showMenuScreen = ref(true)
 let showGameScreen = ref(false)
 let showConfigScreen = ref(false)
+let showScoreScreen = ref(false)
 
 
 const setTheme = (newTheme) => {
@@ -18,6 +20,7 @@ const setTheme = (newTheme) => {
     showMenuScreen.value = true
     showGameScreen.value = false
     showConfigScreen.value = false
+    showScoreScreen.value = false
 }
 
 const startGame = () => {
@@ -25,6 +28,7 @@ const startGame = () => {
     showMenuScreen.value = false
     showGameScreen.value = true
     showConfigScreen.value = false
+    showScoreScreen.value = false
 }
 
 const gameOver = () => {
@@ -32,6 +36,7 @@ const gameOver = () => {
     showMenuScreen.value = true
     showGameScreen.value = false
     showConfigScreen.value = false
+    showScoreScreen.value = false
 }
 
 const setConfig = () => {
@@ -39,6 +44,7 @@ const setConfig = () => {
     showMenuScreen.value = false
     showGameScreen.value = false
     showConfigScreen.value = true
+    showScoreScreen.value = false
 }
 
 const menu = () => {
@@ -46,6 +52,15 @@ const menu = () => {
     showMenuScreen.value = true
     showGameScreen.value = false
     showConfigScreen.value = false
+    showScoreScreen.value = false
+}
+
+const scores = () => {
+    showMainScreen.value = false
+    showMenuScreen.value = false
+    showGameScreen.value = false
+    showConfigScreen.value = false
+    showScoreScreen.value = true
 }
 
 
@@ -59,7 +74,7 @@ const menu = () => {
     </section>
 
     <section v-if="showMenuScreen" id="menu_screen" class="bg">
-      <MenuScreen :theme="theme" @startGame="startGame" @setConfig="setConfig"/>
+      <MenuScreen :theme="theme" @startGame="startGame" @setConfig="setConfig" @scores="scores"/>
     </section>
 
     <section v-if="showGameScreen" id="game_screen" class="bg_dif">
@@ -68,7 +83,12 @@ const menu = () => {
 
     <!-- CONFIGURACION -->
     <section v-if="showConfigScreen" id="config_screen" class="bg_dif">
-      <ConfigScreen :theme="theme" @menu="menu"/>
+      <ConfigScreen @menu="menu"/>
+    </section>
+
+    <!-- PUNTAJES -->
+    <section v-if="showScoreScreen" id="score_screen" class="bg_dif">
+      <ScoreScreen @menu="menu"/>
     </section>
 
   </div>

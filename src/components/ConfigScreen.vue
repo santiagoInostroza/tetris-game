@@ -28,8 +28,7 @@ const menu = () => {
             </article>
         </div>
         <article class="flex gap-4 flex-col items-center justify-center">
-            <button @click="menu()
-            " class="text-xl md:text-2xl border rounded-2xl p-3 w-72 md:w-[35rem] bg-gradient-to-r from-green-600 to-green-800  border-shine font-extrabold" >MENU</button>
+            <button @click="menu()" class="text-xl md:text-2xl border rounded-2xl p-3 w-72 md:w-[35rem] bg-gradient-to-r from-green-600 to-green-800  border-shine font-extrabold" >MENU</button>
         </article>
     </div>
 </template>
