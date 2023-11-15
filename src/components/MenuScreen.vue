@@ -32,7 +32,7 @@ const loadPlayers = async () => {
 };
 
 onMounted(() => {
-    loadPlayers(); // Llama a la función para cargar los puntajes
+    loadPlayers(); 
 });
 
 
