@@ -6,7 +6,7 @@
     } from '/src/utils/consts.js';
 
     import { 
-        ref, onMounted, onBeforeUnmount, reactive, defineEmits 
+        ref, onMounted, onBeforeUnmount, reactive, defineEmits, h 
     } from 'vue';
 
     import { PIECES } from '/src/utils/pieces.js';
@@ -25,16 +25,16 @@
         drawSquare, showScoreOnCompletedLines
     } from '/src/utils/draw.js';
 
+    import { createPlayer } from '/src/api/apiScore.js';
 
-// CONSTANTS    
+    
+    
+    
+    // CONSTANTS    
+    const player = ref(null);
+    const hasName = ref(false);
+    
     const emit = defineEmits(['gameOver', 'menu']);
-
-
-    const gameOver = () => {
-        // emit('gameOver')
-        isGameOver.value = true;
-        pause();
-    }
 
     const menu = () => {
         emit('menu')
@@ -91,6 +91,8 @@
         window.removeEventListener('keyup', handleKeyUp);
     });
 
+    // FUNCIONES    
+
     const getTwoPieces = () => {
         return  pieces.value[Math.floor(Math.random() * pieces.value.length)]
         // return pieces.value[4]
@@ -136,6 +138,33 @@
         animationFrameId = window.requestAnimationFrame(update);
     };
 
+    const gameOver = () => {
+        isGameOver.value = true;
+        pause();
+        if (hasName.value && score.value > 0) {
+            submitPlayerScore();
+        }
+    }
+
+    const submitPlayerScore = async () => {
+
+        if(!player.value){
+            return;
+        }
+        hasName.value = true;
+        try {
+            let newPlayer = { 
+                name: player.value,
+                score: score.value,
+                time: time.value,
+                difficulty: difficulty.value,
+            }
+            const response = await createPlayer(newPlayer);
+        } catch (error) {
+            console.error("Error al agregar el puntaje:", error);
+            // Manejar el error adecuadamente, por ejemplo, mostrar un mensaje al usuario
+        }
+    };
 
     const update = (timestamp) => {
         if (!isPaused.value) {
@@ -346,16 +375,32 @@
                 <!-- titulo opciones -->
                 <h2 class="font-bold text-3xl text-gray-300 text-center mb-4 p-4 ">GAME OVER</h2>
                 
-                <div class="shadow border p-4 rounded-xl text-sm bg-gradient-to-r from-gray-400 to-gray-500 border-shine">
-                    <div class="grid grid-cols-2 gap-4 items-center text-xl">
+                <div class="grid gap-8 shadow border p-4 py-8 rounded-xl text-sm bg-gradient-to-r from-blue-600 to-blue-800 border-shine">
+                    <div class="grid justify-center gap-4 items-center text-xl">
                         <p class="text-center font-bold uppercase">Puntaje</p>
-                        <div class="text-center ">
+                        <div class="text-center font-bold text-5xl">
                             <p>{{ score }}</p>
+                        </div>
+                    </div>
+                    <!-- NOMBRE -->
+                    <div  v-if="!hasName"  class="grid justify-center gap-4 items-center text-xl">
+                        <p class="font-bold uppercase text-center">Ingresa tu Nombre</p>
+                        <div class="text-center ">
+                            <input v-model="player" class="text-center text-orange-500 border-2 border-shine rounded-xl w-72 bg-gradient-to-r from-yellow-100 to-orange-100 border-shine font-extrabold p-2" type="text" placeholder="Ingresa Nombre">
+                        </div>
+                        <div class="flex justify-center gap-4 mt-4">
+                            <button @click="submitPlayerScore" class="text-xl md:text-2xl border rounded-2xl p-3 w-72 md:w-[17rem] bg-gradient-to-r from-green-600 to-green-800  border-shine font-extrabold" >OK</button>
+                        </div>
+                    </div>
+                    <div  v-else class="grid justify-center gap-4 items-center text-xl">
+                        <p class="font-bold uppercase text-center">Nombre</p>
+                        <div class="p-4 text-5xl text-center font-bold">
+                            {{ player }}
                         </div>
                     </div>
                 </div>
 
-                <article class="flex gap-4 flex-col items-center justify-center">
+                <article v-if="hasName" class="flex gap-4 flex-col items-center justify-center">
                     <button @click="menu" class="text-xl md:text-2xl border rounded-2xl p-3 w-72 md:w-[35rem] bg-gradient-to-r from-red-600 to-red-800 border-shine font-extrabold" >IR AL MENU</button>
                     <button @click="restartGame" class="text-xl md:text-2xl border rounded-2xl p-3 w-72 md:w-[35rem] bg-gradient-to-r from-green-600 to-green-800  border-shine font-extrabold" >VOLVER A JUGAR</button>
                 </article>
