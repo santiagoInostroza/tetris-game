@@ -1,7 +1,7 @@
 <script setup>
 import { defineEmits, onMounted, ref } from 'vue'
 import { fetchPlayers } from '/src/api/apiScore.js';
-
+import { ISMOBILE } from '/src/utils/consts.js';
 
 const emit = defineEmits(['startGame', 'setConfig', 'scores'])
 
@@ -38,7 +38,7 @@ onMounted(() => {
 
 </script>
 <template>
-    <div class="flex flex-col gap-12 md:gap-8 justify-between items-center h-screen pb-28 md:pb-14">
+    <div class="flex flex-col gap-12 md:gap-8 justify-between items-center pb-28 md:pb-14" :style="{'height': ISMOBILE ? 'calc(100vh - 50px)' : '100vh'}">
         <article class="flex flex-col gap-8 md:gap-2">
             <h1 class="shining game_name text-center">TETRIS</h1>
             <article class="grid justify-center ">

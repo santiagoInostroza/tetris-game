@@ -379,9 +379,9 @@
                 
 
                 <article class="flex gap-4 flex-col items-center justify-center">
-                    <button @click="pause" class="text-xl md:text-2xl border rounded-2xl p-3 w-72 md:w-[35rem] bg-gradient-to-r from-green-600 to-green-800  border-shine font-extrabold" >CONTINUAR</button>
                     <div class="flex gap-4 flex-col md:flex-row">
-                        <button @click="menu" class="text-xl md:text-2xl border rounded-2xl p-4 w-72 md:w-[17rem] bg-gradient-to-r from-red-600 to-red-800 border-shine font-extrabold">IR AL MENU</button>
+                        <button @click="pause" class="text-xl md:text-2xl border rounded-2xl p-4 w-72 md:w-[17rem] bg-gradient-to-r from-green-600 to-green-800  border-shine font-extrabold" >CONTINUAR</button>
+                        <button @click="menu" class="text-xl md:text-2xl border rounded-2xl p-4 w-72 md:w-[17rem] bg-gradient-to-r from-red-600 to-red-800 border-shine font-extrabold">SALIR</button>
                     </div>
                 </article>
 
