@@ -1,5 +1,7 @@
 import { EVENT_MOVEMENTS, DIRECTIONS } from '/src/utils/consts.js';
 import { checkCollision } from '/src/utils/helpers.js';
+import { startCollisionSound, startMoveSound, startRotateSound } from '/src/utils/sounds.js';
+
 
 
 let keysPressed = {};
@@ -38,6 +40,7 @@ function handleMovement(board, piece, controlFunctions) {
 }
 
 export function movePiece(board, piece, direction, { solidifyPiece, removeLines } = {}) {
+    startMoveSound();
     switch (direction) {
         case 'left':
             piece.position.x--;
@@ -57,9 +60,11 @@ export function movePiece(board, piece, direction, { solidifyPiece, removeLines 
                 piece.position.y--; // Revertir el movimiento si hay colisión
                 solidifyPiece();
                 removeLines();
+                startCollisionSound();
             }
             break;
         case 'rotate':
+            startRotateSound();
             rotatePiece(board, piece);
             break;
         case 'space':

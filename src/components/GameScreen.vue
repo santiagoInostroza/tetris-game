@@ -29,7 +29,10 @@
 
     import {
         startRemoveLineOneSound, startRemoveLineTwoSound, startRemoveLineThreeSound, startRemoveLineFourSound, startRemoveLineFiveSound,
-        startGameAudio, pauseGameAudio, startBonusSound, stopBonusSound
+        startGameAudio, pauseGameAudio, startBonusSound, stopBonusSound, startCollisionSound, 
+        // startRotateSound, 
+       
+        // startDropSound
     } from '/src/utils/sounds.js';
 
     

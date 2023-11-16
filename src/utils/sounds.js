@@ -12,6 +12,9 @@ const SOUNDS = {
     removeLineFiveSound: null,
     collisionSound: null,
     bonusSound: null,
+    moveSound: null,
+    rotateSound: null,
+
 
 }
 
@@ -24,6 +27,7 @@ let theme1 = null;
 
 selectTheme('tetris')
 
+
 export function selectTheme(theme) {
     theme1 = theme;
   if (ISPRODUCTION) {
@@ -35,8 +39,10 @@ export function selectTheme(theme) {
       SOUNDS.removeLineThreeSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris-game/main/src/assets/sounds/${theme}/removeLineThree.mp3`)
       SOUNDS.removeLineFourSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris-game/main/src/assets/sounds/${theme}/removeLineFour.mp3`)
       SOUNDS.removeLineFiveSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris-game/main/src/assets/sounds/${theme}/removeLineFive.mp3`)
-      // SOUNDS.collisionSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris/main/src/assets/sounds/${theme}/collisionSound.mp3`)
+      SOUNDS.collisionSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris/main/src/assets/sounds/${theme}/collisionSound.mp3`)
       SOUNDS.bonusSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris-game/main/src/assets/sounds/${theme}/bonusSound.mp3`)
+      SOUNDS.moveSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris-game/main/src/assets/sounds/${theme}/moveSound.mp3`)
+      SOUNDS.rotateSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris-game/main/src/assets/sounds/${theme}/rotateSound.mp3`)
     } else {
       // SOUNDS.introSound = new Audio(`./sounds/${theme}/intro.mp3`)
       SOUNDS.bgMusic = new Audio(`/src/assets/sounds/${theme}/bg/${canciones[cancionActual]}`);
@@ -47,8 +53,10 @@ export function selectTheme(theme) {
       SOUNDS.removeLineFourSound = new Audio(`/src/assets/sounds/${theme}/removeLineFour.mp3`)
       SOUNDS.removeLineFiveSound = new Audio(`/src/assets/sounds/${theme}/removeLineFive.mp3`)
       
-      // SOUNDS.collisionSound = new Audio(`./sounds/${theme}/collisionSound.mp3`)
+      SOUNDS.collisionSound = new Audio(`/src/assets/sounds/${theme}/collisionSound.mp3`)
       SOUNDS.bonusSound = new Audio(`/src/assets/sounds/${theme}/bonusSound.mp3`)
+      SOUNDS.moveSound = new Audio(`/src/assets/sounds/${theme}/moveSound.mp3`)
+      SOUNDS.rotateSound = new Audio(`/src/assets/sounds/${theme}/rotateSound.mp3`)
     }
 
   }
@@ -132,7 +140,7 @@ export function selectTheme(theme) {
   }
   
   export function startCollisionSound(){
-    SOUNDS.collisionSound.currentTime = 0.2
+    SOUNDS.collisionSound.currentTime = 0
     SOUNDS.collisionSound.volume = 1
     SOUNDS.collisionSound.play()
   }
@@ -146,11 +154,27 @@ export function selectTheme(theme) {
   }
 
   export function startBonusSound() {
-    SOUNDS.bonusSound.play()
+     SOUNDS.bonusSound.play()
   }
 
   export function stopBonusSound() {
     SOUNDS.bonusSound.pause()
     SOUNDS.bonusSound.currentTime = 0
+  }
+
+  export function startMoveSound() {
+    SOUNDS.moveSound.play()
+    setTimeout(() => {
+      SOUNDS.moveSound.pause()
+      SOUNDS.moveSound.currentTime = 0
+    }, 50);
+  }
+
+  export function startRotateSound() {
+    SOUNDS.rotateSound.play()
+    setTimeout(() => {
+      SOUNDS.rotateSound.pause()
+      SOUNDS.rotateSound.currentTime = 0
+    }, 50);
   }
   
