@@ -22,10 +22,15 @@
     } from '/src/utils/keyboardControls.js';
 
     import { 
-        drawSquare, showScoreOnCompletedLines
+        drawSquare, showScoreOnCompletedLines, bonus,
     } from '/src/utils/draw.js';
 
     import { createPlayer } from '/src/api/apiScore.js';
+
+    import {
+        startRemoveLineOneSound, startRemoveLineTwoSound, startRemoveLineThreeSound, startRemoveLineFourSound, startRemoveLineFiveSound,
+        startGameAudio, pauseGameAudio, startBonusSound, stopBonusSound
+    } from '/src/utils/sounds.js';
 
     
     
@@ -67,6 +72,9 @@
     let activeGameTime = 0; // Tiempo total de juego activo
     let lastUpdateTime = 0; // Última vez que se actualizó el juego
 
+    let shouldShowScore = false;
+    let linePosition = -10;
+
 
     const keyDownHandler = (event) => handleKeyDown(event, board, piece, { solidifyPiece, removeLines, updateDropCounter });  
 
@@ -75,7 +83,15 @@
         canvas.value.height = BLOCK_SIZE * BOARD_HEIGHT;
         context.value = canvas.value.getContext('2d');
         context.value.scale(BLOCK_SIZE, BLOCK_SIZE);
-        piece.matrix = getNewPiece(pieces.value);
+        // piece.matrix = getNewPiece(pieces.value);
+        piece.position = {x: 0 , y: 0}
+        piece.matrix = [
+            [1, 1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1, 1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1, 1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1, 1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1, 1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        ]
         startGame();
         
         // window.addEventListener('keydown', handleKeyDown);
@@ -108,6 +124,7 @@
         isGameOver.value = false;
         animationFrameId = window.requestAnimationFrame(update);
         // Añadir otros inicializadores aquí si es necesario
+        startGameAudio();
 
     }
 
@@ -183,7 +200,8 @@
                 movePiece( board, piece, 'down', { solidifyPiece, removeLines });
                 dropCounter = 0;
             }
-            draw();
+            draw(deltaTime);
+
         }
 
         lastUpdateTime = timestamp;
@@ -194,11 +212,14 @@
     };
 
 
-    let shouldShowScore = true;
-    let linePosition = 0;
   
+    let showBonus = false;
+    let timeBonus = 0;
+    let textBonus = '';
+    let multiplierBonus = 1;
+    let remainingBonusTime = 0;
 
-    const draw = () => {
+    const draw = (deltaTime) => {
 
         // Dibuja el fondo del juego
         context.value.fillStyle = 'black';
@@ -228,6 +249,12 @@
             showScoreOnCompletedLines( context.value, newScore.value, linePosition)
         } 
 
+        if (showBonus) {
+            remainingBonusTime = remainingBonusTime - deltaTime;
+            bonus(context.value, textBonus,remainingBonusTime, timeBonus,);
+        }
+
+     
 
     };   
     
@@ -237,10 +264,12 @@
         if (!isPaused.value) {
             window.cancelAnimationFrame(animationFrameId);
             isPaused.value = true;
+            pauseGameAudio();
         } else {
             lastUpdateTime = performance.now();
             animationFrameId = window.requestAnimationFrame(update);
             isPaused.value = false;
+            startGameAudio();
         }
     };
    
@@ -262,27 +291,106 @@
         }
     };
     
+    // const removeLines = () => {
+    //     let lines = 0;
+    //     board.forEach((row, y) => {
+    //         if (row.every((value) => value > 0)) {
+    //             lines++;
+    //             linePosition = y;
+    //             board.splice(y, 1);
+    //             board.unshift(Array(BOARD_WIDTH).fill(0));
+    //         }
+    //     });
+    //     if (lines > 0) {
+
+    //         newScore.value = (lines * BOARD_WIDTH) * (1 + ((lines - 1) * 0.25));
+
+    //         score.value += newScore.value;
+    //         shouldShowScore = true;
+
+    //         setTimeout(() => {
+    //             shouldShowScore = false;
+    //             linePosition = 0;
+    //         }, 1400);
+    //     }
+    // };
+
+
     const removeLines = () => {
         let lines = 0;
+        let linePositions = []; // Almacenará las posiciones de las líneas a eliminar
+
+        // Identificar todas las líneas completas
         board.forEach((row, y) => {
             if (row.every((value) => value > 0)) {
                 lines++;
+                linePositions.push(y);
                 linePosition = y;
-                board.splice(y, 1);
-                board.unshift(Array(BOARD_WIDTH).fill(0));
             }
         });
-        if (lines > 0) {
-            newScore.value = (lines * 10) ** 2;
-            score.value += newScore.value;
-            shouldShowScore = true;
 
-            setTimeout(() => {
-                shouldShowScore = false;
-                linePosition = 0;
-            }, 1400);
-        }
+        shouldShowScore = true;
+
+        // Función para eliminar una línea y actualizar la puntuación
+        const removeLine = (lineIndex) => {
+            if (lineIndex < linePositions.length) {
+                const y = linePositions[lineIndex];
+                board.splice(y, 1);
+                board.unshift(Array(BOARD_WIDTH).fill(0));
+
+                newScore.value = ((lineIndex + 1 ) * BOARD_WIDTH) * (1 + ((lineIndex) * 0.25) ) * multiplierBonus;
+                if (lineIndex === 0) {
+                    startRemoveLineOneSound();
+                } else if (lineIndex === 1) {
+                    startRemoveLineTwoSound();
+                } else if (lineIndex === 2) {
+                    startRemoveLineThreeSound();
+                } else if (lineIndex === 3) {
+                    startRemoveLineFourSound();
+                } else if (lineIndex === 4) {
+                    startRemoveLineFiveSound();
+                    startBonus('45', 'X3', 3);
+                }
+
+
+                
+                if (lineIndex === linePositions.length - 1) {
+                    
+                    score.value += newScore.value;
+
+                    setTimeout(() => {
+                        shouldShowScore = false;
+                        linePosition = -10;
+                    }, 2000);
+                }
+
+                // Llamar a la función de nuevo después de 0.400 segundos para la siguiente línea
+                setTimeout(() => removeLine(lineIndex + 1), 400);
+            }
+        };
+
+        // Iniciar la eliminación de líneas
+        removeLine(0);
     };
+
+    function startBonus(time = 20, text = 'X2', multiplier = 2 ){
+
+        textBonus = text;
+        multiplierBonus = multiplier;
+        showBonus = true;
+        timeBonus = remainingBonusTime = time * 1000;
+        pauseGameAudio();
+        startBonusSound();
+        setTimeout(() => {
+            startGameAudio();
+            stopBonusSound();
+            showBonus = false;
+            textBonus = '';
+            multiplierBonus = 1;
+        }, timeBonus);
+    }
+
+
 </script>
 
 <template>

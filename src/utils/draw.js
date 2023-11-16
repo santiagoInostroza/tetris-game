@@ -40,3 +40,38 @@ export const showScoreOnCompletedLines = (ctx, newScore, linePosition ) => {
     ctx.fillStyle = 'orange'; // Color morado claro
     ctx.fillText(text, textX, textY);
 };
+
+export const bonus = (ctx, text, timeBonus, maxTime = 5, linePosition = 3) => {
+    const textX = 1; // Centrar el texto en el ancho del tablero
+    const textY = linePosition; // Ajustar la posición y al centro de la fila completada
+
+       // Establecer el estilo de la fuente para hacerla más gruesa
+       ctx.font = `bold 2px 'Comic Sans MS'`; // Fuente más gruesa
+
+    
+    // // dibujar un circulo
+    ctx.beginPath();
+    ctx.arc(textX +1.3, textY - 0.6, 1.8, 0, 2 * Math.PI);
+    ctx.fillStyle = 'black';
+    ctx.fill();
+
+    const angle = (timeBonus / maxTime) * 2 * Math.PI;
+   
+    // dibujar un circulo sin relleno
+    ctx.beginPath();
+    ctx.arc(textX +1.3, textY - 0.6, 1.8, 0 , angle);
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 0.4;
+    ctx.stroke();
+
+    // Primero, dibujar el borde del texto
+    ctx.strokeStyle = 'white'; // Color del borde
+    ctx.lineWidth = 0.2; // Ancho del borde
+    ctx.strokeText(text, textX, textY);
+
+    // Luego, rellenar el texto
+    ctx.fillStyle = 'orange'; // Color morado claro
+    ctx.fillText(text, textX, textY);
+
+
+}

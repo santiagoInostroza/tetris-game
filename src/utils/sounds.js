@@ -5,12 +5,13 @@ const SOUNDS = {
     introSound: null,
     bgMusic: null,
     gameOverSound: null,
-    removeOneLineSound: null,
-    removeTwoLinesSound: null,
-    removeThreeLinesSound: null,
-    removeFourLinesSound: null,
-    removeFiveLinesSound: null,
+    removeLineOneSound: null,
+    removeLineTwoSound: null,
+    removeLineThreeSound: null,
+    removeLineFourSound: null,
+    removeLineFiveSound: null,
     collisionSound: null,
+    bonusSound: null,
 
 }
 
@@ -21,30 +22,33 @@ const canciones = Array.from({length: 10}, (_, i) => `${i + 1}.mp3`) // array de
 let cancionActual = 0;
 let theme1 = null;
 
-
+selectTheme('tetris')
 
 export function selectTheme(theme) {
     theme1 = theme;
   if (ISPRODUCTION) {
-      SOUNDS.introSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris/main/audios/${theme}/intro.mp3`)
-      SOUNDS.bgMusic = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris/main/audios/${theme}/bg/${canciones[cancionActual]}`);
-      SOUNDS.gameOverSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris/main/audios/${theme}/gameOverSound.mp3`)
-      SOUNDS.removeOneLineSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris/main/audios/${theme}/removeOneLineSound.mp3`)
-      SOUNDS.removeTwoLinesSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris/main/audios/${theme}/removeOneLineSound.mp3`)
-      SOUNDS.removeThreeLinesSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris/main/audios/${theme}/removeOneLineSound.mp3`)
-      SOUNDS.removeFourLinesSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris/main/audios/${theme}/removeOneLineSound.mp3`)
-      SOUNDS.removeFiveLinesSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris/main/audios/${theme}/removeOneLineSound.mp3`)
-      SOUNDS.collisionSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris/main/audios/${theme}/collisionSound.mp3`)
+      // SOUNDS.introSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris/main/sounds/${theme}/intro.mp3`)
+      SOUNDS.bgMusic = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris/main/src/assets/sounds/${theme}/bg/${canciones[cancionActual]}`);
+      // SOUNDS.gameOverSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris/main/src/assets/sounds/${theme}/gameOverSound.mp3`)
+      SOUNDS.removeLineOneSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris/main/src/assets/sounds/${theme}/removeLineOne.mp3`)
+      SOUNDS.removeLineTwoSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris/main/src/assets/sounds/${theme}/removeLineTwo.mp3`)
+      SOUNDS.removeLineThreeSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris/main/src/assets/sounds/${theme}/removeLineThree.mp3`)
+      SOUNDS.removeLineFourSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris/main/src/assets/sounds/${theme}/removeLineFour.mp3`)
+      SOUNDS.removeLineFiveSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris/main/src/assets/sounds/${theme}/removeLineFive.mp3`)
+      // SOUNDS.collisionSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris/main/src/assets/sounds/${theme}/collisionSound.mp3`)
+      SOUNDS.bonusSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris/main/src/assets/sounds/${theme}/bonusSound.mp3`)
     } else {
-      SOUNDS.introSound = new Audio(`./audios/${theme}/intro.mp3`)
-      SOUNDS.bgMusic = new Audio(`./audios/${theme}/bg/${canciones[cancionActual]}`);
-      SOUNDS.gameOverSound = new Audio(`./audios/${theme}/gameOverSound.mp3`)
-      SOUNDS.removeOneLineSound = new Audio(`./audios/${theme}/removeOneLineSound.mp3`)
-      SOUNDS.removeTwoLinesSound = new Audio(`./audios/${theme}/removeOneLineSound.mp3`)
-      SOUNDS.removeThreeLinesSound = new Audio(`./audios/${theme}/removeOneLineSound.mp3`)
-      SOUNDS.removeFourLinesSound = new Audio(`./audios/${theme}/removeOneLineSound.mp3`)
-      SOUNDS.removeFiveLinesSound = new Audio(`./audios/${theme}/removeOneLineSound.mp3`)
-      SOUNDS.collisionSound = new Audio(`./audios/${theme}/collisionSound.mp3`)
+      // SOUNDS.introSound = new Audio(`./sounds/${theme}/intro.mp3`)
+      SOUNDS.bgMusic = new Audio(`/src/assets/sounds/${theme}/bg/${canciones[cancionActual]}`);
+      // SOUNDS.gameOverSound = new Audio(`./sounds/${theme}/gameOverSound.mp3`)
+      SOUNDS.removeLineOneSound = new Audio(`/src/assets/sounds/${theme}/removeLineOne.mp3`)
+      SOUNDS.removeLineTwoSound = new Audio(`/src/assets/sounds/${theme}/removeLineTwo.mp3`)
+      SOUNDS.removeLineThreeSound = new Audio(`/src/assets/sounds/${theme}/removeLineThree.mp3`)
+      SOUNDS.removeLineFourSound = new Audio(`/src/assets/sounds/${theme}/removeLineFour.mp3`)
+      SOUNDS.removeLineFiveSound = new Audio(`/src/assets/sounds/${theme}/removeLineFive.mp3`)
+      
+      // SOUNDS.collisionSound = new Audio(`./sounds/${theme}/collisionSound.mp3`)
+      SOUNDS.bonusSound = new Audio(`/src/assets/sounds/${theme}/bonusSound.mp3`)
     }
 
   }
@@ -75,14 +79,14 @@ export function selectTheme(theme) {
     SOUNDS.bgMusic.addEventListener('error', function(event) {
       cancionActual = 0;
       SOUNDS.bgMusic.load();
-      SOUNDS.bgMusic = new Audio(`./audios/${theme1}/bg/${canciones[cancionActual]}`);
+      SOUNDS.bgMusic = new Audio(`/src/assets/sounds/${theme1}/bg/${canciones[cancionActual]}`);
       startGameAudio();
     });
   }
 
   function reproducirSiguienteCancion() {
       cancionActual++;
-      SOUNDS.bgMusic.src = `./audios/${theme1}/bg/${canciones[cancionActual]}`;
+      SOUNDS.bgMusic.src = `/src/assets/sounds/${theme1}/bg/${canciones[cancionActual]}`;
       startGameAudio();
   }
 
@@ -97,10 +101,34 @@ export function selectTheme(theme) {
     SOUNDS.gameOverSound.play()
   }
 
-  export function startRemoveOneLineSound() {
-    SOUNDS.removeOneLineSound.currentTime = 1
-    SOUNDS.removeOneLineSound.volume = 1
-    SOUNDS.removeOneLineSound.play()
+  export function startRemoveLineOneSound() {
+    SOUNDS.removeLineOneSound.currentTime = 0
+    SOUNDS.removeLineOneSound.volume = 1
+    SOUNDS.removeLineOneSound.play()
+  }
+
+  export function startRemoveLineTwoSound() {
+    SOUNDS.removeLineTwoSound.currentTime = 0
+    SOUNDS.removeLineTwoSound.volume = 1
+    SOUNDS.removeLineTwoSound.play()
+  }
+
+  export function startRemoveLineThreeSound() {
+    SOUNDS.removeLineThreeSound.currentTime = 0
+    SOUNDS.removeLineThreeSound.volume = 1
+    SOUNDS.removeLineThreeSound.play()
+  }
+
+  export function startRemoveLineFourSound() {
+    SOUNDS.removeLineFourSound.currentTime = 0
+    SOUNDS.removeLineFourSound.volume = 1
+    SOUNDS.removeLineFourSound.play()
+  }
+
+  export function startRemoveLineFiveSound() {
+    SOUNDS.removeLineFiveSound.currentTime = 0
+    SOUNDS.removeLineFiveSound.volume = 1
+    SOUNDS.removeLineFiveSound.play()
   }
   
   export function startCollisionSound(){
@@ -108,3 +136,21 @@ export function selectTheme(theme) {
     SOUNDS.collisionSound.volume = 1
     SOUNDS.collisionSound.play()
   }
+
+  export function pauseGameAudio() {
+    SOUNDS.bgMusic.pause()
+  }
+
+  export function resumeGameAudio() {
+    SOUNDS.bgMusic.play()
+  }
+
+  export function startBonusSound() {
+    SOUNDS.bonusSound.play()
+  }
+
+  export function stopBonusSound() {
+    SOUNDS.bonusSound.pause()
+    SOUNDS.bonusSound.currentTime = 0
+  }
+  
