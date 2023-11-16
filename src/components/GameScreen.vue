@@ -253,12 +253,7 @@
             remainingBonusTime = remainingBonusTime - deltaTime;
             bonus(context.value, textBonus,remainingBonusTime, timeBonus,);
         }
-
-     
-
     };   
-    
-  
     
     const pause = () => {
         if (!isPaused.value) {

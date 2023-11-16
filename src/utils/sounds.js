@@ -28,15 +28,15 @@ export function selectTheme(theme) {
     theme1 = theme;
   if (ISPRODUCTION) {
       // SOUNDS.introSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris/main/sounds/${theme}/intro.mp3`)
-      SOUNDS.bgMusic = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris/main/src/assets/sounds/${theme}/bg/${canciones[cancionActual]}`);
+      SOUNDS.bgMusic = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris-game/main/src/assets/sounds/${theme}/bg/${canciones[cancionActual]}`);
       // SOUNDS.gameOverSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris/main/src/assets/sounds/${theme}/gameOverSound.mp3`)
-      SOUNDS.removeLineOneSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris/main/src/assets/sounds/${theme}/removeLineOne.mp3`)
-      SOUNDS.removeLineTwoSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris/main/src/assets/sounds/${theme}/removeLineTwo.mp3`)
-      SOUNDS.removeLineThreeSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris/main/src/assets/sounds/${theme}/removeLineThree.mp3`)
-      SOUNDS.removeLineFourSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris/main/src/assets/sounds/${theme}/removeLineFour.mp3`)
-      SOUNDS.removeLineFiveSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris/main/src/assets/sounds/${theme}/removeLineFive.mp3`)
+      SOUNDS.removeLineOneSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris-game/main/src/assets/sounds/${theme}/removeLineOne.mp3`)
+      SOUNDS.removeLineTwoSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris-game/main/src/assets/sounds/${theme}/removeLineTwo.mp3`)
+      SOUNDS.removeLineThreeSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris-game/main/src/assets/sounds/${theme}/removeLineThree.mp3`)
+      SOUNDS.removeLineFourSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris-game/main/src/assets/sounds/${theme}/removeLineFour.mp3`)
+      SOUNDS.removeLineFiveSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris-game/main/src/assets/sounds/${theme}/removeLineFive.mp3`)
       // SOUNDS.collisionSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris/main/src/assets/sounds/${theme}/collisionSound.mp3`)
-      SOUNDS.bonusSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris/main/src/assets/sounds/${theme}/bonusSound.mp3`)
+      SOUNDS.bonusSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris-game/main/src/assets/sounds/${theme}/bonusSound.mp3`)
     } else {
       // SOUNDS.introSound = new Audio(`./sounds/${theme}/intro.mp3`)
       SOUNDS.bgMusic = new Audio(`/src/assets/sounds/${theme}/bg/${canciones[cancionActual]}`);
