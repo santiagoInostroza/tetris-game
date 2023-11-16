@@ -286,10 +286,79 @@
 </script>
 
 <template>
+    <!-- CONTENEDOR PRINCIPAL -->
     <div class="grid justify-center">
 
-        <!-- MODAL -->
-        <article v-if="ISMOBILE && isPaused && !isGameOver">
+        <!-- SCORE AND TIME -->
+        <article v-if="ISMOBILE" class="shadow rounded py-2">
+            <div class="flex justify-between w-screen px-4">
+                <!-- SCORE-->
+                <div class="p-1 border-4 border-shine rounded-xl relative w-32 mt-4 text-center bg-gradient-to-r from-blue-600 to-blue-800 grid items-center">
+                    <span class="absolute top-0 -mt-4 font-bold left-0 right-0 mx-auto ">Puntaje</span>
+                    <span class="text-3xl font-extrabold">{{ score }}</span>
+                </div>
+                <!-- TIME -->
+                <div class="p-2 border-4 border-shine rounded-xl relative w-32 mt-4 text-center bg-gradient-to-r from-blue-600 to-blue-800 grid items-center">
+                    <span class="absolute top-0 -mt-4 font-bold left-0 right-0 mx-auto t">Tiempo</span>
+                    <span class="text-xl font-bold">{{ time }}</span>
+                </div>
+            </div>
+        </article>        
+
+        <div class="flex gap-4">
+            <div v-if="!ISMOBILE">
+                <!-- SCORE-->
+                <div class="p-1 border-4 border-shine rounded-xl relative w-32 mt-4 text-center bg-gradient-to-r from-blue-600 to-blue-800 grid items-center">
+                    <span class="absolute top-0 -mt-4 font-bold left-0 right-0 mx-auto ">Puntaje</span>
+                    <span class="text-3xl font-extrabold">{{ score }}</span>
+                </div>
+            </div> 
+            <!-- CANVAS -->
+            <article class="grid justify-center mt-2 w-full" :style="{ height: HEIGHT_CANVAS + 'px' }">
+                <div class="" >
+                    <canvas class="border-shine rounded-xl  bg-blue-400" ref="canvas"></canvas>
+                </div>
+            </article>
+            <div v-if="!ISMOBILE">
+                <!-- TIME -->
+                <div class="grid gap-4">
+                    <div class="p-2 border-4 border-shine rounded-xl relative w-32 mt-4 text-center bg-gradient-to-r from-blue-600 to-blue-800 grid items-center">
+                        <span class="absolute top-0 -mt-4 font-bold left-0 right-0 mx-auto t">Tiempo</span>
+                        <span class="text-xl font-bold">{{ time }}</span>
+                    </div>
+                    <button @click="pause" class="w-32 p-2 rounded-xl deep-button border-shine" style="font-size: 12px;">PAUSAR</button>
+                </div>
+            </div>
+        </div>
+        <!-- JOYSTICK -->
+        <article v-if="ISMOBILE" id="buttons_movil" class=" flex justify-between items-stretch my-5 gap-4 px-4">
+            <div class="h-50 w-50">
+                <div class="flex-between">
+                
+                    <button  @touchstart="startMovement(board, piece, DIRECTIONS.LEFT)"  @touchend="stopMovement(DIRECTIONS.LEFT)" class="text-7xl deep-button rotate-90 w-20 h-20 rounded-full border-shine">▼</button>
+                    <button  @touchstart="startMovement(board, piece, DIRECTIONS.RIGHT)" @touchend="stopMovement(DIRECTIONS.RIGHT)"  class="text-7xl deep-button rotate-90 ml-[3rem] w-20 h-20 rounded-full border-shine">▲</button>
+                </div>
+                <div class="grid justify-center -mt-4">
+                    <button @touchstart="startMovement(board, piece, DIRECTIONS.DOWN,  { solidifyPiece, removeLines, updateDropCounter })" @touchend="stopMovement(DIRECTIONS.DOWN)" class="text-7xl deep-button w-20 h-20 rounded-full border-shine">▼ </button>
+                </div>
+            </div>
+            <div class="grid content-between justify-end">
+                <button @click="pause" class="w-16 h-6 rounded-xl deep-button border-shine -ml-4" style="font-size: 12px;">PAUSAR</button>
+                <div class="ml-12">
+                    <button @click="speedDown(board, piece, {solidifyPiece, removeLines})" class="rounded-full deep-button w-12 h-12 border-shine grid" style="">
+                        <span class="mt-1">▼</span><span class="-mt-4">▼</span>
+                    </button>
+                </div>
+                <button @touchstart="startMovement(board, piece, DIRECTIONS.ROTATE)" @touchend="stopMovement(DIRECTIONS.ROTATE)" class="rounded-full deep-button w-16 h-16 border-shine rotate-180 grid -ml-4" style="font-size: 35px;">↻</button>
+            </div>
+        </article>            
+        
+    </div>
+
+    <!-- MODALES -->
+    <div>
+        <!-- MODAL PAUSA-->
+        <article v-if="isPaused && !isGameOver">
             <div class="w-screen h-screen absolute bg-gray-800 opacity-90 z-10 left-0 top-0 ">
             </div>
             <div class="absolute left-0 top-0 h-full w-full z-10 grid items-center justify-center">
@@ -321,53 +390,7 @@
             </div>
         </article>
 
-        <!-- SCORE AND TIME -->
-        <article v-if="ISMOBILE" class="shadow rounded py-2">
-            <div class="flex justify-between w-screen px-4">
-                <!-- SCORE-->
-                <div class="p-1 border-4 border-shine rounded-xl relative w-32 mt-4 text-center bg-gradient-to-r from-blue-600 to-blue-800 grid items-center">
-                    <span class="absolute top-0 -mt-4 font-bold left-0 right-0 mx-auto ">Puntaje</span>
-                    <span class="text-3xl font-extrabold">{{ score }}</span>
-                </div>
-                <!-- TIME -->
-                <div class="p-2 border-4 border-shine rounded-xl relative w-32 mt-4 text-center bg-gradient-to-r from-blue-600 to-blue-800 grid items-center">
-                    <span class="absolute top-0 -mt-4 font-bold left-0 right-0 mx-auto t">Tiempo</span>
-                    <span class="text-xl font-bold">{{ time }}</span>
-                </div>
-            </div>
-        </article>
-
-        <!-- CANVAS -->
-        <article class="grid justify-center mt-2" :style="{ height: HEIGHT_CANVAS + 'px' }">
-            <div class="" >
-                <canvas class="border-shine rounded-xl  bg-blue-400" ref="canvas"></canvas>
-            </div>
-        </article>
-
-        <!-- JOYSTICK -->
-        <article v-if="ISMOBILE" id="buttons_movil" class=" flex justify-between items-stretch my-5 gap-4 px-4">
-            <div class="h-50 w-50">
-                <div class="flex-between">
-                
-                    <button  @touchstart="startMovement(board, piece, DIRECTIONS.LEFT)"  @touchend="stopMovement(DIRECTIONS.LEFT)" class="text-7xl deep-button rotate-90 w-20 h-20 rounded-full border-shine">▼</button>
-                    <button  @touchstart="startMovement(board, piece, DIRECTIONS.RIGHT)" @touchend="stopMovement(DIRECTIONS.RIGHT)"  class="text-7xl deep-button rotate-90 ml-[3rem] w-20 h-20 rounded-full border-shine">▲</button>
-                </div>
-                <div class="grid justify-center -mt-4">
-                    <button @touchstart="startMovement(board, piece, DIRECTIONS.DOWN,  { solidifyPiece, removeLines, updateDropCounter })" @touchend="stopMovement(DIRECTIONS.DOWN)" class="text-7xl deep-button w-20 h-20 rounded-full border-shine">▼ </button>
-                </div>
-            </div>
-            <div class="grid content-between justify-end">
-                <button @click="pause" class="w-16 h-6 rounded-xl deep-button border-shine -ml-4" style="font-size: 12px;">PAUSAR</button>
-                <div class="ml-12">
-                    <button @click="speedDown(board, piece, {solidifyPiece, removeLines})" class="rounded-full deep-button w-12 h-12 border-shine grid" style="">
-                        <span class="mt-1">▼</span><span class="-mt-4">▼</span>
-                    </button>
-                </div>
-                <button @touchstart="startMovement(board, piece, DIRECTIONS.ROTATE)" @touchend="stopMovement(DIRECTIONS.ROTATE)" class="rounded-full deep-button w-16 h-16 border-shine rotate-180 grid -ml-4" style="font-size: 35px;">↻</button>
-            </div>
-        </article>
-
-        <!-- GAME OVER -->
+        <!--MODAL GAME OVER -->
         <article v-if="isGameOver">
             <div class="w-screen h-screen absolute bg-gray-800 opacity-90 z-10 left-0 top-0 ">
             </div>
