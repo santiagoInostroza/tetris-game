@@ -89,16 +89,16 @@
         canvas.value.height = BLOCK_SIZE * BOARD_HEIGHT;
         context.value = canvas.value.getContext('2d');
         context.value.scale(BLOCK_SIZE, BLOCK_SIZE);
-        // [piece.matrix, piece.color] = getNewPiece(pieces.value, COLORS);
-        piece.position = {x: 0 , y: 0}
-        piece.matrix = [
-            [1, 1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-            [1, 1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-            [1, 1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-            [1, 1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-            [1, 1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-        ]
-        piece.color = 'red';
+        [piece.matrix, piece.color] = getNewPiece(pieces.value, COLORS);
+        // piece.position = {x: 0 , y: 0}
+        // piece.matrix = [
+        //     [1, 1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        //     [1, 1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        //     [1, 1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        //     [1, 1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        //     [1, 1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        // ]
+        // piece.color = 'red';
         startGame();
         
         
@@ -237,7 +237,7 @@
         context.value.fillRect(0, 0, canvas.value.width, canvas.value.height);      
         
         
-        // Dibuja las piezas solidificadas
+        // Dibuja el tablero y las piezas solidificadas
         board.forEach((row, y) => {
             row.forEach((cell, x) => {
                 if (cell.value > 0) {
