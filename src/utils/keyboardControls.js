@@ -1,6 +1,6 @@
 import { EVENT_MOVEMENTS, DIRECTIONS } from '/src/utils/consts.js';
 import { checkCollision } from '/src/utils/helpers.js';
-import { startCollisionSound, startMoveSound, startRotateSound } from '/src/utils/sounds.js';
+import { startCollisionSound, startMoveSound, startRotateSound, startSpeedDownSound } from '/src/utils/sounds.js';
 
 
 
@@ -75,6 +75,7 @@ export function movePiece(board, piece, direction, { solidifyPiece, removeLines 
 
 export const speedDown = (board, piece, { solidifyPiece, removeLines }) => {
     let enter = true;
+    startSpeedDownSound();
     while (enter) {
         piece.position.y++;
         if (checkCollision(board, piece)) {

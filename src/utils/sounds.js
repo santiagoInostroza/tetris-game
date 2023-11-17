@@ -14,6 +14,7 @@ const SOUNDS = {
     bonusSound: null,
     moveSound: null,
     rotateSound: null,
+    speedDownSound: null,
 
 
 }
@@ -43,6 +44,7 @@ export function selectTheme(theme) {
       SOUNDS.bonusSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris-game/main/src/assets/sounds/${theme}/bonusSound.mp3`)
       SOUNDS.moveSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris-game/main/src/assets/sounds/${theme}/moveSound.mp3`)
       SOUNDS.rotateSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris-game/main/src/assets/sounds/${theme}/rotateSound.mp3`)
+      SOUNDS.speedDownSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris-game/main/src/assets/sounds/${theme}/speedDownSound.mp3`)
     } else {
       // SOUNDS.introSound = new Audio(`./sounds/${theme}/intro.mp3`)
       SOUNDS.bgMusic = new Audio(`/src/assets/sounds/${theme}/bg/${canciones[cancionActual]}`);
@@ -57,6 +59,7 @@ export function selectTheme(theme) {
       SOUNDS.bonusSound = new Audio(`/src/assets/sounds/${theme}/bonusSound.mp3`)
       SOUNDS.moveSound = new Audio(`/src/assets/sounds/${theme}/moveSound.mp3`)
       SOUNDS.rotateSound = new Audio(`/src/assets/sounds/${theme}/rotateSound.mp3`)
+      SOUNDS.speedDownSound = new Audio(`/src/assets/sounds/${theme}/speedDownSound.mp3`)
     }
 
   }
@@ -183,4 +186,11 @@ export function selectTheme(theme) {
       SOUNDS.rotateSound.currentTime = 0
     }, 50);
   }
+
+  export function startSpeedDownSound() {
+    SOUNDS.speedDownSound.currentTime = 0.2
+    SOUNDS.speedDownSound.play()
+  }
+
+
   
