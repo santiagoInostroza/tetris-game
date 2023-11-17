@@ -82,6 +82,7 @@ export const speedDown = (board, piece, { solidifyPiece, removeLines }) => {
             piece.position.y--;
             solidifyPiece();
             removeLines();
+            startCollisionSound()
         }
     }
 };
@@ -125,6 +126,7 @@ function continueMovement(board, piece, direction, controlFunctions ) {
     if (movementStates[`isMoving${direction}`]) {
         if (direction === DIRECTIONS.DOWN) {
             controlFunctions.updateDropCounter();
+            startCollisionSound();
         }
         requestAnimationFrame(() => continueMovement(board, piece, direction, controlFunctions));
     }
