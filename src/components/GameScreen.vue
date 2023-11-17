@@ -90,7 +90,6 @@
         context.value = canvas.value.getContext('2d');
         context.value.scale(BLOCK_SIZE, BLOCK_SIZE);
         [piece.matrix, piece.color] = getNewPiece(pieces.value, COLORS);
-        // console.log(piece)
         // piece.position = {x: 0 , y: 0}
         // piece.matrix = [
         //     [1, 1, 1,1,1,1,1,1,1,1],
@@ -369,7 +368,6 @@
             if (row.every((cell) => cell.value > 0) && row.some((cell) => cell.bonus)) {
                 countBonus++;
                 newBonus++;
-                console.log('bonus', countBonus)
             }
         });
 
@@ -432,12 +430,7 @@
         isBonusSound = true;
         setTimeout(() => {
             countSetTimeout--;
-            console.log('entrando a timeout',remainingBonusTime)
-            console.log('entrando a timeout',remainingBonusTime)
-            console.log('entrando a timeout',remainingBonusTime)
-            console.log('entrando a timeout',remainingBonusTime)
-            console.log('entrando a timeout',remainingBonusTime)
-          if(countSetTimeout === 0){
+           if(countSetTimeout === 0){
                 startGameAudio();
                 isGameSound = true;
                 stopBonusSound();
