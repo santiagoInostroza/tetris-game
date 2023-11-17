@@ -90,14 +90,19 @@
         context.value = canvas.value.getContext('2d');
         context.value.scale(BLOCK_SIZE, BLOCK_SIZE);
         [piece.matrix, piece.color] = getNewPiece(pieces.value, COLORS);
-        console.log(piece)
+        // console.log(piece)
         // piece.position = {x: 0 , y: 0}
         // piece.matrix = [
-        //     [1, 1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-        //     [1, 1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-        //     [1, 1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-        //     [1, 1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-        //     [1, 1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        //     [1, 1, 1,1,1,1,1,1,1,1],
+        //     [1, 1, 1,1,1,1,1,1,1,1],
+        //     [1, 1, 1,1,1,1,1,1,1,1],
+        //     [1, 1, 1,1,1,1,1,1,1,1],
+        //     [1, 1, 1,1,1,1,1,1,1,1],
+        //     [1, 1, 1,1,1,1,1,1,1,1],
+        //     [1, 1, 1,1,1,1,1,1,1,1],
+        //     [1, 1, 1,1,1,1,1,1,1,1],
+        //     [1, 1, 1,1,1,1,1,1,1,1],
+        //     [1, 1, 1,1,1,1,1,1,1,1],
         // ]
         // piece.color = 'red';
         startGame();
@@ -230,9 +235,6 @@
     let remainingBonusTime = 0;
 
     const draw = (deltaTime) => {
-
-       
-
         // Dibuja el fondo del juego
         context.value.fillStyle = 'black';
         context.value.fillRect(0, 0, canvas.value.width, canvas.value.height);      
@@ -308,7 +310,7 @@
                 if (value > 0) {
                     let bonus = false;
                     if(!rowsWithBonus.includes(piece.position.y+ y)){
-                        bonus = Math.floor(Math.random() * 100) < 2
+                        bonus = Math.floor(Math.random() * 100) < 5
                     }
                     if (bonus) {
                         rowsWithBonus.push(piece.position.y+ y);
@@ -351,16 +353,23 @@
     // };
 
 
+    let countBonus = 0;
     const removeLines = () => {
         let lines = 0;
         let linePositions = []; // Almacenará las posiciones de las líneas a eliminar
-
         // Identificar todas las líneas completas
+        let newBonus = 0;
         board.forEach((row, y) => {
             if (row.every((cell) => cell.value > 0)) {
                 lines++;
                 linePositions.push(y);
                 linePosition = y;
+            }
+
+            if (row.every((cell) => cell.value > 0) && row.some((cell) => cell.bonus)) {
+                countBonus++;
+                newBonus++;
+                console.log('bonus', countBonus)
             }
         });
 
@@ -370,17 +379,7 @@
         const removeLine = (lineIndex) => {
             if (lineIndex < linePositions.length) {
                 const y = linePositions[lineIndex];
-
-                // ver si fila tiene bonus
-                let bonus = false;
-                board[y].forEach((cell) => {
-                    if (cell.bonus) {
-                        bonus = true;
-                    }
-                });
-
-
-
+                
                 board.splice(y, 1);
                 board.unshift(Array(BOARD_WIDTH).fill(0));
 
@@ -397,14 +396,11 @@
                     startRemoveLineFiveSound();
                     startBonus('45', 'X3', 3);
                 }
-
-
                 
-                if (lineIndex === linePositions.length - 1) {
-                    
+                if (lineIndex === linePositions.length - 1) { 
                     score.value += newScore.value;
-                    if (bonus) {
-                        startBonus('20', 'X2', 2);
+                    if (newBonus > 0) {
+                        startBonus('40', 'X' + countBonus * 2, 2 * countBonus);
                     }
 
                     setTimeout(() => {
@@ -422,7 +418,9 @@
         removeLine(0);
     };
 
+    let countSetTimeout = 0;
     function startBonus(time = 20, text = 'X2', multiplier = 2 ){
+        countSetTimeout++;
 
         textBonus = text;
         multiplierBonus = multiplier;
@@ -433,14 +431,23 @@
         startBonusSound();
         isBonusSound = true;
         setTimeout(() => {
-            startGameAudio();
-            isGameSound = true;
-            stopBonusSound();
-            isBonusSound = false;
-            showBonus = false;
-            textBonus = '';
-            multiplierBonus = 1;
-        }, timeBonus);
+            countSetTimeout--;
+            console.log('entrando a timeout',remainingBonusTime)
+            console.log('entrando a timeout',remainingBonusTime)
+            console.log('entrando a timeout',remainingBonusTime)
+            console.log('entrando a timeout',remainingBonusTime)
+            console.log('entrando a timeout',remainingBonusTime)
+          if(countSetTimeout === 0){
+                startGameAudio();
+                isGameSound = true;
+                stopBonusSound();
+                isBonusSound = false;
+                showBonus = false;
+                textBonus = '';
+                multiplierBonus = 1;
+                countBonus = 0;
+            }
+         }, timeBonus);
     }
 
 
