@@ -9,7 +9,7 @@
         ref, onMounted, onBeforeUnmount, reactive, defineEmits, h 
     } from 'vue';
 
-    import { PIECES } from '/src/utils/pieces.js';
+    import { PIECES, COLORS } from '/src/utils/pieces.js';
 
     import { difficulty, DIFFICULTY } from '/src/utils/config.js';
 
@@ -95,6 +95,7 @@
             [1, 1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1],
             [1, 1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1],
         ]
+        piece.color = 'red';
         startGame();
         
         // window.addEventListener('keydown', handleKeyDown);
@@ -146,7 +147,7 @@
         board.splice(0, board.length, ...createBoard(BOARD_WIDTH, BOARD_HEIGHT));
 
         // Restablecer la pieza actual
-        piece.matrix = getNewPiece(pieces.value);
+        piece.matrix = getNewPiece(pieces.value, COLORS)
         piece.position.x = Math.floor((BOARD_WIDTH - piece.matrix[0].length) / 2);
         piece.position.y = 0;
 
@@ -224,6 +225,8 @@
 
     const draw = (deltaTime) => {
 
+       
+
         // Dibuja el fondo del juego
         context.value.fillStyle = 'black';
         context.value.fillRect(0, 0, canvas.value.width, canvas.value.height);      
@@ -233,7 +236,7 @@
         board.forEach((row, y) => {
             row.forEach((value, x) => {
                 if (value > 0) {
-                    drawSquare(context.value, x, y, 'blue', 0.08);
+                    drawSquare(context.value, x, y, piece.color, 'white', 0.05, 'white');
                 }
             });
         });
@@ -243,7 +246,7 @@
         piece.matrix.forEach((row, y) => {
             row.forEach((value, x) => {
                 if (value > 0) {
-                    drawSquare(context.value, piece.position.x + x, piece.position.y + y, 'green', 0.08);
+                    drawSquare(context.value, piece.position.x + x, piece.position.y + y, piece.color, piece.color , 0.06, 'black', showBonus);
                 }
             });
         });
@@ -281,13 +284,15 @@
             }
             });
         });
-        piece.matrix = getNewPiece(pieces.value);
+        [piece.matrix, piece.color] = getNewPiece(pieces.value, COLORS);
+        console.log(piece.color);
         piece.position.y = 0;
         piece.position.x = Math.floor((BOARD_WIDTH - piece.matrix[0].length) / 2);
         if (checkCollision(board, piece)) {
             gameOver();
         }
     };
+
     
     // const removeLines = () => {
     //     let lines = 0;

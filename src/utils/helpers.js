@@ -16,8 +16,12 @@ export const createBoard = (width, height) => {
     return Array.from({ length: height }, () => new Array(width).fill(0))
 }
 
-export const getNewPiece = (pieces) => {
-    return  pieces[Math.floor(Math.random() * pieces.length)]
+export const getNewPiece = (pieces, colors) => {
+    let num = Math.floor(Math.random() * pieces.length)
+    return  [
+        pieces[num],
+        colors[num],
+    ]
     // return pieces.value[4]
 }
 

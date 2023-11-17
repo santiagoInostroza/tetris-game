@@ -1,8 +1,27 @@
-export const drawSquare = (ctx, x, y, color, borderWidth = 0.08) => {
+function getRandomColor() {
+    const colors = [
+        'red',
+        'blue',
+        'green',
+        'yellow',
+        'purple',
+        'orange',
+        'cyan',
+    ];
+    return colors[Math.floor(Math.random() * colors.length)];
+}
+
+export const drawSquare = (ctx, x, y, color, color2 = 'white', borderWidth = 0.08, borderColor = black, isBonus = false) => {
     const size = 1; // Tamaño del cuadrado
     const gradient = ctx.createLinearGradient(x, y, x + size, y + size);
+
+    
+    if(isBonus){
+        color = getRandomColor();
+    }
     gradient.addColorStop(0, color);
-    gradient.addColorStop(1, 'white');
+    gradient.addColorStop(1, color2);
+
 
     // Establecer el color de relleno y aplicar sombra
     ctx.fillStyle = gradient;
@@ -16,7 +35,7 @@ export const drawSquare = (ctx, x, y, color, borderWidth = 0.08) => {
     ctx.shadowBlur = 0;
 
     // Establecer el estilo y el grosor del borde
-    ctx.strokeStyle = 'white'; // Color del borde
+    ctx.strokeStyle = borderColor; // Color del borde
     ctx.lineWidth = borderWidth; // Grosor del borde
 
     // Dibujar el borde del cuadrado
@@ -41,32 +60,38 @@ export const showScoreOnCompletedLines = (ctx, newScore, linePosition ) => {
     ctx.fillText(text, textX, textY);
 };
 
-export const bonus = (ctx, text, timeBonus, maxTime = 5, linePosition = 3) => {
+export const bonus = (ctx, text, timeBonus, maxTime = 5, linePosition = 2) => {
     const textX = 1; // Centrar el texto en el ancho del tablero
     const textY = linePosition; // Ajustar la posición y al centro de la fila completada
 
        // Establecer el estilo de la fuente para hacerla más gruesa
-       ctx.font = `bold 2px 'Comic Sans MS'`; // Fuente más gruesa
+       ctx.font = `bold 1px 'Comic Sans MS'`; // Fuente más gruesa
 
     
-    // // dibujar un circulo
+    // dibujar un circulo
     ctx.beginPath();
-    ctx.arc(textX +1.3, textY - 0.6, 1.8, 0, 2 * Math.PI);
-    ctx.fillStyle = 'black';
+    ctx.arc(textX +0.6, textY - 0.3, 0.8, 0, 2 * Math.PI);
+    ctx.fillStyle = 'white';
     ctx.fill();
 
     const angle = (timeBonus / maxTime) * 2 * Math.PI;
    
     // dibujar un circulo sin relleno
+    // ctx.beginPath();
+    // ctx.arc(textX + 0.6, textY - 0.3, 1, 0 , 2 * Math.PI);
+    // ctx.strokeStyle = 'red';
+    // ctx.lineWidth = 0.4;
+    // ctx.stroke();
+
     ctx.beginPath();
-    ctx.arc(textX +1.3, textY - 0.6, 1.8, 0 , angle);
+    ctx.arc(textX + 0.6, textY - 0.3, 1, 0 , angle);
     ctx.strokeStyle = 'white';
     ctx.lineWidth = 0.4;
     ctx.stroke();
 
     // Primero, dibujar el borde del texto
-    ctx.strokeStyle = 'white'; // Color del borde
-    ctx.lineWidth = 0.2; // Ancho del borde
+    ctx.strokeStyle = 'black'; // Color del borde
+    ctx.lineWidth = 0.3; // Ancho del borde
     ctx.strokeText(text, textX, textY);
 
     // Luego, rellenar el texto
