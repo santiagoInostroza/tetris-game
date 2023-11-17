@@ -39,7 +39,7 @@ export function selectTheme(theme) {
       SOUNDS.removeLineThreeSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris-game/main/src/assets/sounds/${theme}/removeLineThree.mp3`)
       SOUNDS.removeLineFourSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris-game/main/src/assets/sounds/${theme}/removeLineFour.mp3`)
       SOUNDS.removeLineFiveSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris-game/main/src/assets/sounds/${theme}/removeLineFive.mp3`)
-      SOUNDS.collisionSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris/main/src/assets/sounds/${theme}/collisionSound.mp3`)
+      SOUNDS.collisionSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris-game/main/src/assets/sounds/${theme}/collisionSound.mp3`)
       SOUNDS.bonusSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris-game/main/src/assets/sounds/${theme}/bonusSound.mp3`)
       SOUNDS.moveSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris-game/main/src/assets/sounds/${theme}/moveSound.mp3`)
       SOUNDS.rotateSound = new Audio(`https://raw.githubusercontent.com/santiagoinostroza/tetris-game/main/src/assets/sounds/${theme}/rotateSound.mp3`)
