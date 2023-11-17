@@ -29,7 +29,7 @@
 
     import {
         startRemoveLineOneSound, startRemoveLineTwoSound, startRemoveLineThreeSound, startRemoveLineFourSound, startRemoveLineFiveSound,
-        startGameAudio, pauseGameAudio, startBonusSound, stopBonusSound, startCollisionSound, 
+        startGameAudio, pauseGameAudio, startBonusSound, stopBonusSound, pauseBonusSound, 
         // startRotateSound, 
        
         // startDropSound
@@ -59,7 +59,6 @@
     const time = ref('00:00:00')
 
     const board = createBoard(BOARD_WIDTH, BOARD_HEIGHT);
-  
     const isPaused = ref(true);
     const isGameOver = ref(false);
 
@@ -78,6 +77,10 @@
     let shouldShowScore = false;
     let linePosition = -10;
 
+    let isGameSound = false;
+    let isBonusSound = false;
+    let soundPaused = null;
+
 
     const keyDownHandler = (event) => handleKeyDown(event, board, piece, { solidifyPiece, removeLines, updateDropCounter });  
 
@@ -86,7 +89,7 @@
         canvas.value.height = BLOCK_SIZE * BOARD_HEIGHT;
         context.value = canvas.value.getContext('2d');
         context.value.scale(BLOCK_SIZE, BLOCK_SIZE);
-        // piece.matrix = getNewPiece(pieces.value);
+        // [piece.matrix, piece.color] = getNewPiece(pieces.value, COLORS);
         piece.position = {x: 0 , y: 0}
         piece.matrix = [
             [1, 1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1],
@@ -97,6 +100,7 @@
         ]
         piece.color = 'red';
         startGame();
+        
         
         // window.addEventListener('keydown', handleKeyDown);
         window.addEventListener('keydown', keyDownHandler);
@@ -129,6 +133,7 @@
         animationFrameId = window.requestAnimationFrame(update);
         // Añadir otros inicializadores aquí si es necesario
         startGameAudio();
+        isGameSound = true;
 
     }
 
@@ -232,17 +237,20 @@
         context.value.fillRect(0, 0, canvas.value.width, canvas.value.height);      
         
         
-        // Dibuja el tablero
+        // Dibuja las piezas solidificadas
         board.forEach((row, y) => {
-            row.forEach((value, x) => {
-                if (value > 0) {
-                    drawSquare(context.value, x, y, piece.color, 'white', 0.05, 'white');
+            row.forEach((cell, x) => {
+                if (cell.value > 0) {
+                    drawSquare(context.value, x, y, cell.color, 'gray', 0.05, 'black');
+                }else{
+                    // drawSquare(context.value, x, y, 'black', 'black', 0.01, 'gray');
                 }
+
             });
         });
         
         
-        // // Dibuja las piezas
+        // Dibuja la pieza actual
         piece.matrix.forEach((row, y) => {
             row.forEach((value, x) => {
                 if (value > 0) {
@@ -265,12 +273,29 @@
         if (!isPaused.value) {
             window.cancelAnimationFrame(animationFrameId);
             isPaused.value = true;
-            pauseGameAudio();
+            if (isGameSound) {
+                pauseGameAudio();
+                soundPaused = 'game';
+                isGameSound = false;
+            }
+            if (isBonusSound) {
+                pauseBonusSound();
+                soundPaused = 'bonus';
+                isBonusSound = false;
+            }
         } else {
             lastUpdateTime = performance.now();
             animationFrameId = window.requestAnimationFrame(update);
             isPaused.value = false;
-            startGameAudio();
+            if (soundPaused === 'game') {
+                startGameAudio();
+                isGameSound = true;
+            }
+            if (soundPaused === 'bonus') {
+                startBonusSound();
+                isBonusSound = true;
+            }
+            isGameSound = true;
         }
     };
    
@@ -279,13 +304,12 @@
        
         piece.matrix.forEach((row, y) => {
             row.forEach((value, x) => {
-            if (value > 0) {
-                board[piece.position.y + y][piece.position.x + x] = value;
-            }
+                if (value > 0) {
+                    board[piece.position.y + y][piece.position.x + x] = { value, color: piece.color };
+                }
             });
         });
         [piece.matrix, piece.color] = getNewPiece(pieces.value, COLORS);
-        console.log(piece.color);
         piece.position.y = 0;
         piece.position.x = Math.floor((BOARD_WIDTH - piece.matrix[0].length) / 2);
         if (checkCollision(board, piece)) {
@@ -325,7 +349,7 @@
 
         // Identificar todas las líneas completas
         board.forEach((row, y) => {
-            if (row.every((value) => value > 0)) {
+            if (row.every((cell) => cell.value > 0)) {
                 lines++;
                 linePositions.push(y);
                 linePosition = y;
@@ -383,10 +407,14 @@
         showBonus = true;
         timeBonus = remainingBonusTime = time * 1000;
         pauseGameAudio();
+        isGameSound = false;
         startBonusSound();
+        isBonusSound = true;
         setTimeout(() => {
             startGameAudio();
+            isGameSound = true;
             stopBonusSound();
+            isBonusSound = false;
             showBonus = false;
             textBonus = '';
             multiplierBonus = 1;

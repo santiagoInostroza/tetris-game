@@ -43,7 +43,7 @@ export const drawSquare = (ctx, x, y, color, color2 = 'white', borderWidth = 0.0
 };
 
 export const showScoreOnCompletedLines = (ctx, newScore, linePosition ) => {
-    const text = `+ ${newScore}`;
+    const text = `+${newScore}`;
     const textX = 5; // Centrar el texto en el ancho del tablero
     const textY = linePosition; // Ajustar la posición y al centro de la fila completada
 
@@ -52,6 +52,9 @@ export const showScoreOnCompletedLines = (ctx, newScore, linePosition ) => {
 
     // Primero, dibujar el borde del texto
     ctx.strokeStyle = 'white'; // Color del borde
+    ctx.lineWidth = 0.5; // Ancho del borde
+    ctx.strokeText(text, textX, textY);
+    ctx.strokeStyle = 'black'; // Color del borde
     ctx.lineWidth = 0.2; // Ancho del borde
     ctx.strokeText(text, textX, textY);
 

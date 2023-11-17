@@ -13,7 +13,9 @@ export const formatTime = (totalSeconds) => {
 };
 
 export const createBoard = (width, height) => {
-    return Array.from({ length: height }, () => new Array(width).fill(0))
+    return Array.from({ length: height }, () => 
+        Array.from({ length: width }, () => ({ value: 0, color: null }))
+    );
 }
 
 export const getNewPiece = (pieces, colors) => {
@@ -24,11 +26,26 @@ export const getNewPiece = (pieces, colors) => {
     ]
     // return pieces.value[4]
 }
-
 export const checkCollision = (board, piece) => {
-    return piece.matrix.find((row, y) => {
-        return row.find((value, x) => {
-            return value !== 0 &&  board[piece.position.y + y] ?. [piece.position.x + x] !== 0
-        })
-    })
-}
+    for (let y = 0; y < piece.matrix.length; ++y) {
+        for (let x = 0; x < piece.matrix[y].length; ++x) {
+            // Verificar si la celda de la pieza está ocupada
+            if (piece.matrix[y][x] !== 0) {
+                // Calcular la posición actual en el tablero
+                const currentX = piece.position.x + x;
+                const currentY = piece.position.y + y;
+
+                // Verificar si la posición está fuera del tablero (debajo o a los lados)
+                if (currentX < 0 || currentX >= board[0].length || currentY >= board.length) {
+                    return true;
+                }
+
+                // Verificar si la celda del tablero está ocupada
+                if (board[currentY] && board[currentY][currentX] && board[currentY][currentX].value !== 0) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+};

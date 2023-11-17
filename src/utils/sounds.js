@@ -162,6 +162,10 @@ export function selectTheme(theme) {
     SOUNDS.bonusSound.currentTime = 0
   }
 
+  export function pauseBonusSound() {
+    SOUNDS.bonusSound.pause()
+  }
+
   export function startMoveSound() {
     SOUNDS.moveSound.play()
     setTimeout(() => {
