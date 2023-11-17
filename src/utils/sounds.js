@@ -79,6 +79,7 @@ export function selectTheme(theme) {
       reproducirSiguienteCancion();
     });
     
+    SOUNDS.bgMusic.volume = 0.5
     SOUNDS.bgMusic.play()
     .then(() => {}).catch(error => {
      
@@ -154,6 +155,7 @@ export function selectTheme(theme) {
   }
 
   export function startBonusSound() {
+    SOUNDS.bonusSound.volume = 0.5
      SOUNDS.bonusSound.play()
   }
 
