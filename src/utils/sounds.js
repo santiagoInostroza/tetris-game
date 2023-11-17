@@ -76,30 +76,36 @@ export function selectTheme(theme) {
   }
 
 
-  export function startGameAudio() {
+  // export function startGameAudio() {
     
-    SOUNDS.bgMusic.addEventListener("ended", function () {
-      reproducirSiguienteCancion();
-    });
+  //   SOUNDS.bgMusic.addEventListener("ended", function () {
+  //     reproducirSiguienteCancion();
+  //   });
     
-    SOUNDS.bgMusic.volume = 0.5
-    SOUNDS.bgMusic.play()
-    .then(() => {}).catch(error => {
+  //   SOUNDS.bgMusic.volume = 0.5
+  //   SOUNDS.bgMusic.play()
+  //   .then(() => {}).catch(error => {
      
-    })
+  //   })
           
-    SOUNDS.bgMusic.addEventListener('error', function(event) {
-      cancionActual = 0;
-      SOUNDS.bgMusic.load();
-      SOUNDS.bgMusic = new Audio(`/src/assets/sounds/${theme1}/bg/${canciones[cancionActual]}`);
-      startGameAudio();
-    });
-  }
+  //   SOUNDS.bgMusic.addEventListener('error', function(event) {
+  //     cancionActual = 0;
+  //     SOUNDS.bgMusic.load();
+  //     SOUNDS.bgMusic = new Audio(`/src/assets/sounds/${theme1}/bg/${canciones[cancionActual]}`);
+  //     startGameAudio();
+  //   });
+  // }
 
   function reproducirSiguienteCancion() {
       cancionActual++;
       SOUNDS.bgMusic.src = `/src/assets/sounds/${theme1}/bg/${canciones[cancionActual]}`;
       startGameAudio();
+  }
+
+  export function startGameAudio() {
+    SOUNDS.bgMusic.loop = true
+    SOUNDS.bgMusic.play()
+
   }
 
   export function stopGameAudio() {

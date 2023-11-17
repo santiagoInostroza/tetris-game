@@ -22,7 +22,7 @@
     } from '/src/utils/keyboardControls.js';
 
     import { 
-        drawSquare, showScoreOnCompletedLines, bonus,
+        drawSquare, showScoreOnCompletedLines, bonus, drawSquareWithBonus,
     } from '/src/utils/draw.js';
 
     import { createPlayer } from '/src/api/apiScore.js';
@@ -90,6 +90,7 @@
         context.value = canvas.value.getContext('2d');
         context.value.scale(BLOCK_SIZE, BLOCK_SIZE);
         [piece.matrix, piece.color] = getNewPiece(pieces.value, COLORS);
+        console.log(piece)
         // piece.position = {x: 0 , y: 0}
         // piece.matrix = [
         //     [1, 1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1],
@@ -242,10 +243,10 @@
             row.forEach((cell, x) => {
                 if (cell.value > 0) {
                     drawSquare(context.value, x, y, cell.color, 'gray', 0.05, 'black');
-                }else{
-                    // drawSquare(context.value, x, y, 'black', 'black', 0.01, 'gray');
+                    if(cell.bonus){
+                        drawSquareWithBonus(context.value, x, y)
+                    }
                 }
-
             });
         });
         
@@ -299,13 +300,20 @@
         }
     };
    
-  
+    let rowsWithBonus = [];
     const solidifyPiece = () => {
-       
+        
         piece.matrix.forEach((row, y) => {
             row.forEach((value, x) => {
                 if (value > 0) {
-                    board[piece.position.y + y][piece.position.x + x] = { value, color: piece.color };
+                    let bonus = false;
+                    if(!rowsWithBonus.includes(piece.position.y+ y)){
+                        bonus = Math.floor(Math.random() * 100) < 2
+                    }
+                    if (bonus) {
+                        rowsWithBonus.push(piece.position.y+ y);
+                    }
+                    board[piece.position.y + y][piece.position.x + x] = { value, color: piece.color, bonus: bonus };
                 }
             });
         });
@@ -362,6 +370,17 @@
         const removeLine = (lineIndex) => {
             if (lineIndex < linePositions.length) {
                 const y = linePositions[lineIndex];
+
+                // ver si fila tiene bonus
+                let bonus = false;
+                board[y].forEach((cell) => {
+                    if (cell.bonus) {
+                        bonus = true;
+                    }
+                });
+
+
+
                 board.splice(y, 1);
                 board.unshift(Array(BOARD_WIDTH).fill(0));
 
@@ -384,6 +403,9 @@
                 if (lineIndex === linePositions.length - 1) {
                     
                     score.value += newScore.value;
+                    if (bonus) {
+                        startBonus('20', 'X2', 2);
+                    }
 
                     setTimeout(() => {
                         shouldShowScore = false;

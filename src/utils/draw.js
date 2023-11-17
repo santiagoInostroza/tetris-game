@@ -103,3 +103,27 @@ export const bonus = (ctx, text, timeBonus, maxTime = 5, linePosition = 2) => {
 
 
 }
+
+export const drawSquareWithBonus = (ctx, x, y, ) => {
+
+     // Establecer el estilo de la fuente para hacerla más gruesa
+     ctx.font = `bold 0.6px 'Comic Sans MS'`; // Fuente más gruesa
+
+    x= x+0.1;
+    y= y+0.7;
+
+     let text= 'X2';
+
+     // Primero, dibujar el borde del texto
+     ctx.strokeStyle = 'white'; // Color del borde
+     ctx.lineWidth = 0.2; // Ancho del borde
+     ctx.strokeText(text, x, y);
+     ctx.strokeStyle = 'black'; // Color del borde
+     ctx.lineWidth = 0.1; // Ancho del borde
+     ctx.strokeText(text, x, y);
+ 
+     // Luego, rellenar el texto
+     ctx.fillStyle = 'orange'; // Color morado claro
+     ctx.fillText(text, x, y);
+
+};

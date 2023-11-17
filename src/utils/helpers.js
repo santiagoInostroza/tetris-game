@@ -13,8 +13,14 @@ export const formatTime = (totalSeconds) => {
 };
 
 export const createBoard = (width, height) => {
+    // necesito que el 1 % de veces me salga un 1 y el resto 0
+    let bonus = Math.floor(Math.random() * 100)
     return Array.from({ length: height }, () => 
-        Array.from({ length: width }, () => ({ value: 0, color: null }))
+        Array.from({ length: width }, () => ({ 
+            value: 0, 
+            color: null ,
+            bonus: bonus > 5 ? true : false,
+        }))
     );
 }
 
