@@ -6,7 +6,7 @@
     } from '/src/utils/consts.js';
 
     import { 
-        ref, onMounted, onBeforeUnmount, reactive, defineEmits, h 
+        ref, onMounted, onBeforeUnmount, reactive, defineEmits, watch
     } from 'vue';
 
     import { PIECES, COLORS } from '/src/utils/pieces.js';
@@ -29,11 +29,15 @@
 
     import {
         startRemoveLineOneSound, startRemoveLineTwoSound, startRemoveLineThreeSound, startRemoveLineFourSound, startRemoveLineFiveSound,
-        startGameAudio, pauseGameAudio, startBonusSound, stopBonusSound, pauseBonusSound, 
+        startGameAudio, pauseGameAudio, startBonusSound, stopBonusSound, pauseBonusSound, setMusicVolume, setSoundVolume
         // startRotateSound, 
        
         // startDropSound
     } from '/src/utils/sounds.js';
+
+    import SwitchButton from './/components/SwitchButton.vue';
+
+
 
     
     
@@ -300,6 +304,32 @@
             isGameSound = true;
         }
     };
+
+    let musicVolume = 1;
+
+   
+
+    const musicOff = () => {
+        musicVolume = 0;
+        setMusicVolume(musicVolume);
+    }
+
+    const musicOn = () => {
+        musicVolume = 1;
+        setMusicVolume(musicVolume);
+    }
+
+    let soundVolume = 1;
+
+    const soundOff = () => {
+        soundVolume = 0;
+        setSoundVolume(soundVolume);
+    }
+
+    const soundOn = () => {
+        soundVolume = 1;
+        setSoundVolume(soundVolume);
+    }
    
     let rowsWithBonus = [];
     const solidifyPiece = () => {
@@ -442,6 +472,25 @@
             }
          }, timeBonus);
     }
+    
+    const isMusicOn = ref(true);
+    const isSoundsOn = ref(true);
+
+    watch(isMusicOn, (newValue) => {
+      if (newValue) {
+        musicOn();
+      } else {
+        musicOff();
+      }
+    });
+
+    watch(isSoundsOn, (newValue) => {
+      if (newValue) {
+        soundOn();
+      } else {
+        soundOff();
+      }
+    });
 
 
 </script>
@@ -488,6 +537,17 @@
                         <span class="text-xl font-bold">{{ time }}</span>
                     </div>
                     <button @click="pause" class="w-32 p-2 rounded-xl deep-button border-shine" style="font-size: 12px;">PAUSAR</button>
+                    <!-- music on off -->
+                    <div class="flex items-center justify-between gap-4">
+                        MÚSICA
+                        <SwitchButton v-model="isMusicOn" class=" p-2 rounded-xl border-shine flex gap-4 items-center justify-between" :class="{'bg-green-500': isMusicOn, 'bg-red-500':!isMusicOn}" style="font-size: 12px;"/>
+                    </div>
+                    <div class="flex items-center justify-between gap-4">
+                        SONIDOS
+                        <SwitchButton v-model="isSoundsOn" class=" p-2 rounded-xl border-shine flex gap-4 items-center justify-between" :class="{'bg-green-500': isSoundsOn, 'bg-red-500':!isSoundsOn}" style="font-size: 12px;"/>
+                    </div>
+                    
+
                 </div>
             </div>
         </div>
@@ -504,7 +564,7 @@
                 </div>
             </div>
             <div class="grid content-between justify-end">
-                <button @click="pause" class="w-16 h-6 rounded-xl deep-button border-shine -ml-4" style="font-size: 12px;">PAUSAR</button>
+                <button @click="pause" class="w-16 h-6 rounded-xl deep-button border-shine -ml-4" style="font-size: 12px;">OPCIONES</button>
                 <div class="ml-12">
                     <button @click="speedDown(board, piece, {solidifyPiece, removeLines})" class="rounded-full deep-button w-12 h-12 border-shine grid" style="">
                         <span class="mt-1">▼</span><span class="-mt-4">▼</span>
@@ -526,14 +586,23 @@
                 <!-- titulo opciones -->
                 <h2 class="font-bold text-3xl text-gray-300 text-center mb-4 p-4 ">OPCIONES</h2>
                 
-                <div class="shadow border p-4 rounded-xl text-sm bg-gradient-to-r from-gray-400 to-gray-500 border-shine">
+                <div class="grid gap-4 shadow border p-4 rounded-xl text-sm bg-gradient-to-r from-gray-400 to-gray-500 border-shine">
                     <div class="grid grid-cols-2 gap-4 items-center text-xl">
                         <p class="text-center font-bold uppercase">Dificultad</p>
-                        <div class="text-center ">
+                        <div class="text-right ">
                             <p v-if="difficulty == DIFFICULTY.EASY" >FACIL</p>
                             <p v-if="difficulty == DIFFICULTY.MEDIUM">MEDIA</p>
                             <p v-if="difficulty == DIFFICULTY.HARD">DIFICIL</p>
                         </div>
+                    </div>
+                      <!-- music on off -->
+                    <div class="flex items-center justify-between gap-4 text-xl">
+                        <p class="text-center font-bold uppercase">MUSICA</p>
+                        <SwitchButton v-model="isMusicOn" class=" p-2 rounded-xl border-shine flex gap-4 items-center justify-between" :class="{'bg-green-500': isMusicOn, 'bg-red-500':!isMusicOn}"/>
+                    </div>
+                    <div class="flex items-center justify-between gap-4 text-xl">
+                        <p class="text-center font-bold uppercase">SONIDOS</p>
+                        <SwitchButton v-model="isSoundsOn" class=" p-2 rounded-xl border-shine flex gap-4 items-center justify-between" :class="{'bg-green-500': isSoundsOn, 'bg-red-500':!isSoundsOn}"/>
                     </div>
                     
                 </div>
