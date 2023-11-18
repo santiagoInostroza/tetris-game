@@ -536,18 +536,7 @@
                         <span class="absolute top-0 -mt-4 font-bold left-0 right-0 mx-auto t">Tiempo</span>
                         <span class="text-xl font-bold">{{ time }}</span>
                     </div>
-                    <button @click="pause" class="w-32 p-2 rounded-xl deep-button border-shine" style="font-size: 12px;">PAUSAR</button>
-                    <!-- music on off -->
-                    <div class="flex items-center justify-between gap-4">
-                        MÚSICA
-                        <SwitchButton v-model="isMusicOn" class=" p-2 rounded-xl border-shine flex gap-4 items-center justify-between" :class="{'bg-green-500': isMusicOn, 'bg-red-500':!isMusicOn}" style="font-size: 12px;"/>
-                    </div>
-                    <div class="flex items-center justify-between gap-4">
-                        SONIDOS
-                        <SwitchButton v-model="isSoundsOn" class=" p-2 rounded-xl border-shine flex gap-4 items-center justify-between" :class="{'bg-green-500': isSoundsOn, 'bg-red-500':!isSoundsOn}" style="font-size: 12px;"/>
-                    </div>
-                    
-
+                    <button @click="pause" class="w-32 p-2 rounded-xl deep-button border-shine" style="font-size: 12px;">OPCIONES</button>
                 </div>
             </div>
         </div>
@@ -586,9 +575,9 @@
                 <!-- titulo opciones -->
                 <h2 class="font-bold text-3xl text-gray-300 text-center mb-4 p-4 ">OPCIONES</h2>
                 
-                <div class="grid gap-4 shadow border p-4 rounded-xl text-sm bg-gradient-to-r from-gray-400 to-gray-500 border-shine">
+                <div class="grid gap-6 shadow border p-4 rounded-xl text-sm bg-gradient-to-r from-gray-400 to-gray-500 border-shine">
                     <div class="grid grid-cols-2 gap-4 items-center text-xl">
-                        <p class="text-center font-bold uppercase">Dificultad</p>
+                        <p class=" font-bold uppercase">Dificultad</p>
                         <div class="text-right ">
                             <p v-if="difficulty == DIFFICULTY.EASY" >FACIL</p>
                             <p v-if="difficulty == DIFFICULTY.MEDIUM">MEDIA</p>
