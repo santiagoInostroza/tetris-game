@@ -114,6 +114,20 @@
         // window.addEventListener('keydown', handleKeyDown);
         window.addEventListener('keydown', keyDownHandler);
         window.addEventListener('keyup', handleKeyUp);
+
+        window.onbeforeunload = function() {
+            return '¿Estás seguro de que deseas abandonar esta página?';
+        };
+
+        window.addEventListener('blur', function() {
+            pause();
+        });
+
+        history.pushState(null, null, document.URL);
+            window.addEventListener('popstate', function () {
+            history.pushState(null, null, document.URL);
+        });
+
        
     });
 
@@ -122,6 +136,14 @@
 
         window.removeEventListener('keydown', keyDownHandler);
         window.removeEventListener('keyup', handleKeyUp);
+
+        window.onbeforeunload = null; // Elimina el manejador de beforeunload
+        window.removeEventListener('blur', () => {
+            pause();
+        });
+        window.removeEventListener('popstate', () => {
+            history.pushState(null, null, document.URL);
+        });
     });
 
     // FUNCIONES    
@@ -468,10 +490,8 @@
       }
     });
 
-    window.addEventListener('blur', function() {
-        console.log('La página ha perdido el foco');
-        pause();
-    });
+
+   
 
 
 </script>
