@@ -163,9 +163,3 @@ function continueMovement(board, piece, direction, controlFunctions ) {
     }
 }
 
-window.addEventListener('blur', function() {
-    // La página ha perdido el foco
-    console.log('La página ha perdido el foco');
-    this.alert('La página ha perdido el foco')
-    // Puedes realizar acciones adicionales aquí, como pausar un juego o guardar el estado
-});

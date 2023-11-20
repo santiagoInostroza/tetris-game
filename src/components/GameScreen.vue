@@ -356,30 +356,6 @@
         }
     };
 
-    
-    // const removeLines = () => {
-    //     let lines = 0;
-    //     board.forEach((row, y) => {
-    //         if (row.every((value) => value > 0)) {
-    //             lines++;
-    //             linePosition = y;
-    //             board.splice(y, 1);
-    //             board.unshift(Array(BOARD_WIDTH).fill(0));
-    //         }
-    //     });
-    //     if (lines > 0) {
-
-    //         newScore.value = (lines * BOARD_WIDTH) * (1 + ((lines - 1) * 0.25));
-
-    //         score.value += newScore.value;
-    //         shouldShowScore = true;
-
-    //         setTimeout(() => {
-    //             shouldShowScore = false;
-    //             linePosition = 0;
-    //         }, 1400);
-    //     }
-    // };
 
 
     let countBonus = 0;
@@ -490,6 +466,11 @@
       } else {
         soundOff();
       }
+    });
+
+    window.addEventListener('blur', function() {
+        console.log('La página ha perdido el foco');
+        pause();
     });
 
 
