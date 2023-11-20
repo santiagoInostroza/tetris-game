@@ -39,55 +39,86 @@ function handleMovement(board, piece, controlFunctions) {
     } 
 }
 
+/**
+ * Mueve una pieza en la dirección especificada y realiza las acciones necesarias en caso de colisión.
+ * @param {Array} board - El tablero de juego.
+ * @param {Object} piece - La pieza a mover.
+ * @param {string} direction - La dirección del movimiento ('left', 'right', 'down', 'rotate', 'space').
+ * @param {Object} options - Opciones adicionales como solidificar la pieza y eliminar líneas.
+ */
 export function movePiece(board, piece, direction, { solidifyPiece, removeLines } = {}) {
+    // Iniciar el sonido de movimiento
     startMoveSound();
+
+    // Guardar las coordenadas originales de la pieza
+    const originalX = piece.position.x;
+    const originalY = piece.position.y;
+
+    // Realizar el movimiento según la dirección especificada
     switch (direction) {
         case 'left':
             piece.position.x--;
-            if (checkCollision(board, piece)) {
-                piece.position.x++; // Revertir el movimiento si hay colisión
-            }
             break;
         case 'right':
             piece.position.x++;
-            if (checkCollision(board, piece)) {
-                piece.position.x--; // Revertir el movimiento si hay colisión
-            }
             break;
         case 'down':
             piece.position.y++;
-            if (checkCollision(board, piece)) {
-                piece.position.y--; // Revertir el movimiento si hay colisión
-                solidifyPiece();
-                removeLines();
-                startCollisionSound();
-            }
             break;
         case 'rotate':
+            // Iniciar el sonido de rotación
             startRotateSound();
             rotatePiece(board, piece);
             break;
         case 'space':
+              // Iniciar el sonido de movimiento rápido hacia abajo
+            startSpeedDownSound();
+            // Realizar movimiento rápido hacia abajo
             speedDown(board, piece, { solidifyPiece, removeLines });
             break;
+        default:
+            // Manejar direcciones no válidas o faltantes
+            throw new Error(`Dirección de movimiento no válida: ${direction}`);
+    }
+
+    // Comprobar si hay colisión
+    if (checkCollision(board, piece)) {
+        // Revertir el movimiento en caso de colisión
+        piece.position.x = originalX;
+        piece.position.y = originalY;
+
+        // Solidificar la pieza y eliminar líneas si es necesario
+        solidifyPiece && solidifyPiece();
+        removeLines && removeLines();
+
+        // Iniciar el sonido de colisión
+        startCollisionSound();
     }
 }
 
+/**
+ * Realiza un movimiento rápido hacia abajo de la pieza hasta que haya colisión.
+ * @param {Array} board - El tablero de juego.
+ * @param {Object} piece - La pieza a mover.
+ * @param {Object} options - Opciones adicionales como solidificar la pieza y eliminar líneas.
+ */
 export const speedDown = (board, piece, { solidifyPiece, removeLines }) => {
-    let enter = true;
-    startSpeedDownSound();
-    while (enter) {
+  
+
+    // Mover hacia abajo hasta que haya colisión
+    for (let i = 0; i < board.length; i++) {
         piece.position.y++;
         if (checkCollision(board, piece)) {
-            enter = false;
             piece.position.y--;
-            solidifyPiece();
-            removeLines();
-            startCollisionSound()
+            // Solidificar la pieza y eliminar líneas si es necesario
+            solidifyPiece && solidifyPiece();
+            removeLines && removeLines();
+            // Iniciar el sonido de colisión
+            startCollisionSound();
+            break;
         }
     }
 };
-
 
 export const rotatePiece = (board, piece) => {
     const matrix = piece.matrix;
@@ -114,12 +145,12 @@ export function stopMovement(direction) {
 }
 
 let lastMoveTime = 0;
-const moveInterval = 120; // Controla la velocidad de movimiento, en milisegundos
+const MOVE_INTERVAL = 120; // Controla la velocidad de movimiento, en milisegundos
 
 function continueMovement(board, piece, direction, controlFunctions ) {
     const now = performance.now();
 
-    if (movementStates[`isMoving${direction}`] && now - lastMoveTime > moveInterval) {
+    if (movementStates[`isMoving${direction}`] && now - lastMoveTime > MOVE_INTERVAL) {
         movePiece(board, piece, direction, controlFunctions);
         lastMoveTime = now; // Actualizar el tiempo de la última acción de movimiento
     }
@@ -131,3 +162,10 @@ function continueMovement(board, piece, direction, controlFunctions ) {
         requestAnimationFrame(() => continueMovement(board, piece, direction, controlFunctions));
     }
 }
+
+window.addEventListener('blur', function() {
+    // La página ha perdido el foco
+    console.log('La página ha perdido el foco');
+    this.alert('La página ha perdido el foco')
+    // Puedes realizar acciones adicionales aquí, como pausar un juego o guardar el estado
+});
