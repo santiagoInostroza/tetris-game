@@ -29,7 +29,7 @@
 
     import {
         startRemoveLineOneSound, startRemoveLineTwoSound, startRemoveLineThreeSound, startRemoveLineFourSound, startRemoveLineFiveSound,
-        startGameAudio, pauseGameAudio, startBonusSound, stopBonusSound, pauseBonusSound, setMusicVolume, setSoundVolume
+        startGameAudio,stopGameAudio , pauseGameAudio, startBonusSound, stopBonusSound, pauseBonusSound, setMusicVolume, setSoundVolume
         // startRotateSound, 
        
         // startDropSound
@@ -183,7 +183,7 @@
         board.splice(0, board.length, ...createBoard(BOARD_WIDTH, BOARD_HEIGHT));
 
         // Restablecer la pieza actual
-        piece.matrix = getNewPiece(pieces.value, COLORS)
+        [piece.matrix, piece.color] = getNewPiece(pieces.value, COLORS);
         piece.position.x = Math.floor((BOARD_WIDTH - piece.matrix[0].length) / 2);
         piece.position.y = 0;
 
@@ -193,11 +193,16 @@
 
         // Iniciar el ciclo de animación del juego
         animationFrameId = window.requestAnimationFrame(update);
+        startGameAudio();
+        
+        isGameSound = true;
     };
+
 
     const gameOver = () => {
         isGameOver.value = true;
         pause();
+        stopGameAudio();
         if (hasName.value && score.value > 0) {
             submitPlayerScore();
         }
@@ -296,21 +301,25 @@
             bonus(context.value, textBonus,remainingBonusTime, timeBonus,);
         }
     };   
-    
+
     const pause = () => {
+        window.cancelAnimationFrame(animationFrameId);
+        isPaused.value = true;
+        if (isGameSound) {
+            pauseGameAudio();
+            soundPaused = 'game';
+            isGameSound = false;
+        }
+        if (isBonusSound) {
+            pauseBonusSound();
+            soundPaused = 'bonus';
+            isBonusSound = false;
+        }
+    };
+    
+    const togglePause = () => {
         if (!isPaused.value) {
-            window.cancelAnimationFrame(animationFrameId);
-            isPaused.value = true;
-            if (isGameSound) {
-                pauseGameAudio();
-                soundPaused = 'game';
-                isGameSound = false;
-            }
-            if (isBonusSound) {
-                pauseBonusSound();
-                soundPaused = 'bonus';
-                isBonusSound = false;
-            }
+            pause();
         } else {
             lastUpdateTime = performance.now();
             animationFrameId = window.requestAnimationFrame(update);
@@ -537,7 +546,7 @@
                         <span class="absolute top-0 -mt-4 font-bold left-0 right-0 mx-auto t">Tiempo</span>
                         <span class="text-xl font-bold">{{ time }}</span>
                     </div>
-                    <button @click="pause" class="w-32 p-2 rounded-xl deep-button border-shine" style="font-size: 12px;">OPCIONES</button>
+                    <button @click="togglePause" class="w-32 p-2 rounded-xl deep-button border-shine" style="font-size: 12px;">OPCIONES</button>
                 </div>
             </div>
         </div>
@@ -554,7 +563,7 @@
                 </div>
             </div>
             <div class="grid content-between justify-end">
-                <button @click="pause" class="w-16 h-6 rounded-xl deep-button border-shine -ml-4" style="font-size: 12px;">OPCIONES</button>
+                <button @click="togglePause" class="w-16 h-6 rounded-xl deep-button border-shine -ml-4" style="font-size: 12px;">OPCIONES</button>
                 <div class="ml-12">
                     <button @click="speedDown(board, piece, {solidifyPiece, removeLines})" class="rounded-full deep-button w-12 h-12 border-shine grid" style="">
                         <span class="mt-1">▼</span><span class="-mt-4">▼</span>
@@ -600,7 +609,7 @@
 
                 <article class="flex gap-4 flex-col items-center justify-center">
                     <div class="flex gap-4 flex-col md:flex-row">
-                        <button @click="pause" class="text-xl md:text-2xl border rounded-2xl p-4 w-72 md:w-[17rem] bg-gradient-to-r from-green-600 to-green-800  border-shine font-extrabold" >CONTINUAR</button>
+                        <button @click="togglePause" class="text-xl md:text-2xl border rounded-2xl p-4 w-72 md:w-[17rem] bg-gradient-to-r from-green-600 to-green-800  border-shine font-extrabold" >CONTINUAR</button>
                         <button @click="menu" class="text-xl md:text-2xl border rounded-2xl p-4 w-72 md:w-[17rem] bg-gradient-to-r from-red-600 to-red-800 border-shine font-extrabold">SALIR</button>
                     </div>
                 </article>

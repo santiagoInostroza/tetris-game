@@ -138,8 +138,8 @@ export function selectTheme(theme) {
   export function stopGameAudio() {
     SOUNDS.bgMusic.pause()
     SOUNDS.bgMusic.currentTime = 0
-    SOUNDS.bgMusic.removeEventListener("ended", reproducirSiguienteCancion);
-    SOUNDS.bgMusic.removeEventListener("error", reproducirSiguienteCancion);
+    // SOUNDS.bgMusic.removeEventListener("ended", reproducirSiguienteCancion);
+    // SOUNDS.bgMusic.removeEventListener("error", reproducirSiguienteCancion);
   }
 
   export function startGameOverAudio() {
