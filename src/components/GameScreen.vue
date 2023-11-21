@@ -165,7 +165,7 @@
         // Añadir otros inicializadores aquí si es necesario
         startGameAudio();
         isGameSound = true;
-
+        rowsWithBonus = [];
     }
 
 
@@ -178,7 +178,7 @@
         dropCounter = 0;
         shouldShowScore = false;
         linePosition = 0;
-
+        rowsWithBonus = [];
         // Restablecer el tablero a su estado inicial
         board.splice(0, board.length, ...createBoard(BOARD_WIDTH, BOARD_HEIGHT));
 
@@ -275,8 +275,9 @@
             row.forEach((cell, x) => {
                 if (cell.value > 0) {
                     drawSquare(context.value, x, y, cell.color, 'gray', 0.05, 'black');
-                    if(cell.bonus){
-                        drawSquareWithBonus(context.value, x, y)
+                    if(cell.bonus > 0){
+                        let text = 'X' + cell.bonus;
+                        drawSquareWithBonus(context.value, x, y, text)
                     }
                 }
             });
@@ -363,17 +364,23 @@
     }
    
     let rowsWithBonus = [];
+
     const solidifyPiece = () => {
-        
+        console.log('rowsWithBonus', rowsWithBonus);
         piece.matrix.forEach((row, y) => {
             row.forEach((value, x) => {
                 if (value > 0) {
-                    let bonus = false;
+                    let bonus = 0;
                     if(!rowsWithBonus.includes(piece.position.y+ y)){
-                        bonus = Math.floor(Math.random() * 100) < 5
-                    }
-                    if (bonus) {
-                        rowsWithBonus.push(piece.position.y+ y);
+                        let random = (Math.random() * 100)
+                        bonus = (random < 8.2) ? 10 : 0;
+                        bonus = (random < 8) ? 5 : bonus;
+                        bonus = (random < 7) ? 4 : bonus;
+                        bonus = (random < 5.5) ? 3 : bonus;
+                        bonus = (random < 3.5) ? 2 : bonus;
+                        if (bonus > 0) {
+                            rowsWithBonus.push(piece.position.y+ y);
+                        }
                     }
                     board[piece.position.y + y][piece.position.x + x] = { value, color: piece.color, bonus: bonus };
                 }
@@ -398,14 +405,18 @@
         board.forEach((row, y) => {
             if (row.every((cell) => cell.value > 0)) {
                 lines++;
-                linePositions.push(y);
-                linePosition = y;
-            }
+                linePositions.push(y);linePosition = y;
+                rowsWithBonus = rowsWithBonus.filter((row) => row !== y);
+           }
 
-            if (row.every((cell) => cell.value > 0) && row.some((cell) => cell.bonus)) {
-                countBonus++;
-                newBonus++;
-            }
+            if (row.every((cell) => cell.value > 0) && row.some((cell) => cell.bonus > 0)) {
+            row.forEach((cell) => {
+                if (cell.bonus > 0) {
+                    countBonus += cell.bonus;
+                    newBonus++;
+                }
+            });
+}
         });
 
         shouldShowScore = true;
@@ -435,7 +446,7 @@
                 if (lineIndex === linePositions.length - 1) { 
                     score.value += newScore.value;
                     if (newBonus > 0) {
-                        startBonus('40', 'X' + countBonus * 2, 2 * countBonus);
+                        startBonus('40', 'X' + countBonus , countBonus);
                     }
 
                     setTimeout(() => {
