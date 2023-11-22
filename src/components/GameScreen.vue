@@ -25,7 +25,7 @@
         drawSquare, showScoreOnCompletedLines, bonus, drawSquareWithBonus,
     } from '/src/utils/draw.js';
 
-    import { createPlayer } from '/src/api/apiScore.js';
+    import { createPlayer } from '/src/api/apiPlayer.js';
 
     import {
         startRemoveLineOneSound, startRemoveLineTwoSound, startRemoveLineThreeSound, startRemoveLineFourSound, startRemoveLineFiveSound,

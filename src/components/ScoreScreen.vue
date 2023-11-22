@@ -1,6 +1,6 @@
 <script setup>
 import { defineEmits, onMounted, ref } from 'vue'
-import { fetchPlayers } from '/src/api/apiScore.js';
+import { fetchPlayers } from '/src/api/apiPlayer.js';
 import { DIFFICULTY } from '/src/utils/config.js';
 
 const emit = defineEmits(['menu'])
