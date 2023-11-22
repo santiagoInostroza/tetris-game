@@ -3,7 +3,7 @@ import { DIFFICULTY } from '/src/utils/config.js';
 import {ISPRODUCTION } from '/src/utils/consts.js';
 
 const API_URL_LOCAL = 'http://localhost/api/';
-const API_URL_PRODUCCION = 'http://tetrisbackend.saig.cl/api/';
+const API_URL_PRODUCCION = 'https://tetrisbackend.saig.cl/api/';
 let url = null;
 let api_url = null;
 
