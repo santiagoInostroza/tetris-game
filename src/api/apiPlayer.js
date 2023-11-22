@@ -25,7 +25,7 @@ const URL_IPGEOLOCATION = "https://api.ipgeolocation.io/ipgeo?apiKey=" + API_KEY
 
 
 // GET /players
-export async function fetchPlayers(quantity = 3, difficulty = DIFFICULTY.MEDIUM) {
+export async function fetchPlayers(quantity = 5, difficulty = DIFFICULTY.MEDIUM) {
    
     let url = `${api_url}players`;
   try {
@@ -77,7 +77,6 @@ export async function createPlayer(newPlayer) {
 
 
 const getDataUserFromIpGeolocation = async (player) => {
-    alert('getDataUserFromIpGeolocation')
     const response = await fetch(URL_IPGEOLOCATION);
     const data = await response.json();
     player.country = data.country_name;
@@ -95,7 +94,6 @@ async function getPlayer() {
     if (player) {
         setName(player.name);
     }
-    console.log(player);
 }
 
 getPlayer();
