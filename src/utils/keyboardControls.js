@@ -5,7 +5,7 @@ import { startCollisionSound, startMoveSound, startRotateSound, startSpeedDownSo
 
 
 let keysPressed = {};
-let movementStates = { isMovingLeft: false, isMovingRight: false, isMovingDown: false, isRotating: false };
+let movementStates = { isMovingleft: false, isMovingright: false, isMovingdown: false, isMovingrotate: false };
 
 
 export function handleKeyDown(event, board, piece, controlFunctions) {
@@ -162,4 +162,5 @@ function continueMovement(board, piece, direction, controlFunctions ) {
         requestAnimationFrame(() => continueMovement(board, piece, direction, controlFunctions));
     }
 }
+
 

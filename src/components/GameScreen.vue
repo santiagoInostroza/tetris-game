@@ -18,7 +18,7 @@
     } from '/src/utils/helpers.js';
 
     import { 
-        handleKeyDown, handleKeyUp, speedDown, movePiece, startMovement, stopMovement
+        handleKeyDown, handleKeyUp, speedDown, movePiece, startMovement, stopMovement,
     } from '/src/utils/keyboardControls.js';
 
     import { 
@@ -36,6 +36,9 @@
     } from '/src/utils/sounds.js';
 
     import SwitchButton from './/components/SwitchButton.vue';
+
+    
+    import { name } from '/src/utils/player.js';
 
 
 
@@ -94,6 +97,10 @@
         context.value = canvas.value.getContext('2d');
         context.value.scale(BLOCK_SIZE, BLOCK_SIZE);
         [piece.matrix, piece.color] = getNewPiece(pieces.value, COLORS);
+        if (name){
+            player.value = name;
+            hasName.value = true;   
+        }
         // piece.position = {x: 0 , y: 0}
         // piece.matrix = [
         //     [1, 1, 1,1,1,1,1,1,1,1],
