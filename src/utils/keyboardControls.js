@@ -137,52 +137,68 @@ export const rotatePiece = (board, piece) => {
 
 let move_interval = 50;
 let time_initial = 0;
-let firstTime = true;
+let firstTime={
+    isMovingdown: true,
+    isMovingleft: true,
+    isMovingright: true,
+    isMovingrotate: true,
+    isMovingspace: true,
+}
+let changeTimeInitial = false;
 
 export function continueMovement(board, piece, movementStates, isTouching, controlFunctions ) {
     time_initial++;
     if (!isTouching) {
         time_initial = 0;
-        firstTime = true;
+        firstTime.isMovingdown = true;
+        firstTime.isMovingleft = true;
+        firstTime.isMovingright = true;
+        firstTime.isMovingrotate = true;
+        firstTime.isMovingspace = true;
         move_interval = 50;
         return;
     }
-    if (movementStates.isMovingdown && firstTime || ( movementStates.isMovingdown && time_initial > move_interval)) {
-        firstTime = false;
+    if (movementStates.isMovingdown && firstTime.isMovingdown || ( movementStates.isMovingdown && time_initial > move_interval)) {
+        firstTime.isMovingdown = false;
         movePiece(board, piece, DIRECTIONS.DOWN, controlFunctions);
         controlFunctions.updateDropCounter();
         if(movementStates.isMovingdown && time_initial > move_interval){
-            time_initial = 48;
+            changeTimeInitial = true;
         }
     }
 
-    if (movementStates.isMovingleft && firstTime || (movementStates.isMovingleft && time_initial > move_interval)) {
-        firstTime = false;
+    if (movementStates.isMovingleft && firstTime.isMovingleft || (movementStates.isMovingleft && time_initial > move_interval)) {
+        firstTime.isMovingleft = false;
         movePiece(board, piece, DIRECTIONS.LEFT);
         if(movementStates.isMovingleft && time_initial > move_interval){
-            time_initial = 48;
+            changeTimeInitial = true;
         }
     }
 
-    if (movementStates.isMovingright && firstTime || (movementStates.isMovingright && time_initial > move_interval)) {
-        firstTime = false;
+    if (movementStates.isMovingright && firstTime.isMovingright || (movementStates.isMovingright && time_initial > move_interval)) {
+        firstTime.isMovingright = false;
         movePiece(board, piece, DIRECTIONS.RIGHT);
         if(movementStates.isMovingright && time_initial > move_interval){
-            time_initial = 48;
+            changeTimeInitial = true;
         }
     }
 
-    if (movementStates.isMovingrotate && firstTime || (movementStates.isMovingrotate && time_initial> move_interval)) {
-        firstTime = false;
+    if (movementStates.isMovingrotate && firstTime.isMovingrotate || (movementStates.isMovingrotate && time_initial > move_interval)) {
+        firstTime.isMovingrotate = false;
         rotatePiece(board, piece);
         if(movementStates.isMovingrotate && time_initial > move_interval){
-            time_initial = 48;
+            changeTimeInitial = true;
         }
     }
 
-    if (movementStates.isMovingspace && firstTime || (movementStates.isMovingspace && time_initial> move_interval)) {
-        firstTime = false;
+    if (movementStates.isMovingspace && firstTime.isMovingspace || (movementStates.isMovingspace && time_initial > move_interval)) {
+        firstTime.isMovingspace = false;
         move_interval = 49;
+    }
+
+    if (changeTimeInitial) {
+        time_initial = 48;
+        changeTimeInitial = false;
     }
 
 }
