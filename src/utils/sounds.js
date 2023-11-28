@@ -66,8 +66,8 @@ export function selectTheme(theme) {
 
   }
 
-  let musicVolume = ref(1)
-  let soundVolume = ref(1)
+  let musicVolume = ref(0.2)
+  let soundVolume = ref(0.2)
 
   export function setMusicVolume(newMusicVolume) {
     musicVolume.value = newMusicVolume

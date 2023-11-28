@@ -18,7 +18,7 @@
     } from '/src/utils/helpers.js';
 
     import { 
-        handleKeyDown, handleKeyUp, speedDown, movePiece, startMovement, stopMovement
+        handleKeyDown, handleKeyUp, movePiece, continueMovement
     } from '/src/utils/keyboardControls.js';
 
     import { 
@@ -36,6 +36,9 @@
     } from '/src/utils/sounds.js';
 
     import SwitchButton from './/components/SwitchButton.vue';
+
+    
+    import { name } from '/src/utils/player.js';
 
 
 
@@ -94,6 +97,10 @@
         context.value = canvas.value.getContext('2d');
         context.value.scale(BLOCK_SIZE, BLOCK_SIZE);
         [piece.matrix, piece.color] = getNewPiece(pieces.value, COLORS);
+        if (name){
+            player.value = name;
+            hasName.value = true;   
+        }
         // piece.position = {x: 0 , y: 0}
         // piece.matrix = [
         //     [1, 1, 1,1,1,1,1,1,1,1],
@@ -229,6 +236,11 @@
     };
 
     const update = (timestamp) => {
+
+        continueMovement(board, piece, movementStates, isTouching, { solidifyPiece, removeLines, updateDropCounter } );
+        
+
+
         if (!isPaused.value) {
             if (lastUpdateTime === 0) {
                 lastUpdateTime = timestamp;
@@ -510,6 +522,26 @@
       }
     });
 
+    let movementStates = {
+        isMovingleft: false,
+        isMovingright: false,
+        isMovingdown: false,
+        isMovingrotate: false,
+        isMovingspace: false,
+    };
+
+    let isTouching = false;
+
+    function startMovement(direction) {
+        movementStates[`isMoving${direction}`] = true;
+        isTouching = true;
+    }
+
+    function stopMovement(direction) {
+        movementStates[`isMoving${direction}`] = false;
+        isTouching = Object.values(movementStates).some(value => value);
+    }
+
 
    
 
@@ -565,22 +597,21 @@
         <article v-if="ISMOBILE" id="buttons_movil" class=" flex justify-between items-stretch my-5 gap-4 px-4">
             <div class="h-50 w-50">
                 <div class="flex-between">
-                
-                    <button  @touchstart="startMovement(board, piece, DIRECTIONS.LEFT)"  @touchend="stopMovement(DIRECTIONS.LEFT)" class="text-7xl deep-button rotate-90 w-20 h-20 rounded-full border-shine">▼</button>
-                    <button  @touchstart="startMovement(board, piece, DIRECTIONS.RIGHT)" @touchend="stopMovement(DIRECTIONS.RIGHT)"  class="text-7xl deep-button rotate-90 ml-[3rem] w-20 h-20 rounded-full border-shine">▲</button>
+                    <button  @touchstart="startMovement(DIRECTIONS.LEFT)"  @touchend="stopMovement(DIRECTIONS.LEFT)" class="text-7xl deep-button rotate-90 w-20 h-20 rounded-full border-shine">▼</button>
+                    <button  @touchstart="startMovement(DIRECTIONS.RIGHT)" @touchend="stopMovement(DIRECTIONS.RIGHT)"  class="text-7xl deep-button rotate-90 ml-[3rem] w-20 h-20 rounded-full border-shine">▲</button>
                 </div>
                 <div class="grid justify-center -mt-4">
-                    <button @touchstart="startMovement(board, piece, DIRECTIONS.DOWN,  { solidifyPiece, removeLines, updateDropCounter })" @touchend="stopMovement(DIRECTIONS.DOWN)" class="text-7xl deep-button w-20 h-20 rounded-full border-shine">▼ </button>
+                    <button @touchstart="startMovement(DIRECTIONS.DOWN)" @touchend="stopMovement(DIRECTIONS.DOWN)" class="text-7xl deep-button w-20 h-20 rounded-full border-shine">▼ </button>
                 </div>
             </div>
             <div class="grid content-between justify-end">
                 <button @click="togglePause" class="w-16 h-6 rounded-xl deep-button border-shine -ml-4" style="font-size: 12px;">OPCIONES</button>
                 <div class="ml-12">
-                    <button @click="speedDown(board, piece, {solidifyPiece, removeLines})" class="rounded-full deep-button w-12 h-12 border-shine grid" style="">
+                    <button @touchstart="startMovement('space')" @touchend="stopMovement('space')" class="rounded-full deep-button w-12 h-12 border-shine grid" style="">
                         <span class="mt-1">▼</span><span class="-mt-4">▼</span>
                     </button>
                 </div>
-                <button @touchstart="startMovement(board, piece, DIRECTIONS.ROTATE)" @touchend="stopMovement(DIRECTIONS.ROTATE)" class="rounded-full deep-button w-16 h-16 border-shine rotate-180 grid -ml-4" style="font-size: 35px;">↻</button>
+                <button @touchstart="startMovement(DIRECTIONS.ROTATE)" @touchend="stopMovement(DIRECTIONS.ROTATE)" class="rounded-full deep-button w-16 h-16 border-shine rotate-180 grid -ml-4" style="font-size: 35px;">↻</button>
             </div>
         </article>            
         

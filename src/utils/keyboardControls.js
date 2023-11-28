@@ -2,11 +2,7 @@ import { EVENT_MOVEMENTS, DIRECTIONS } from '/src/utils/consts.js';
 import { checkCollision } from '/src/utils/helpers.js';
 import { startCollisionSound, startMoveSound, startRotateSound, startSpeedDownSound } from '/src/utils/sounds.js';
 
-
-
 let keysPressed = {};
-let movementStates = { isMovingLeft: false, isMovingRight: false, isMovingDown: false, isRotating: false };
-
 
 export function handleKeyDown(event, board, piece, controlFunctions) {
     keysPressed[event.key] = true;
@@ -134,32 +130,60 @@ export const rotatePiece = (board, piece) => {
 };
 
 //   MOVIMIENTOS TACTILES
-export function startMovement(board, piece, direction, controlFunctions = {}) {
-    
-   movementStates[`isMoving${direction}`] = true;
-    continueMovement(board, piece, direction, controlFunctions);
-}
 
-export function stopMovement(direction) {
-    movementStates[`isMoving${direction}`] = false;
-}
 
-let lastMoveTime = 0;
-const MOVE_INTERVAL = 120; // Controla la velocidad de movimiento, en milisegundos
 
-function continueMovement(board, piece, direction, controlFunctions ) {
-    const now = performance.now();
 
-    if (movementStates[`isMoving${direction}`] && now - lastMoveTime > MOVE_INTERVAL) {
-        movePiece(board, piece, direction, controlFunctions);
-        lastMoveTime = now; // Actualizar el tiempo de la última acción de movimiento
+
+let move_interval = 100;
+let time_initial = 0;
+let firstTime = true;
+
+export function continueMovement(board, piece, movementStates, isTouching, controlFunctions ) {
+    time_initial++;
+    if (!isTouching) {
+        time_initial = 0;
+        firstTime = true;
+        return;
     }
-
-    if (movementStates[`isMoving${direction}`]) {
-        if (direction === DIRECTIONS.DOWN) {
-            controlFunctions.updateDropCounter();
+    if (movementStates.isMovingdown && firstTime || ( movementStates.isMovingdown && time_initial > move_interval)) {
+        firstTime = false;
+        movePiece(board, piece, DIRECTIONS.DOWN, controlFunctions);
+        controlFunctions.updateDropCounter();
+        if(movementStates.isMovingdown && time_initial > move_interval){
+            time_initial = 96;
         }
-        requestAnimationFrame(() => continueMovement(board, piece, direction, controlFunctions));
     }
+
+    if (movementStates.isMovingleft && firstTime || (movementStates.isMovingleft && time_initial > move_interval)) {
+        firstTime = false;
+        movePiece(board, piece, DIRECTIONS.LEFT);
+        if(movementStates.isMovingleft && time_initial > move_interval){
+            time_initial = 96;
+        }
+    }
+
+    if (movementStates.isMovingright && firstTime || (movementStates.isMovingright && time_initial > move_interval)) {
+        firstTime = false;
+        movePiece(board, piece, DIRECTIONS.RIGHT);
+        if(movementStates.isMovingright && time_initial > move_interval){
+            time_initial = 96;
+        }
+    }
+
+    if (movementStates.isMovingrotate && firstTime || (movementStates.isMovingrotate && time_initial> move_interval)) {
+        firstTime = false;
+        rotatePiece(board, piece);
+        if(movementStates.isMovingrotate && time_initial > move_interval){
+            time_initial = 96;
+        }
+    }
+
+    if (movementStates.isMovingspace && firstTime || (movementStates.isMovingspace && time_initial> move_interval)) {
+        firstTime = false;
+        move_interval = 97;
+    }
+
 }
+
 
