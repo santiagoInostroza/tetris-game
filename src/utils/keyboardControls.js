@@ -144,6 +144,7 @@ export function continueMovement(board, piece, movementStates, isTouching, contr
     if (!isTouching) {
         time_initial = 0;
         firstTime = true;
+        move_interval = 100;
         return;
     }
     if (movementStates.isMovingdown && firstTime || ( movementStates.isMovingdown && time_initial > move_interval)) {
