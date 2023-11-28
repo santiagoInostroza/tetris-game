@@ -311,7 +311,7 @@
 
         if (showBonus) {
             remainingBonusTime = remainingBonusTime - deltaTime;
-            bonus(context.value, textBonus,remainingBonusTime, timeBonus,);
+            bonus(context.value, textBonus,remainingBonusTime, timeBonus);
         }
     };   
 
@@ -464,7 +464,7 @@
                     setTimeout(() => {
                         shouldShowScore = false;
                         linePosition = -10;
-                    }, 2000);
+                    }, 1000);
                 }
 
                 // Llamar a la función de nuevo después de 0.400 segundos para la siguiente línea
