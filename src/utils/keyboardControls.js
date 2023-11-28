@@ -193,7 +193,10 @@ export function continueMovement(board, piece, movementStates, isTouching, contr
 
     if (movementStates.isMovingspace && firstTime.isMovingspace || (movementStates.isMovingspace && time_initial > move_interval)) {
         firstTime.isMovingspace = false;
-        move_interval = 49;
+        speedDown(board, piece, controlFunctions);
+        if(movementStates.isMovingspace && time_initial > move_interval){
+            changeTimeInitial = true;
+        }
     }
 
     if (changeTimeInitial) {
