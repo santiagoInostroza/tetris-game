@@ -135,7 +135,7 @@ export const rotatePiece = (board, piece) => {
 
 
 
-let move_interval = 50;
+let move_interval = 25;
 let time_initial = 0;
 let firstTime={
     isMovingdown: true,
@@ -155,7 +155,7 @@ export function continueMovement(board, piece, movementStates, isTouching, contr
         firstTime.isMovingright = true;
         firstTime.isMovingrotate = true;
         firstTime.isMovingspace = true;
-        move_interval = 50;
+        move_interval = 25;
         return;
     }
     if (movementStates.isMovingdown && firstTime.isMovingdown || ( movementStates.isMovingdown && time_initial > move_interval)) {
@@ -194,13 +194,10 @@ export function continueMovement(board, piece, movementStates, isTouching, contr
     if (movementStates.isMovingspace && firstTime.isMovingspace || (movementStates.isMovingspace && time_initial > move_interval)) {
         firstTime.isMovingspace = false;
         speedDown(board, piece, controlFunctions);
-        if(movementStates.isMovingspace && time_initial > move_interval){
-            changeTimeInitial = true;
-        }
     }
 
     if (changeTimeInitial) {
-        time_initial = 48;
+        time_initial = 23;
         changeTimeInitial = false;
     }
 
