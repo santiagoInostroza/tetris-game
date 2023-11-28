@@ -135,7 +135,7 @@ export const rotatePiece = (board, piece) => {
 
 
 
-let move_interval = 100;
+let move_interval = 50;
 let time_initial = 0;
 let firstTime = true;
 
@@ -152,7 +152,7 @@ export function continueMovement(board, piece, movementStates, isTouching, contr
         movePiece(board, piece, DIRECTIONS.DOWN, controlFunctions);
         controlFunctions.updateDropCounter();
         if(movementStates.isMovingdown && time_initial > move_interval){
-            time_initial = 96;
+            time_initial = 48;
         }
     }
 
@@ -160,7 +160,7 @@ export function continueMovement(board, piece, movementStates, isTouching, contr
         firstTime = false;
         movePiece(board, piece, DIRECTIONS.LEFT);
         if(movementStates.isMovingleft && time_initial > move_interval){
-            time_initial = 96;
+            time_initial = 48;
         }
     }
 
@@ -168,7 +168,7 @@ export function continueMovement(board, piece, movementStates, isTouching, contr
         firstTime = false;
         movePiece(board, piece, DIRECTIONS.RIGHT);
         if(movementStates.isMovingright && time_initial > move_interval){
-            time_initial = 96;
+            time_initial = 48;
         }
     }
 
@@ -176,13 +176,13 @@ export function continueMovement(board, piece, movementStates, isTouching, contr
         firstTime = false;
         rotatePiece(board, piece);
         if(movementStates.isMovingrotate && time_initial > move_interval){
-            time_initial = 96;
+            time_initial = 48;
         }
     }
 
     if (movementStates.isMovingspace && firstTime || (movementStates.isMovingspace && time_initial> move_interval)) {
         firstTime = false;
-        move_interval = 97;
+        move_interval = 49;
     }
 
 }
