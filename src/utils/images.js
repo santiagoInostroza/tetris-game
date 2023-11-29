@@ -27,7 +27,7 @@ export const PIECES_IMAGES = {
 
 
 if(ISPRODUCTION){
-    PIECES_IMAGES.ghost.src = "url('https://raw.githubusercontent.com/santiagoinostroza/tetris-game/main/src/assets/img/pieces/ghost.png')";
+    PIECES_IMAGES.ghost.src = 'https://raw.githubusercontent.com/santiagoinostroza/tetris-game/main/src/assets/img/pieces/ghost.png';
 }else{
     PIECES_IMAGES.ghost.src = '/src/assets/img/pieces/ghost.png';
 }
