@@ -594,7 +594,7 @@
             </div>
         </div>
         <!-- JOYSTICK -->
-        <article v-if="ISMOBILE" id="buttons_movil" class=" flex justify-between items-stretch my-5 gap-4 px-4">
+        <article v-if="ISMOBILE" id="buttons_movil" class=" flex justify-between items-stretch my-5 gap-4 px-4 select-none">
             <div class="h-50 w-50">
                 <div class="flex-between">
                     <button  @touchstart="startMovement(DIRECTIONS.LEFT)"  @touchend="stopMovement(DIRECTIONS.LEFT)" class="text-7xl deep-button rotate-90 w-20 h-20 rounded-full border-shine">▼</button>

@@ -155,11 +155,11 @@ export function continueMovement(board, piece, movementStates, isTouching, contr
 
     
     if(!movementStates.isMovingrotate ){
-        time_initial_two = 80;
+        firstTime.isMovingrotate = true;
     }
 
     if(!movementStates.isMovingspace ){
-        time_initial_two = 80;
+        firstTime.isMovingspace = true;
     }
 
 
