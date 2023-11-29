@@ -135,8 +135,10 @@ export const rotatePiece = (board, piece) => {
 
 
 
-let move_interval = 25;
+let move_interval = 15;
+let move_interval_two = 80;
 let time_initial = 0;
+let time_initial_two = 0;
 let firstTime={
     isMovingdown: true,
     isMovingleft: true,
@@ -145,17 +147,21 @@ let firstTime={
     isMovingspace: true,
 }
 let changeTimeInitial = false;
+let changeTimeInitialTwo = false;
 
 export function continueMovement(board, piece, movementStates, isTouching, controlFunctions ) {
     time_initial++;
+    time_initial_two++;
     if (!isTouching) {
         time_initial = 0;
+        time_initial_two = 0;
         firstTime.isMovingdown = true;
         firstTime.isMovingleft = true;
         firstTime.isMovingright = true;
         firstTime.isMovingrotate = true;
         firstTime.isMovingspace = true;
-        move_interval = 25;
+        move_interval = 15;
+        move_interval_two = 80;
         return;
     }
     if (movementStates.isMovingdown && firstTime.isMovingdown || ( movementStates.isMovingdown && time_initial > move_interval)) {
@@ -183,22 +189,30 @@ export function continueMovement(board, piece, movementStates, isTouching, contr
         }
     }
 
-    if (movementStates.isMovingrotate && firstTime.isMovingrotate || (movementStates.isMovingrotate && time_initial > move_interval)) {
+    if (movementStates.isMovingrotate && firstTime.isMovingrotate || (movementStates.isMovingrotate && time_initial_two > move_interval_two)) {
         firstTime.isMovingrotate = false;
         rotatePiece(board, piece);
-        if(movementStates.isMovingrotate && time_initial > move_interval){
-            changeTimeInitial = true;
+        if(movementStates.isMovingrotate && time_initial_two > move_interval_two){
+            changeTimeInitialTwo = true;
         }
     }
 
-    if (movementStates.isMovingspace && firstTime.isMovingspace || (movementStates.isMovingspace && time_initial > move_interval)) {
+    if (movementStates.isMovingspace && firstTime.isMovingspace || (movementStates.isMovingspace && time_initial_two > move_interval_two)) {
         firstTime.isMovingspace = false;
         speedDown(board, piece, controlFunctions);
+        if(movementStates.isMovingspace && time_initial_two > move_interval_two){
+            changeTimeInitialTwo = true;
+        }
     }
 
     if (changeTimeInitial) {
-        time_initial = 23;
+        time_initial = 13;
         changeTimeInitial = false;
+    }
+
+    if (changeTimeInitialTwo) {
+        time_initial_two = 0;
+        changeTimeInitialTwo = false;
     }
 
 }
