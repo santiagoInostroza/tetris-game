@@ -26,13 +26,12 @@ export function getBgImg(theme){
 
 export const PIECES_IMAGES = {
     ghost: new Image(),
-
 }
 
 
 
 if(ISPRODUCTION){
-    PIECES_IMAGES.ghost.src = 'https://raw.githubusercontent.com/santiagoinostroza/tetris/main/img/pieces/ghost.png';
+    PIECES_IMAGES.ghost.src = "url('https://raw.githubusercontent.com/santiagoinostroza/tetris/main/img/pieces/ghost.png')";
 }else{
     PIECES_IMAGES.ghost.src = '/src/assets/img/pieces/ghost.png';
 }
