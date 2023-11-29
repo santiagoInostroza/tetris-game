@@ -30,26 +30,49 @@ export const getNewPiece = (pieces, colors) => {
     ]
     // return pieces.value[4]
 }
+
+let columnaCompleta  = null;
 export const checkCollision = (board, piece) => {
     for (let y = 0; y < piece.matrix.length; ++y) {
         for (let x = 0; x < piece.matrix[y].length; ++x) {
-            // Verificar si la celda de la pieza está ocupada
             if (piece.matrix[y][x] !== 0) {
-                // Calcular la posición actual en el tablero
                 const currentX = piece.position.x + x;
                 const currentY = piece.position.y + y;
+
 
                 // Verificar si la posición está fuera del tablero (debajo o a los lados)
                 if (currentX < 0 || currentX >= board[0].length || currentY >= board.length) {
                     return true;
                 }
 
-                // Verificar si la celda del tablero está ocupada
-                if (board[currentY] && board[currentY][currentX] && board[currentY][currentX].value !== 0) {
-                    return true;
+                if (piece.color === 'ghost') {
+                    if (currentY + 1 < board.length && board[currentY + 1][currentX].value !== 0) {
+                        for (let deeperY = currentY + 1; deeperY < board.length; deeperY++) {
+                            if (board[deeperY][currentX].value === 0) { 
+                                columnaCompleta  = false;
+                                return false;
+                            }
+                        }
+                        columnaCompleta  = true;
+                        if (board[currentY][currentX].value !== 0) {
+                            columnaCompleta  = null;
+                            return true;
+                        }
+                    } else if ( columnaCompleta && board[currentY][currentX].value !== 0) {
+                        columnaCompleta  = null;
+                        return true;
+                    }
+                } else {
+                    if (board[currentY][currentX].value !== 0) {
+                        return true;
+                    }
                 }
             }
         }
     }
     return false;
 };
+
+
+
+

@@ -11,14 +11,23 @@ function getRandomColor() {
     return colors[Math.floor(Math.random() * colors.length)];
 }
 
-export const drawSquare = (ctx, x, y, color, color2 = 'white', borderWidth = 0.08, borderColor = black, isBonus = false) => {
+export const drawSquare = (ctx, x, y, color, color2 = 'white', borderWidth = 0.08, borderColor = black, isBonus = false, imgs = null) => {
     const size = 1; // Tamaño del cuadrado
+
+    let img = (color === 'ghost') ? 'ghost' : '';
+    
+    if(img == 'ghost'){
+        color =  color2 = 'black';
+    }
+    
+
     const gradient = ctx.createLinearGradient(x, y, x + size, y + size);
 
     
     if(isBonus){
         color = getRandomColor();
     }
+
     gradient.addColorStop(0, color);
     gradient.addColorStop(1, color2);
 
@@ -40,6 +49,14 @@ export const drawSquare = (ctx, x, y, color, color2 = 'white', borderWidth = 0.0
 
     // Dibujar el borde del cuadrado
     ctx.strokeRect(x - borderWidth / 2, y - borderWidth / 2, size + borderWidth, size + borderWidth);
+
+    if(img === 'ghost'){
+        if (imgs?.ghost?.complete) { // Comprueba si la imagen se ha cargado completamente
+            ctx.drawImage(imgs.ghost, x, y, 1, 1); // Ajusta las posiciones y el tamaño según sea necesario
+        }
+    }
+
+
 };
 
 export const showScoreOnCompletedLines = (ctx, newScore, linePosition ) => {

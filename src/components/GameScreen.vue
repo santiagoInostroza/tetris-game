@@ -103,18 +103,9 @@
         }
         // piece.position = {x: 0 , y: 0}
         // piece.matrix = [
-        //     [1, 1, 1,1,1,1,1,1,1,1],
-        //     [1, 1, 1,1,1,1,1,1,1,1],
-        //     [1, 1, 1,1,1,1,1,1,1,1],
-        //     [1, 1, 1,1,1,1,1,1,1,1],
-        //     [1, 1, 1,1,1,1,1,1,1,1],
-        //     [1, 1, 1,1,1,1,1,1,1,1],
-        //     [1, 1, 1,1,1,1,1,1,1,1],
-        //     [1, 1, 1,1,1,1,1,1,1,1],
-        //     [1, 1, 1,1,1,1,1,1,1,1],
-        //     [1, 1, 1,1,1,1,1,1,1,1],
+        //     [1],
         // ]
-        // piece.color = 'red';
+        // piece.color = 'ghost';
         startGame();
         
         
@@ -236,11 +227,8 @@
     };
 
     const update = (timestamp) => {
-
         continueMovement(board, piece, movementStates, isTouching, { solidifyPiece, removeLines, updateDropCounter } );
         
-
-
         if (!isPaused.value) {
             if (lastUpdateTime === 0) {
                 lastUpdateTime = timestamp;
@@ -276,6 +264,11 @@
     let multiplierBonus = 1;
     let remainingBonusTime = 0;
 
+    const piecesImages = {};
+    piecesImages.ghost =new Image();
+    piecesImages.ghost.src = '/src/assets/img/pieces/ghost.png'; 
+
+
     const draw = (deltaTime) => {
         // Dibuja el fondo del juego
         context.value.fillStyle = 'black';
@@ -291,6 +284,9 @@
                         let text = 'X' + cell.bonus;
                         drawSquareWithBonus(context.value, x, y, text)
                     }
+                    if (cell.color === 'ghost') {
+                        context.value.drawImage(piecesImages.ghost, x, y, 1, 1);
+                    }
                 }
             });
         });
@@ -300,10 +296,12 @@
         piece.matrix.forEach((row, y) => {
             row.forEach((value, x) => {
                 if (value > 0) {
-                    drawSquare(context.value, piece.position.x + x, piece.position.y + y, piece.color, piece.color , 0.06, 'black', showBonus);
+                    drawSquare(context.value, piece.position.x + x, piece.position.y + y, piece.color, piece.color , 0.06, 'black', showBonus, piecesImages);
                 }
             });
         });
+
+      
 
         if(shouldShowScore){
             showScoreOnCompletedLines( context.value, newScore.value, linePosition)
@@ -378,7 +376,6 @@
     let rowsWithBonus = [];
 
     const solidifyPiece = () => {
-        console.log('rowsWithBonus', rowsWithBonus);
         piece.matrix.forEach((row, y) => {
             row.forEach((value, x) => {
                 if (value > 0) {
@@ -399,9 +396,10 @@
             });
         });
         [piece.matrix, piece.color] = getNewPiece(pieces.value, COLORS);
-        piece.position.y = 0;
+        piece.position.y = 1;
         piece.position.x = Math.floor((BOARD_WIDTH - piece.matrix[0].length) / 2);
-        if (checkCollision(board, piece)) {
+        
+         if (checkCollision(board, piece)) {
             gameOver();
         }
     };
@@ -409,6 +407,7 @@
 
 
     let countBonus = 0;
+
     const removeLines = () => {
         let lines = 0;
         let linePositions = []; // Almacenará las posiciones de las líneas a eliminar
@@ -439,7 +438,8 @@
                 const y = linePositions[lineIndex];
                 
                 board.splice(y, 1);
-                board.unshift(Array(BOARD_WIDTH).fill(0));
+                const newRow = Array.from({ length: BOARD_WIDTH }, () => ({ value: 0, color: null, bonus: 0 }));
+                board.unshift(newRow);
 
                 newScore.value = ((lineIndex + 1 ) * BOARD_WIDTH) * (1 + ((lineIndex) * 0.25) ) * multiplierBonus;
                 if (lineIndex === 0) {
@@ -452,7 +452,7 @@
                     startRemoveLineFourSound();
                 } else if (lineIndex === 4) {
                     startRemoveLineFiveSound();
-                    startBonus('45', 'X3', 3);
+                    // startBonus('45', 'X3', 3);
                 }
                 
                 if (lineIndex === linePositions.length - 1) { 
