@@ -205,6 +205,16 @@ export function continueMovement(board, piece, movementStates, isTouching, contr
         }
     }
 
+    if(!movementStates.isMovingrotate ){
+        changeTimeInitialTwo = true;
+    }
+
+    if(!movementStates.isMovingspace ){
+        changeTimeInitialTwo = true;
+    }
+
+    
+
     if (changeTimeInitial) {
         time_initial = 13;
         changeTimeInitial = false;
