@@ -36,3 +36,5 @@ if(ISPRODUCTION){
 }else{
     PIECES_IMAGES.ghost.src = '/src/assets/img/pieces/ghost.png';
 }
+
+console.log(PIECES_IMAGES.ghost.src)
