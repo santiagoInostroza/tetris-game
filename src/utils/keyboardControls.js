@@ -152,6 +152,17 @@ let changeTimeInitialTwo = false;
 export function continueMovement(board, piece, movementStates, isTouching, controlFunctions ) {
     time_initial++;
     time_initial_two++;
+
+    
+    if(!movementStates.isMovingrotate ){
+        time_initial_two = 0;
+    }
+
+    if(!movementStates.isMovingspace ){
+        time_initial_two = 0;
+    }
+
+
     if (!isTouching) {
         time_initial = 0;
         time_initial_two = 0;
@@ -203,14 +214,6 @@ export function continueMovement(board, piece, movementStates, isTouching, contr
         if(movementStates.isMovingspace && time_initial_two > move_interval_two){
             changeTimeInitialTwo = true;
         }
-    }
-
-    if(!movementStates.isMovingrotate ){
-        changeTimeInitialTwo = true;
-    }
-
-    if(!movementStates.isMovingspace ){
-        changeTimeInitialTwo = true;
     }
 
     
