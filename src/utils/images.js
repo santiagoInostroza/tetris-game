@@ -19,3 +19,20 @@ export function getBgImg(theme){
 
    
 }
+
+// const piecesImages = {};
+// piecesImages.ghost =new Image();
+// piecesImages.ghost.src = '/src/assets/img/pieces/ghost.png'; 
+
+export const PIECES_IMAGES = {
+    ghost: new Image(),
+
+}
+
+
+
+if(ISPRODUCTION){
+    PIECES_IMAGES.ghost.src = 'https://raw.githubusercontent.com/santiagoinostroza/tetris/main/img/pieces/ghost.png';
+}else{
+    PIECES_IMAGES.ghost.src = '/src/assets/img/pieces/ghost.png';
+}

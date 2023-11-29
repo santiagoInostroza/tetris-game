@@ -40,6 +40,8 @@
     
     import { name } from '/src/utils/player.js';
 
+    import { PIECES_IMAGES} from '/src/utils/images.js';
+
 
 
     
@@ -264,9 +266,8 @@
     let multiplierBonus = 1;
     let remainingBonusTime = 0;
 
-    const piecesImages = {};
-    piecesImages.ghost =new Image();
-    piecesImages.ghost.src = '/src/assets/img/pieces/ghost.png'; 
+
+    
 
 
     const draw = (deltaTime) => {
@@ -285,7 +286,7 @@
                         drawSquareWithBonus(context.value, x, y, text)
                     }
                     if (cell.color === 'ghost') {
-                        context.value.drawImage(piecesImages.ghost, x, y, 1, 1);
+                        context.value.drawImage(PIECES_IMAGES.ghost, x, y, 1, 1);
                     }
                 }
             });
@@ -296,7 +297,7 @@
         piece.matrix.forEach((row, y) => {
             row.forEach((value, x) => {
                 if (value > 0) {
-                    drawSquare(context.value, piece.position.x + x, piece.position.y + y, piece.color, piece.color , 0.06, 'black', showBonus, piecesImages);
+                    drawSquare(context.value, piece.position.x + x, piece.position.y + y, piece.color, piece.color , 0.06, 'black', showBonus, PIECES_IMAGES);
                 }
             });
         });
