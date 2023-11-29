@@ -557,12 +557,12 @@
             <div class="flex justify-between w-screen px-4">
                 <!-- SCORE-->
                 <div class="p-1 border-4 border-shine rounded-xl relative w-32 mt-4 text-center bg-gradient-to-r from-blue-600 to-blue-800 grid items-center">
-                    <span class="absolute top-0 -mt-4 font-bold left-0 right-0 mx-auto ">Puntaje</span>
+                    <span class="absolute top-0 -mt-4 font-bold left-0 right-0 mx-auto select-none">Puntaje</span>
                     <span class="text-3xl font-extrabold">{{ score }}</span>
                 </div>
                 <!-- TIME -->
                 <div class="p-2 border-4 border-shine rounded-xl relative w-32 mt-4 text-center bg-gradient-to-r from-blue-600 to-blue-800 grid items-center">
-                    <span class="absolute top-0 -mt-4 font-bold left-0 right-0 mx-auto t">Tiempo</span>
+                    <span class="absolute top-0 -mt-4 font-bold left-0 right-0 mx-auto select-none">Tiempo</span>
                     <span class="text-xl font-bold">{{ time }}</span>
                 </div>
             </div>
