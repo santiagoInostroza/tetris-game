@@ -90,6 +90,19 @@
     let isBonusSound = false;
     let soundPaused = null;
 
+    let piece_christmas = {};
+    
+    piece_christmas.matrix = [
+        [0, 0, 2, 0, 0],
+        [0, 2, 2, 2, 0],
+        [2, 2, 2, 2, 2],
+        [0, 0, 2, 0, 0],
+        [0, 0, 0, 0, 0],
+    ];
+    piece_christmas.color = 'christmas';
+
+    
+
 
     const keyDownHandler = (event) => handleKeyDown(event, board, piece, { solidifyPiece, removeLines, updateDropCounter });  
 
@@ -104,10 +117,8 @@
             hasName.value = true;   
         }
         // piece.position = {x: 0 , y: 0}
-        // piece.matrix = [
-        //     [1],
-        // ]
-        // piece.color = 'ghost';
+        piece.matrix = piece_christmas.matrix;
+        piece.color = piece_christmas.color;
         startGame();
         
         
@@ -258,17 +269,11 @@
         }
     };
 
-
-  
     let showBonus = false;
     let timeBonus = 0;
     let textBonus = '';
     let multiplierBonus = 1;
     let remainingBonusTime = 0;
-
-
-    
-
 
     const draw = (deltaTime) => {
         // Dibuja el fondo del juego
