@@ -288,6 +288,9 @@
                     if (cell.color === 'ghost') {
                         context.value.drawImage(PIECES_IMAGES.ghost, x, y, 1, 1);
                     }
+                    if (cell.color === 'christmas') {
+                        context.value.drawImage(PIECES_IMAGES.christmas, x, y, 1, 1);
+                    }
                 }
             });
         });

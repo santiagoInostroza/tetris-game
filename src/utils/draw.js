@@ -15,8 +15,13 @@ export const drawSquare = (ctx, x, y, color, color2 = 'white', borderWidth = 0.0
     const size = 1; // Tamaño del cuadrado
 
     let img = (color === 'ghost') ? 'ghost' : '';
+    img = (color === 'christmas') ? 'christmas' : img;
     
     if(img == 'ghost'){
+        color =  color2 = 'black';
+    }
+
+    if(img == 'christmas'){
         color =  color2 = 'black';
     }
     
@@ -53,6 +58,12 @@ export const drawSquare = (ctx, x, y, color, color2 = 'white', borderWidth = 0.0
     if(img === 'ghost'){
         if (imgs?.ghost?.complete) { // Comprueba si la imagen se ha cargado completamente
             ctx.drawImage(imgs.ghost, x, y, 1, 1); // Ajusta las posiciones y el tamaño según sea necesario
+        }
+    }
+
+    if(img === 'christmas'){
+        if (imgs?.christmas?.complete) { // Comprueba si la imagen se ha cargado completamente
+            ctx.drawImage(imgs.christmas, x, y, 1, 1); // Ajusta las posiciones y el tamaño según sea necesario
         }
     }
 

@@ -23,13 +23,15 @@ export function getBgImg(theme){
 
 export const PIECES_IMAGES = {
     ghost: new Image(),
+    christmas: new Image()
 }
 
 
 if(ISPRODUCTION){
     PIECES_IMAGES.ghost.src = 'https://raw.githubusercontent.com/santiagoinostroza/tetris-game/main/src/assets/img/pieces/ghost.png';
+    PIECES_IMAGES.christmas.src = 'https://raw.githubusercontent.com/santiagoinostroza/tetris-game/main/src/assets/img/pieces/christmas.png';
 }else{
     PIECES_IMAGES.ghost.src = '/src/assets/img/pieces/ghost.png';
+    PIECES_IMAGES.christmas.src = '/src/assets/img/pieces/christmas.png';
 }
 
-console.log(PIECES_IMAGES.ghost.src)
