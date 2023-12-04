@@ -59,7 +59,6 @@
 
     const pieces = ref(PIECES[difficulty.value]);
 
-
     const canvas  = ref(null);
     const context = ref(null);
 
@@ -117,8 +116,8 @@
             hasName.value = true;   
         }
         // piece.position = {x: 0 , y: 0}
-        piece.matrix = piece_christmas.matrix;
-        piece.color = piece_christmas.color;
+        // piece.matrix = piece_christmas.matrix;
+        // piece.color = piece_christmas.color;
         startGame();
         
         
