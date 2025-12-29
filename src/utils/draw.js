@@ -1,155 +1,257 @@
+// ============================================================================
+// GENERADOR DE COLORES ALEATORIOS
+// ============================================================================
+
+const BONUS_COLORS = [
+    'red',
+    'blue',
+    'green',
+    'yellow',
+    'purple',
+    'orange',
+    'cyan',
+];
+
+/**
+ * Obtiene un color aleatorio del array de colores
+ * @returns {string} Color en formato CSS
+ */
 function getRandomColor() {
-    const colors = [
-        'red',
-        'blue',
-        'green',
-        'yellow',
-        'purple',
-        'orange',
-        'cyan',
-    ];
-    return colors[Math.floor(Math.random() * colors.length)];
+    return BONUS_COLORS[Math.floor(Math.random() * BONUS_COLORS.length)];
 }
 
-export const drawSquare = (ctx, x, y, color, color2 = 'white', borderWidth = 0.08, borderColor = black, isBonus = false, imgs = null) => {
-    const size = 1; // Tamaño del cuadrado
+// ============================================================================
+// DIBUJO DE CUADRADOS
+// ============================================================================
 
-    let img = (color === 'ghost') ? 'ghost' : '';
-    img = (color === 'christmas') ? 'christmas' : img;
+/**
+ * Dibuja un cuadrado en el canvas
+ * @param {CanvasRenderingContext2D} ctx - Contexto del canvas
+ * @param {number} x - Posición X
+ * @param {number} y - Posición Y
+ * @param {string} color - Color principal
+ * @param {string} color2 - Color secundario para gradiente
+ * @param {number} borderWidth - Ancho del borde
+ * @param {string} borderColor - Color del borde
+ * @param {boolean} isBonus - Si es una pieza con bonus
+ * @param {Object} imgs - Objeto con imágenes de piezas especiales
+ */
+export function drawSquare(
+    ctx,
+    x,
+    y,
+    color,
+    color2 = 'white',
+    borderWidth = 0.08,
+    borderColor = 'black',
+    isBonus = false,
+    imgs = null
+) {
+    const size = 1;
+
+    // Determinar imagen especial
+    const specialImage = getSpecialImage(color);
     
-    if(img == 'ghost'){
-        color =  color2 = 'black';
+    // Ajustar colores si es imagen especial
+    if (specialImage) {
+        color = color2 = 'black';
     }
 
-    if(img == 'christmas'){
-        color =  color2 = 'black';
-    }
-    
-
-    const gradient = ctx.createLinearGradient(x, y, x + size, y + size);
-
-    
-    if(isBonus){
+    // Color aleatorio si tiene bonus
+    if (isBonus) {
         color = getRandomColor();
     }
 
+    // Crear gradiente
+    const gradient = ctx.createLinearGradient(x, y, x + size, y + size);
     gradient.addColorStop(0, color);
     gradient.addColorStop(1, color2);
 
-
-    // Establecer el color de relleno y aplicar sombra
+    // Dibujar cuadrado con sombra
     ctx.fillStyle = gradient;
     ctx.shadowBlur = 20;
     ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
-    
-    // Dibujar el cuadrado
     ctx.fillRect(x, y, size, size);
 
-    // Resetear la sombra
+    // Resetear sombra
     ctx.shadowBlur = 0;
 
-    // Establecer el estilo y el grosor del borde
-    ctx.strokeStyle = borderColor; // Color del borde
-    ctx.lineWidth = borderWidth; // Grosor del borde
+    // Dibujar borde
+    ctx.strokeStyle = borderColor;
+    ctx.lineWidth = borderWidth;
+    ctx.strokeRect(
+        x - borderWidth / 2,
+        y - borderWidth / 2,
+        size + borderWidth,
+        size + borderWidth
+    );
 
-    // Dibujar el borde del cuadrado
-    ctx.strokeRect(x - borderWidth / 2, y - borderWidth / 2, size + borderWidth, size + borderWidth);
-
-    if(img === 'ghost'){
-        if (imgs?.ghost?.complete) { // Comprueba si la imagen se ha cargado completamente
-            ctx.drawImage(imgs.ghost, x, y, 1, 1); // Ajusta las posiciones y el tamaño según sea necesario
-        }
+    // Dibujar imagen especial si corresponde
+    if (specialImage && imgs?.[specialImage]?.complete) {
+        ctx.drawImage(imgs[specialImage], x, y, 1, 1);
     }
+}
 
-    if(img === 'christmas'){
-        if (imgs?.christmas?.complete) { // Comprueba si la imagen se ha cargado completamente
-            ctx.drawImage(imgs.christmas, x, y, 1, 1); // Ajusta las posiciones y el tamaño según sea necesario
-        }
-    }
+/**
+ * Determina si un color corresponde a una imagen especial
+ * @param {string} color - Color de la pieza
+ * @returns {string|null} Nombre de la imagen o null
+ */
+function getSpecialImage(color) {
+    if (color === 'ghost') return 'ghost';
+    if (color === 'christmas') return 'christmas';
+    return null;
+}
 
+// ============================================================================
+// TEXTO DE SCORE EN LÍNEAS COMPLETADAS
+// ============================================================================
 
-};
+/**
+ * Muestra el score en las líneas completadas
+ * @param {CanvasRenderingContext2D} ctx - Contexto del canvas
+ * @param {number} score - Score a mostrar
+ * @param {number} linePosition - Posición Y de la línea
+ */
+export function showScoreOnCompletedLines(ctx, score, linePosition) {
+    const text = `+${score}`;
+    const textX = 5;
+    const textY = linePosition;
 
-export const showScoreOnCompletedLines = (ctx, newScore, linePosition ) => {
-    const text = `+${newScore}`;
-    const textX = 5; // Centrar el texto en el ancho del tablero
-    const textY = linePosition; // Ajustar la posición y al centro de la fila completada
+    // Configurar fuente
+    ctx.font = `bold 2px 'Comic Sans MS'`;
 
-    // Establecer el estilo de la fuente para hacerla más gruesa
-    ctx.font = `bold 2px 'Comic Sans MS'`; // Fuente más gruesa
-
-    // Primero, dibujar el borde del texto
-    ctx.strokeStyle = 'white'; // Color del borde
-    ctx.lineWidth = 0.5; // Ancho del borde
+    // Dibujar borde del texto (doble borde para mejor legibilidad)
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 0.5;
     ctx.strokeText(text, textX, textY);
-    ctx.strokeStyle = 'black'; // Color del borde
-    ctx.lineWidth = 0.2; // Ancho del borde
+
+    ctx.strokeStyle = 'black';
+    ctx.lineWidth = 0.2;
     ctx.strokeText(text, textX, textY);
 
-    // Luego, rellenar el texto
-    ctx.fillStyle = 'orange'; // Color morado claro
+    // Rellenar texto
+    ctx.fillStyle = 'orange';
     ctx.fillText(text, textX, textY);
-};
+}
 
-export const bonus = (ctx, text, timeBonus, maxTime = 5, linePosition = 2) => {
-    const textX = 1; // Centrar el texto en el ancho del tablero
-    const textY = linePosition; // Ajustar la posición y al centro de la fila completada
+// ============================================================================
+// ANIMACIÓN DE BONUS
+// ============================================================================
 
-       // Establecer el estilo de la fuente para hacerla más gruesa
-       ctx.font = `bold 1px 'Comic Sans MS'`; // Fuente más gruesa
+/**
+ * Dibuja la animación de bonus activo
+ * @param {CanvasRenderingContext2D} ctx - Contexto del canvas
+ * @param {string} text - Texto del bonus (ej: "X3")
+ * @param {number} timeBonus - Tiempo restante en ms
+ * @param {number} maxTime - Tiempo máximo en ms
+ * @param {number} linePosition - Posición Y del bonus
+ */
+export function bonus(ctx, text, timeBonus, maxTime = 5000, linePosition = 2) {
+    const centerX = 1.6;
+    const centerY = linePosition - 0.3;
+    const radius = 0.8;
 
-    
-    // dibujar un circulo
+    // Fondo blanco del círculo
     ctx.beginPath();
-    ctx.arc(textX +0.6, textY - 0.3, 0.8, 0, 2 * Math.PI);
+    ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
     ctx.fillStyle = 'white';
     ctx.fill();
 
-    const angle = (timeBonus / maxTime) * 2 * Math.PI;
-   
-    // dibujar un circulo sin relleno
-    // ctx.beginPath();
-    // ctx.arc(textX + 0.6, textY - 0.3, 1, 0 , 2 * Math.PI);
-    // ctx.strokeStyle = 'red';
-    // ctx.lineWidth = 0.4;
-    // ctx.stroke();
+    // Calcular ángulo de progreso
+    const progress = timeBonus / maxTime;
+    const angle = progress * 2 * Math.PI;
 
+    // Dibujar progreso
     ctx.beginPath();
-    ctx.arc(textX + 0.6, textY - 0.3, 1, 0 , angle);
+    ctx.arc(centerX, centerY, 1, -Math.PI / 2, -Math.PI / 2 + angle);
     ctx.strokeStyle = 'white';
     ctx.lineWidth = 0.4;
     ctx.stroke();
 
-    // Primero, dibujar el borde del texto
-    ctx.strokeStyle = 'black'; // Color del borde
-    ctx.lineWidth = 0.3; // Ancho del borde
-    ctx.strokeText(text, textX, textY);
+    // Dibujar texto del bonus
+    ctx.font = `bold 1px 'Comic Sans MS'`;
 
-    // Luego, rellenar el texto
-    ctx.fillStyle = 'orange'; // Color morado claro
-    ctx.fillText(text, textX, textY);
+    // Borde del texto
+    ctx.strokeStyle = 'black';
+    ctx.lineWidth = 0.3;
+    ctx.strokeText(text, 1, linePosition);
 
-
+    // Relleno del texto
+    ctx.fillStyle = 'orange';
+    ctx.fillText(text, 1, linePosition);
 }
 
-export const drawSquareWithBonus = (ctx, x, y, text ) => {
+// ============================================================================
+// TEXTO DE BONUS EN CELDAS
+// ============================================================================
 
-     // Establecer el estilo de la fuente para hacerla más gruesa
-     ctx.font = `bold 0.6px 'Comic Sans MS'`; // Fuente más gruesa
+/**
+ * Dibuja el texto de bonus en una celda del tablero
+ * @param {CanvasRenderingContext2D} ctx - Contexto del canvas
+ * @param {number} x - Posición X
+ * @param {number} y - Posición Y
+ * @param {string} text - Texto a mostrar (ej: "X2")
+ */
+export function drawSquareWithBonus(ctx, x, y, text) {
+    ctx.font = `bold 0.6px 'Comic Sans MS'`;
 
-    x= x+0.1;
-    y= y+0.7;
+    const textX = x + 0.1;
+    const textY = y + 0.7;
 
-     // Primero, dibujar el borde del texto
-     ctx.strokeStyle = 'white'; // Color del borde
-     ctx.lineWidth = 0.2; // Ancho del borde
-     ctx.strokeText(text, x, y);
-     ctx.strokeStyle = 'black'; // Color del borde
-     ctx.lineWidth = 0.1; // Ancho del borde
-     ctx.strokeText(text, x, y);
- 
-     // Luego, rellenar el texto
-     ctx.fillStyle = 'orange'; // Color morado claro
-     ctx.fillText(text, x, y);
+    // Borde blanco exterior
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 0.2;
+    ctx.strokeText(text, textX, textY);
 
-};
+    // Borde negro interior
+    ctx.strokeStyle = 'black';
+    ctx.lineWidth = 0.1;
+    ctx.strokeText(text, textX, textY);
+
+    // Relleno naranja
+    ctx.fillStyle = 'orange';
+    ctx.fillText(text, textX, textY);
+}
+
+// ============================================================================
+// UTILIDADES
+// ============================================================================
+
+/**
+ * Limpia completamente el canvas
+ * @param {CanvasRenderingContext2D} ctx - Contexto del canvas
+ * @param {number} width - Ancho del canvas
+ * @param {number} height - Alto del canvas
+ */
+export function clearCanvas(ctx, width, height) {
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, width, height);
+}
+
+/**
+ * Dibuja un grid de ayuda (útil para debugging)
+ * @param {CanvasRenderingContext2D} ctx - Contexto del canvas
+ * @param {number} width - Ancho en celdas
+ * @param {number} height - Alto en celdas
+ */
+export function drawGrid(ctx, width, height) {
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.lineWidth = 0.02;
+
+    // Líneas verticales
+    for (let x = 0; x <= width; x++) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+    }
+
+    // Líneas horizontales
+    for (let y = 0; y <= height; y++) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+    }
+}

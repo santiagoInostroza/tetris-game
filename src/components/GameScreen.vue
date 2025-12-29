@@ -1,759 +1,879 @@
 <script setup>
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
+import { ISMOBILE, HEIGHT_CANVAS, BLOCK_SIZE, BOARD_WIDTH, BOARD_HEIGHT, DIRECTIONS } from '/src/utils/consts.js';
+import { checkCollision } from '/src/utils/helpers.js';
+import { DIFFICULTY } from '/src/utils/config.js';
+import { name } from '/src/utils/player.js';
+import { PIECES_IMAGES } from '/src/utils/images.js';
 
-// IMPORTS
-    import {
-        ISMOBILE, HEIGHT_CANVAS, BLOCK_SIZE, BOARD_WIDTH, BOARD_HEIGHT, DIRECTIONS
-    } from '/src/utils/consts.js';
+import { handleKeyDown, handleKeyUp, movePiece, continueMovement } from '/src/utils/keyboardControls.js';
+import { drawSquare, showScoreOnCompletedLines, bonus as drawBonus, drawSquareWithBonus } from '/src/utils/draw.js';
+import { createPlayer } from '/src/api/apiPlayer.js';
 
-    import { 
-        ref, onMounted, onBeforeUnmount, reactive, defineEmits, watch
-    } from 'vue';
+import SwitchButton from './components/SwitchButton.vue';
 
-    import { PIECES, COLORS } from '/src/utils/pieces.js';
+// Composables
+import { useGameState } from '/src/composables/useGameState.js';
+import { useGameAudio } from '/src/composables/useGameAudio.js';
+import { useBonus } from '/src/composables/useBonus.js';
+import { useGameLoop } from '/src/composables/useGameLoop.js';
+import NextPiecePreview from './NextPiecePreview.vue';
 
-    import { difficulty, DIFFICULTY } from '/src/utils/config.js';
+// ============================================================================
+// PROPS Y EMITS
+// ============================================================================
 
-    import { 
-        formatTime, createBoard, getNewPiece, checkCollision 
-    } from '/src/utils/helpers.js';
+const emit = defineEmits(['gameOver', 'menu']);
 
-    import { 
-        handleKeyDown, handleKeyUp, movePiece, continueMovement
-    } from '/src/utils/keyboardControls.js';
+// ============================================================================
+// COMPOSABLES
+// ============================================================================
 
-    import { 
-        drawSquare, showScoreOnCompletedLines, bonus, drawSquareWithBonus,
-    } from '/src/utils/draw.js';
+const gameState = useGameState();
+const audio = useGameAudio();
+const bonus = useBonus();
+const gameLoop = useGameLoop(gameState, bonus, audio);
 
-    import { createPlayer } from '/src/api/apiPlayer.js';
+// ============================================================================
+// REFS Y ESTADO LOCAL
+// ============================================================================
 
-    import {
-        startRemoveLineOneSound, startRemoveLineTwoSound, startRemoveLineThreeSound, startRemoveLineFourSound, startRemoveLineFiveSound,
-        startGameAudio,stopGameAudio , pauseGameAudio, startBonusSound, stopBonusSound, pauseBonusSound, setMusicVolume, setSoundVolume
-        // startRotateSound, 
-       
-        // startDropSound
-    } from '/src/utils/sounds.js';
+const canvas = ref(null);
+const context = ref(null);
+const player = ref(null);
+const hasName = ref(false);
 
-    import SwitchButton from './/components/SwitchButton.vue';
+// Estado de movimiento táctil
+const movementStates = {
+    isMovingleft: false,
+    isMovingright: false,
+    isMovingdown: false,
+    isMovingrotate: false,
+    isMovingspace: false,
+};
+let isTouching = false;
 
+// ============================================================================
+// LIFECYCLE
+// ============================================================================
+
+onMounted(() => {
+    initializeCanvas();
+    initializePlayer();
     
-    import { name } from '/src/utils/player.js';
-
-    import { PIECES_IMAGES} from '/src/utils/images.js';
-
-
-
+    // ✅ Inicializar pieza ANTES de empezar el loop
+    gameState.initializePiece();
     
+    setupEventListeners();
+    setupBrowserBehavior();
     
-    
-    // CONSTANTS    
-    const player = ref(null);
-    const hasName = ref(false);
-    
-    const emit = defineEmits(['gameOver', 'menu']);
+    // Iniciar el loop después de tener todo listo
+    gameLoop.startLoop(draw, handleAutoDrop);
+});
 
-    const menu = () => {
-        emit('menu')
+onBeforeUnmount(() => {
+    cleanup();
+});
+
+// ============================================================================
+// INICIALIZACIÓN
+// ============================================================================
+
+function initializeCanvas() {
+    canvas.value.width = BLOCK_SIZE * BOARD_WIDTH;
+    canvas.value.height = BLOCK_SIZE * BOARD_HEIGHT;
+    context.value = canvas.value.getContext('2d');
+    context.value.scale(BLOCK_SIZE, BLOCK_SIZE);
+}
+
+function initializePlayer() {
+    if (name) {
+        player.value = name;
+        hasName.value = true;
     }
+}
 
-    const pieces = ref(PIECES[difficulty.value]);
-
-    const canvas  = ref(null);
-    const context = ref(null);
-
-    const score = ref(0);
-    const newScore = ref(0);
-    const time = ref('00:00:00')
-
-    const board = createBoard(BOARD_WIDTH, BOARD_HEIGHT);
-    const isPaused = ref(true);
-    const isGameOver = ref(false);
-
-    const piece = reactive({
-        position: { x: 5, y: 5 },
-        matrix: {},
-    });
-
-// VARIABLES
-    let dropCounter = 0;
-    let animationFrameId;
+function setupEventListeners() {
+    const keyDownHandler = (event) => handleKeyDown(
+        event, 
+        gameState.board, 
+        gameState.piece, 
+        { solidifyPiece, removeLines, updateDropCounter: gameState.updateDropCounter }
+    );
     
-    let activeGameTime = 0; // Tiempo total de juego activo
-    let lastUpdateTime = 0; // Última vez que se actualizó el juego
+    window.addEventListener('keydown', keyDownHandler);
+    window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('blur', pause);
+}
 
-    let shouldShowScore = false;
-    let linePosition = -10;
-
-    let isGameSound = false;
-    let isBonusSound = false;
-    let soundPaused = null;
-
-    let piece_christmas = {};
+function setupBrowserBehavior() {
+    // Prevenir salida accidental
+    window.onbeforeunload = () => '¿Estás seguro de que deseas abandonar esta página?';
     
-    piece_christmas.matrix = [
-        [0, 0, 2, 0, 0],
-        [0, 2, 2, 2, 0],
-        [2, 2, 2, 2, 2],
-        [0, 0, 2, 0, 0],
-        [0, 0, 0, 0, 0],
-    ];
-    piece_christmas.color = 'christmas';
-
-    
-
-
-    const keyDownHandler = (event) => handleKeyDown(event, board, piece, { solidifyPiece, removeLines, updateDropCounter });  
-
-    onMounted(() => {
-        canvas.value.width = BLOCK_SIZE * BOARD_WIDTH;
-        canvas.value.height = BLOCK_SIZE * BOARD_HEIGHT;
-        context.value = canvas.value.getContext('2d');
-        context.value.scale(BLOCK_SIZE, BLOCK_SIZE);
-        [piece.matrix, piece.color] = getNewPiece(pieces.value, COLORS);
-        if (name){
-            player.value = name;
-            hasName.value = true;   
-        }
-        // piece.position = {x: 0 , y: 0}
-        // piece.matrix = piece_christmas.matrix;
-        // piece.color = piece_christmas.color;
-        startGame();
-        
-        
-        // window.addEventListener('keydown', handleKeyDown);
-        window.addEventListener('keydown', keyDownHandler);
-        window.addEventListener('keyup', handleKeyUp);
-
-        window.onbeforeunload = function() {
-            return '¿Estás seguro de que deseas abandonar esta página?';
-        };
-
-        window.addEventListener('blur', function() {
-            pause();
-        });
-
+    // Prevenir navegación atrás
+    history.pushState(null, null, document.URL);
+    window.addEventListener('popstate', () => {
         history.pushState(null, null, document.URL);
-            window.addEventListener('popstate', function () {
-            history.pushState(null, null, document.URL);
-        });
-
-       
     });
+}
 
-    onBeforeUnmount(() => {
-        window.cancelAnimationFrame(animationFrameId);
+function cleanup() {
+    gameLoop.stopLoop();
+    
+    window.removeEventListener('keydown', handleKeyDown);
+    window.removeEventListener('keyup', handleKeyUp);
+    window.removeEventListener('blur', pause);
+    window.removeEventListener('popstate', () => {});
+    window.onbeforeunload = null;
+}
 
-        window.removeEventListener('keydown', keyDownHandler);
-        window.removeEventListener('keyup', handleKeyUp);
+// ============================================================================
+// GAME LOGIC
+// ============================================================================
 
-        window.onbeforeunload = null; // Elimina el manejador de beforeunload
-        window.removeEventListener('blur', () => {
-            pause();
-        });
-        window.removeEventListener('popstate', () => {
-            history.pushState(null, null, document.URL);
+/**
+ * Solidifica la pieza actual en el tablero
+ */
+function solidifyPiece() {
+    gameState.piece.matrix.forEach((row, y) => {
+        row.forEach((value, x) => {
+            if (value > 0) {
+                const boardY = gameState.piece.position.y + y;
+                const boardX = gameState.piece.position.x + x;
+                const bonusValue = bonus.assignBonus(boardY);
+                
+                gameState.board[boardY][boardX] = {
+                    value,
+                    color: gameState.piece.color,
+                    bonus: bonusValue
+                };
+            }
         });
     });
-
-    // FUNCIONES    
-
-    const getTwoPieces = () => {
-        return  pieces.value[Math.floor(Math.random() * pieces.value.length)]
-        // return pieces.value[4]
+    
+    // Nueva pieza
+    gameState.initializePiece();
+    
+    // Verificar game over
+    if (checkCollision(gameState.board, gameState.piece)) {
+        endGame();
     }
+}
 
-    const updateDropCounter = () => {
-        dropCounter = 0;
-    };
+/**
+ * Remueve líneas completadas
+ */
+function removeLines() {
+    const result = bonus.processCompletedLines(gameState.board);
+    
+    if (result.lineCount === 0) return;
+    
+    // Procesar eliminación de líneas con animación
+    processLineRemoval(result.linePositions, result.totalBonus);
+}
 
-    const startGame = () => {
-        // Inicia el loop del juego
-        isPaused.value = false;
-        isGameOver.value = false;
-        animationFrameId = window.requestAnimationFrame(update);
-        // Añadir otros inicializadores aquí si es necesario
-        startGameAudio();
-        isGameSound = true;
-        rowsWithBonus = [];
-    }
-
-
-    const restartGame = () => {
-        // Restablecer puntuación y estados relacionados con el juego
-        score.value = 0;
-        newScore.value = 0;
-        activeGameTime = 0;
-        lastUpdateTime = 0;
-        dropCounter = 0;
-        shouldShowScore = false;
-        linePosition = 0;
-        rowsWithBonus = [];
-        // Restablecer el tablero a su estado inicial
-        board.splice(0, board.length, ...createBoard(BOARD_WIDTH, BOARD_HEIGHT));
-
-        // Restablecer la pieza actual
-        [piece.matrix, piece.color] = getNewPiece(pieces.value, COLORS);
-        piece.position.x = Math.floor((BOARD_WIDTH - piece.matrix[0].length) / 2);
-        piece.position.y = 0;
-
-        // Reiniciar el estado de pausa y finalización del juego
-        isPaused.value = false;
-        isGameOver.value = false;
-
-        // Iniciar el ciclo de animación del juego
-        animationFrameId = window.requestAnimationFrame(update);
-        startGameAudio();
-        
-        isGameSound = true;
-    };
-
-
-    const gameOver = () => {
-        isGameOver.value = true;
-        pause();
-        stopGameAudio();
-        if (hasName.value && score.value > 0) {
-            submitPlayerScore();
-        }
-    }
-
-    const submitPlayerScore = async () => {
-
-        if(!player.value){
+/**
+ * Procesa la eliminación de líneas una por una
+ */
+function processLineRemoval(linePositions, totalBonus) {
+    let currentLine = 0;
+    
+    function removeNextLine() {
+        if (currentLine >= linePositions.length) {
+            // Todas las líneas procesadas
+            if (totalBonus > 0) {
+                bonus.startBonusAnimation(
+                    40, 
+                    'X' + totalBonus, 
+                    totalBonus,
+                    () => audio.stopBonusAndResumeGame()
+                );
+                audio.playBonusSound();
+            }
+            
+            setTimeout(() => bonus.hideLineScore(), 1000);
             return;
         }
-        hasName.value = true;
-        try {
-            let newPlayer = { 
-                name: player.value,
-                score: score.value,
-                time: time.value,
-                difficulty: difficulty.value,
-            }
-            const response = await createPlayer(newPlayer);
-        } catch (error) {
-            console.error("Error al agregar el puntaje:", error);
-            // Manejar el error adecuadamente, por ejemplo, mostrar un mensaje al usuario
-        }
-    };
-
-    const update = (timestamp) => {
-        continueMovement(board, piece, movementStates, isTouching, { solidifyPiece, removeLines, updateDropCounter } );
         
-        if (!isPaused.value) {
-            if (lastUpdateTime === 0) {
-                lastUpdateTime = timestamp;
-            }
-
-            const deltaTime = timestamp - lastUpdateTime;
-            activeGameTime += deltaTime; // Incrementar solo el tiempo de juego activo
-
-            const secondsElapsed = Math.floor(activeGameTime / 1000);
-            time.value = formatTime(secondsElapsed);
-
-            dropCounter += deltaTime;
-            if (dropCounter > 1000) {
-                movePiece( board, piece, 'down', { solidifyPiece, removeLines });
-                dropCounter = 0;
-            }
-            draw(deltaTime);
-
-        }
-
-        lastUpdateTime = timestamp;
-
-        if (!isGameOver.value) {
-            animationFrameId = window.requestAnimationFrame(update);
-        }
-    };
-
-    let showBonus = false;
-    let timeBonus = 0;
-    let textBonus = '';
-    let multiplierBonus = 1;
-    let remainingBonusTime = 0;
-
-    const draw = (deltaTime) => {
-        // Dibuja el fondo del juego
-        context.value.fillStyle = 'black';
-        context.value.fillRect(0, 0, canvas.value.width, canvas.value.height);      
+        const y = linePositions[currentLine];
         
+        // Remover línea
+        bonus.removeLine(gameState.board, y);
         
-        // Dibuja el tablero y las piezas solidificadas
-        board.forEach((row, y) => {
-            row.forEach((cell, x) => {
-                if (cell.value > 0) {
-                    drawSquare(context.value, x, y, cell.color, 'gray', 0.05, 'black');
-                    if(cell.bonus > 0){
-                        let text = 'X' + cell.bonus;
-                        drawSquareWithBonus(context.value, x, y, text)
-                    }
-                    if (cell.color === 'ghost') {
-                        context.value.drawImage(PIECES_IMAGES.ghost, x, y, 1, 1);
-                    }
-                    if (cell.color === 'christmas') {
-                        context.value.drawImage(PIECES_IMAGES.christmas, x, y, 1, 1);
-                    }
-                }
-            });
-        });
+        // Calcular score
+        const multiplier = bonus.getMultiplier();
+        const lineScore = ((currentLine + 1) * BOARD_WIDTH) * (1 + (currentLine * 0.25)) * multiplier;
         
+        bonus.showLineScore(y, lineScore);
+        bonus.playLineSound(currentLine);
         
-        // Dibuja la pieza actual
-        piece.matrix.forEach((row, y) => {
-            row.forEach((value, x) => {
-                if (value > 0) {
-                    drawSquare(context.value, piece.position.x + x, piece.position.y + y, piece.color, piece.color , 0.06, 'black', showBonus, PIECES_IMAGES);
-                }
-            });
-        });
-
-      
-
-        if(shouldShowScore){
-            showScoreOnCompletedLines( context.value, newScore.value, linePosition)
-        } 
-
-        if (showBonus) {
-            remainingBonusTime = remainingBonusTime - deltaTime;
-            bonus(context.value, textBonus,remainingBonusTime, timeBonus);
+        // Actualizar score total en la última línea
+        if (currentLine === linePositions.length - 1) {
+            gameState.score.value += lineScore;
         }
-    };   
-
-    const pause = () => {
-        window.cancelAnimationFrame(animationFrameId);
-        isPaused.value = true;
-        if (isGameSound) {
-            pauseGameAudio();
-            soundPaused = 'game';
-            isGameSound = false;
-        }
-        if (isBonusSound) {
-            pauseBonusSound();
-            soundPaused = 'bonus';
-            isBonusSound = false;
-        }
-    };
+        
+        currentLine++;
+        setTimeout(removeNextLine, 400);
+    }
     
-    const togglePause = () => {
-        if (!isPaused.value) {
-            pause();
-        } else {
-            lastUpdateTime = performance.now();
-            animationFrameId = window.requestAnimationFrame(update);
-            isPaused.value = false;
-            if (soundPaused === 'game') {
-                startGameAudio();
-                isGameSound = true;
-            }
-            if (soundPaused === 'bonus') {
-                startBonusSound();
-                isBonusSound = true;
-            }
-            isGameSound = true;
-        }
-    };
-
-    let musicVolume = 1;
-
-   
-
-    const musicOff = () => {
-        musicVolume = 0;
-        setMusicVolume(musicVolume);
-    }
-
-    const musicOn = () => {
-        musicVolume = 1;
-        setMusicVolume(musicVolume);
-    }
-
-    let soundVolume = 1;
-
-    const soundOff = () => {
-        soundVolume = 0;
-        setSoundVolume(soundVolume);
-    }
-
-    const soundOn = () => {
-        soundVolume = 1;
-        setSoundVolume(soundVolume);
-    }
-   
-    let rowsWithBonus = [];
-
-    const solidifyPiece = () => {
-        piece.matrix.forEach((row, y) => {
-            row.forEach((value, x) => {
-                if (value > 0) {
-                    let bonus = 0;
-                    if(!rowsWithBonus.includes(piece.position.y+ y)){
-                        let random = (Math.random() * 100)
-                        bonus = (random < 8.2) ? 10 : 0;
-                        bonus = (random < 8) ? 5 : bonus;
-                        bonus = (random < 7) ? 4 : bonus;
-                        bonus = (random < 5.5) ? 3 : bonus;
-                        bonus = (random < 3.5) ? 2 : bonus;
-                        if (bonus > 0) {
-                            rowsWithBonus.push(piece.position.y+ y);
-                        }
-                    }
-                    board[piece.position.y + y][piece.position.x + x] = { value, color: piece.color, bonus: bonus };
-                }
-            });
-        });
-        [piece.matrix, piece.color] = getNewPiece(pieces.value, COLORS);
-        piece.position.y = 1;
-        piece.position.x = Math.floor((BOARD_WIDTH - piece.matrix[0].length) / 2);
-        
-         if (checkCollision(board, piece)) {
-            gameOver();
-        }
-    };
-
-
-
-    let countBonus = 0;
-
-    const removeLines = () => {
-        let lines = 0;
-        let linePositions = []; // Almacenará las posiciones de las líneas a eliminar
-        // Identificar todas las líneas completas
-        let newBonus = 0;
-        board.forEach((row, y) => {
-            if (row.every((cell) => cell.value > 0)) {
-                lines++;
-                linePositions.push(y);linePosition = y;
-                rowsWithBonus = rowsWithBonus.filter((row) => row !== y);
-           }
-
-            if (row.every((cell) => cell.value > 0) && row.some((cell) => cell.bonus > 0)) {
-            row.forEach((cell) => {
-                if (cell.bonus > 0) {
-                    countBonus += cell.bonus;
-                    newBonus++;
-                }
-            });
+    removeNextLine();
 }
-        });
 
-        shouldShowScore = true;
+/**
+ * Finaliza el juego
+ */
+function endGame() {
+    gameState.isGameOver.value = true;
+    pause();
+    audio.stopMusic();
+    
+    if (hasName.value && gameState.score.value > 0) {
+        submitPlayerScore();
+    }
+}
 
-        // Función para eliminar una línea y actualizar la puntuación
-        const removeLine = (lineIndex) => {
-            if (lineIndex < linePositions.length) {
-                const y = linePositions[lineIndex];
-                
-                board.splice(y, 1);
-                const newRow = Array.from({ length: BOARD_WIDTH }, () => ({ value: 0, color: null, bonus: 0 }));
-                board.unshift(newRow);
-
-                newScore.value = ((lineIndex + 1 ) * BOARD_WIDTH) * (1 + ((lineIndex) * 0.25) ) * multiplierBonus;
-                if (lineIndex === 0) {
-                    startRemoveLineOneSound();
-                } else if (lineIndex === 1) {
-                    startRemoveLineTwoSound();
-                } else if (lineIndex === 2) {
-                    startRemoveLineThreeSound();
-                } else if (lineIndex === 3) {
-                    startRemoveLineFourSound();
-                } else if (lineIndex === 4) {
-                    startRemoveLineFiveSound();
-                    // startBonus('45', 'X3', 3);
-                }
-                
-                if (lineIndex === linePositions.length - 1) { 
-                    score.value += newScore.value;
-                    if (newBonus > 0) {
-                        startBonus('40', 'X' + countBonus , countBonus);
-                    }
-
-                    setTimeout(() => {
-                        shouldShowScore = false;
-                        linePosition = -10;
-                    }, 1000);
-                }
-
-                // Llamar a la función de nuevo después de 0.400 segundos para la siguiente línea
-                setTimeout(() => removeLine(lineIndex + 1), 400);
-            }
+/**
+ * Envía el puntaje del jugador al servidor
+ */
+async function submitPlayerScore() {
+    if (!player.value) return;
+    
+    hasName.value = true;
+    
+    try {
+        const newPlayer = {
+            name: player.value,
+            score: gameState.score.value,
+            time: gameState.time.value,
+            difficulty: DIFFICULTY.value,
         };
+        
+        await createPlayer(newPlayer);
+    } catch (error) {
+        console.error("Error al agregar el puntaje:", error);
+    }
+}
 
-        // Iniciar la eliminación de líneas
-        removeLine(0);
-    };
+/**
+ * Reinicia el juego
+ */
+function restartGame() {
+    gameState.resetGameState();
+    bonus.resetBonus();
+    gameLoop.startLoop(draw, handleAutoDrop); 
+}
 
-    let countSetTimeout = 0;
-    function startBonus(time = 20, text = 'X2', multiplier = 2 ){
-        countSetTimeout++;
+function handleAutoDrop() {
+    movePiece(
+        gameState.board, 
+        gameState.piece, 
+        DIRECTIONS.DOWN, 
+        { solidifyPiece, removeLines }
+    );
+}
 
-        textBonus = text;
-        multiplierBonus = multiplier;
-        showBonus = true;
-        timeBonus = remainingBonusTime = time * 1000;
-        pauseGameAudio();
-        isGameSound = false;
-        startBonusSound();
-        isBonusSound = true;
-        setTimeout(() => {
-            countSetTimeout--;
-           if(countSetTimeout === 0){
-                startGameAudio();
-                isGameSound = true;
-                stopBonusSound();
-                isBonusSound = false;
-                showBonus = false;
-                textBonus = '';
-                multiplierBonus = 1;
-                countBonus = 0;
-            }
-         }, timeBonus);
+// ============================================================================
+// CONTROLES
+// ============================================================================
+
+function pause() {
+    gameLoop.pauseLoop();
+}
+
+function togglePause() {
+    if (!gameState.isPaused.value) {
+        pause();
+    } else {
+        gameLoop.resumeLoop(draw, handleAutoDrop);
+    }
+}
+
+function menu() {
+    emit('menu');
+}
+
+function startMovement(direction) {
+    movementStates[`isMoving${direction}`] = true;
+    isTouching = true;
+}
+
+function stopMovement(direction) {
+    movementStates[`isMoving${direction}`] = false;
+    isTouching = Object.values(movementStates).some(value => value);
+}
+
+// ============================================================================
+// RENDERIZADO
+// ============================================================================
+
+/**
+ * Dibuja el estado actual del juego
+ */
+function draw(deltaTime) {
+    // ✅ Validar que el context esté disponible
+    if (!context.value || !canvas.value) {
+        console.warn('Canvas context no disponible');
+        return;
     }
     
-    const isMusicOn = ref(true);
-    const isSoundsOn = ref(true);
-
-    watch(isMusicOn, (newValue) => {
-      if (newValue) {
-        musicOn();
-      } else {
-        musicOff();
-      }
+    // Fondo
+    context.value.fillStyle = 'black';
+    context.value.fillRect(0, 0, canvas.value.width, canvas.value.height);
+    
+    // Tablero
+    gameState.board.forEach((row, y) => {
+        row.forEach((cell, x) => {
+            if (cell.value > 0) {
+                drawSquare(context.value, x, y, cell.color, 'gray', 0.05, 'black');
+                
+                if (cell.bonus > 0) {
+                    drawSquareWithBonus(context.value, x, y, 'X' + cell.bonus);
+                }
+                
+                if (cell.color === 'ghost') {
+                    context.value.drawImage(PIECES_IMAGES.ghost, x, y, 1, 1);
+                }
+                
+                if (cell.color === 'christmas') {
+                    context.value.drawImage(PIECES_IMAGES.christmas, x, y, 1, 1);
+                }
+            }
+        });
     });
-
-    watch(isSoundsOn, (newValue) => {
-      if (newValue) {
-        soundOn();
-      } else {
-        soundOff();
-      }
-    });
-
-    let movementStates = {
-        isMovingleft: false,
-        isMovingright: false,
-        isMovingdown: false,
-        isMovingrotate: false,
-        isMovingspace: false,
-    };
-
-    let isTouching = false;
-
-    function startMovement(direction) {
-        movementStates[`isMoving${direction}`] = true;
-        isTouching = true;
+    
+    // Pieza actual
+    if (gameState.piece?.matrix) {
+        gameState.piece.matrix.forEach((row, y) => {
+            row.forEach((value, x) => {
+                if (value > 0) {
+                    drawSquare(
+                        context.value,
+                        gameState.piece.position.x + x,
+                        gameState.piece.position.y + y,
+                        gameState.piece.color,
+                        gameState.piece.color,
+                        0.06,
+                        'black',
+                        bonus.showBonus.value,
+                        PIECES_IMAGES
+                    );
+                }
+            });
+        });
     }
-
-    function stopMovement(direction) {
-        movementStates[`isMoving${direction}`] = false;
-        isTouching = Object.values(movementStates).some(value => value);
+    
+    // Score en líneas completadas
+    if (bonus.showScoreOnLine.value) {
+        showScoreOnCompletedLines(context.value, bonus.newScore.value, bonus.linePosition.value);
     }
-
-
-   
-
-
+    
+    // Bonus animation
+    if (bonus.showBonus.value) {
+        bonus.remainingBonusTime.value -= deltaTime;
+        drawBonus(
+            context.value,
+            bonus.textBonus.value,
+            bonus.remainingBonusTime.value,
+            bonus.timeBonus.value
+        );
+    }
+    
+    // Movimiento continuo (táctil)
+    continueMovement(
+        gameState.board,
+        gameState.piece,
+        movementStates,
+        isTouching,
+        { solidifyPiece, removeLines, updateDropCounter: gameState.updateDropCounter }
+    );
+}
 </script>
 
 <template>
     <!-- CONTENEDOR PRINCIPAL -->
     <div class="grid justify-center">
 
-        <!-- SCORE AND TIME -->
+        <!-- SCORE AND TIME - MOBILE -->
         <article v-if="ISMOBILE" class="shadow rounded py-2">
             <div class="flex justify-between w-screen px-4">
                 <!-- SCORE-->
-                <div class="p-1 border-4 border-shine rounded-xl relative w-32 mt-4 text-center bg-gradient-to-r from-blue-600 to-blue-800 grid items-center">
-                    <span class="absolute top-0 -mt-4 font-bold left-0 right-0 mx-auto select-none">Puntaje</span>
-                    <span class="text-3xl font-extrabold">{{ score }}</span>
+                <div class="score-display">
+                    <span class="score-label">Puntaje</span>
+                    <span class="score-value">{{ gameState.score.value }}</span>
                 </div>
                 <!-- TIME -->
-                <div class="p-2 border-4 border-shine rounded-xl relative w-32 mt-4 text-center bg-gradient-to-r from-blue-600 to-blue-800 grid items-center">
-                    <span class="absolute top-0 -mt-4 font-bold left-0 right-0 mx-auto select-none">Tiempo</span>
-                    <span class="text-xl font-bold">{{ time }}</span>
+                <div class="time-display">
+                    <span class="time-label">Tiempo</span>
+                    <span class="time-value">{{ gameState.time.value }}</span>
                 </div>
             </div>
         </article>        
 
         <div class="flex gap-4">
+            <!-- SCORE - DESKTOP -->
             <div v-if="!ISMOBILE">
-                <!-- SCORE-->
-                <div class="p-1 border-4 border-shine rounded-xl relative w-32 mt-4 text-center bg-gradient-to-r from-blue-600 to-blue-800 grid items-center">
-                    <span class="absolute top-0 -mt-4 font-bold left-0 right-0 mx-auto ">Puntaje</span>
-                    <span class="text-3xl font-extrabold">{{ score }}</span>
+                <div class="score-display">
+                    <span class="score-label">Puntaje</span>
+                    <span class="score-value">{{ gameState.score.value }}</span>
                 </div>
+                <!-- ⭐ NUEVO: Próxima pieza (desktop) -->
+                <NextPiecePreview :nextPiece="gameState.nextPiece" />
             </div> 
+            
             <!-- CANVAS -->
             <article class="grid justify-center mt-2 w-full" :style="{ height: HEIGHT_CANVAS + 'px' }">
-                <div class="" >
-                    <canvas class="border-shine rounded-xl  bg-blue-400" ref="canvas"></canvas>
+                <div>
+                    <canvas class="border-shine rounded-xl bg-blue-400" ref="canvas"></canvas>
                 </div>
             </article>
+            
+            <!-- TIME - DESKTOP -->
             <div v-if="!ISMOBILE">
-                <!-- TIME -->
                 <div class="grid gap-4">
-                    <div class="p-2 border-4 border-shine rounded-xl relative w-32 mt-4 text-center bg-gradient-to-r from-blue-600 to-blue-800 grid items-center">
-                        <span class="absolute top-0 -mt-4 font-bold left-0 right-0 mx-auto t">Tiempo</span>
-                        <span class="text-xl font-bold">{{ time }}</span>
+                    <div class="time-display">
+                        <span class="time-label">Tiempo</span>
+                        <span class="time-value">{{ gameState.time.value }}</span>
                     </div>
-                    <button @click="togglePause" class="w-32 p-2 rounded-xl deep-button border-shine" style="font-size: 12px;">OPCIONES</button>
+                    <button 
+                        @click="togglePause" 
+                        class="w-32 p-2 rounded-xl deep-button border-shine" 
+                        style="font-size: 12px;"
+                    >
+                        OPCIONES
+                    </button>
                 </div>
             </div>
         </div>
-        <!-- JOYSTICK -->
-        <article v-if="ISMOBILE" id="buttons_movil" class=" flex justify-between items-stretch my-5 gap-4 px-4 select-none">
+
+        <article v-if="ISMOBILE" class="mobile-next-piece">
+            <NextPiecePreview :nextPiece="gameState.nextPiece" />
+        </article>
+        
+        <!-- JOYSTICK - MOBILE -->
+        <article 
+            v-if="ISMOBILE" 
+            id="buttons_movil" 
+            class="flex justify-between items-stretch my-5 gap-4 px-4 select-none"
+            @contextmenu.prevent
+        >
             <div class="h-50 w-50">
                 <div class="flex-between">
-                    <button  @touchstart="startMovement(DIRECTIONS.LEFT)"  @touchend="stopMovement(DIRECTIONS.LEFT)" class="text-7xl deep-button rotate-90 w-20 h-20 rounded-full border-shine">▼</button>
-                    <button  @touchstart="startMovement(DIRECTIONS.RIGHT)" @touchend="stopMovement(DIRECTIONS.RIGHT)"  class="text-7xl deep-button rotate-90 ml-[3rem] w-20 h-20 rounded-full border-shine">▲</button>
-                </div>
-                <div class="grid justify-center -mt-4">
-                    <button @touchstart="startMovement(DIRECTIONS.DOWN)" @touchend="stopMovement(DIRECTIONS.DOWN)" class="text-7xl deep-button w-20 h-20 rounded-full border-shine">▼ </button>
-                </div>
-            </div>
-            <div class="grid content-between justify-end">
-                <button @click="togglePause" class="w-16 h-6 rounded-xl deep-button border-shine -ml-4" style="font-size: 12px;">OPCIONES</button>
-                <div class="ml-12">
-                    <button @touchstart="startMovement('space')" @touchend="stopMovement('space')" class="rounded-full deep-button w-12 h-12 border-shine grid" style="">
-                        <span class="mt-1">▼</span><span class="-mt-4">▼</span>
+                    <button  
+                        @touchstart.prevent="startMovement(DIRECTIONS.LEFT)"  
+                        @touchend.prevent="stopMovement(DIRECTIONS.LEFT)"
+                        @mousedown.prevent="startMovement(DIRECTIONS.LEFT)"
+                        @mouseup="stopMovement(DIRECTIONS.LEFT)"
+                        @mouseleave="stopMovement(DIRECTIONS.LEFT)"
+                        @contextmenu.prevent
+                        class="joystick-button rotate-90"
+                        aria-label="Mover izquierda"
+                    >
+                        ▼
+                    </button>
+                    
+                    <button  
+                        @touchstart.prevent="startMovement(DIRECTIONS.RIGHT)" 
+                        @touchend.prevent="stopMovement(DIRECTIONS.RIGHT)"
+                        @mousedown.prevent="startMovement(DIRECTIONS.RIGHT)"
+                        @mouseup="stopMovement(DIRECTIONS.RIGHT)"
+                        @mouseleave="stopMovement(DIRECTIONS.RIGHT)"
+                        @contextmenu.prevent
+                        class="joystick-button rotate-90 ml-[3rem]"
+                        aria-label="Mover derecha"
+                    >
+                        ▲
                     </button>
                 </div>
-                <button @touchstart="startMovement(DIRECTIONS.ROTATE)" @touchend="stopMovement(DIRECTIONS.ROTATE)" class="rounded-full deep-button w-16 h-16 border-shine rotate-180 grid -ml-4" style="font-size: 35px;">↻</button>
+                <div class="grid justify-center -mt-4">
+                    <button 
+                        @touchstart.prevent="startMovement(DIRECTIONS.DOWN)" 
+                        @touchend.prevent="stopMovement(DIRECTIONS.DOWN)"
+                        @mousedown.prevent="startMovement(DIRECTIONS.DOWN)"
+                        @mouseup="stopMovement(DIRECTIONS.DOWN)"
+                        @mouseleave="stopMovement(DIRECTIONS.DOWN)"
+                        @contextmenu.prevent
+                        class="joystick-button"
+                        aria-label="Mover abajo"
+                    >
+                        ▼
+                    </button>
+                </div>
+            </div>
+            
+            <div class="grid content-between justify-end">
+                <button 
+                    @click="togglePause" 
+                    class="w-16 h-6 rounded-xl deep-button border-shine -ml-4" 
+                    style="font-size: 12px;"
+                >
+                    OPCIONES
+                </button>
+                
+                <div class="ml-12">
+                    <button 
+                        @touchstart.prevent="startMovement('space')" 
+                        @touchend.prevent="stopMovement('space')"
+                        @mousedown.prevent="startMovement('space')"
+                        @mouseup="stopMovement('space')"
+                        @mouseleave="stopMovement('space')"
+                        @contextmenu.prevent
+                        class="joystick-button-small grid"
+                        aria-label="Caída rápida"
+                    >
+                        <span class="mt-1">▼</span>
+                        <span class="-mt-4">▼</span>
+                    </button>
+                </div>
+                
+                <button 
+                    @touchstart.prevent="startMovement(DIRECTIONS.ROTATE)" 
+                    @touchend.prevent="stopMovement(DIRECTIONS.ROTATE)"
+                    @mousedown.prevent="startMovement(DIRECTIONS.ROTATE)"
+                    @mouseup="stopMovement(DIRECTIONS.ROTATE)"
+                    @mouseleave="stopMovement(DIRECTIONS.ROTATE)"
+                    @contextmenu.prevent
+                    class="joystick-button-large rotate-180 grid -ml-4" 
+                    aria-label="Rotar pieza"
+                >
+                    ↻
+                </button>
             </div>
         </article>            
-        
     </div>
 
     <!-- MODALES -->
     <div>
-        <!-- MODAL PAUSA-->
-        <article v-if="isPaused && !isGameOver">
-            <div class="w-screen h-screen absolute bg-gray-800 opacity-90 z-10 left-0 top-0 ">
-            </div>
-            <div class="absolute left-0 top-0 h-full w-full z-10 grid items-center justify-center">
-                <!-- titulo opciones -->
-                <h2 class="font-bold text-3xl text-gray-300 text-center mb-4 p-4 ">OPCIONES</h2>
+        <!-- MODAL PAUSA -->
+        <article v-if="gameState.isPaused.value && !gameState.isGameOver.value">
+            <div class="modal-overlay"></div>
+            <div class="modal-container">
+                <h2 class="modal-title">OPCIONES</h2>
                 
-                <div class="grid gap-6 shadow border p-4 rounded-xl text-sm bg-gradient-to-r from-gray-400 to-gray-500 border-shine">
-                    <div class="grid grid-cols-2 gap-4 items-center text-xl">
-                        <p class=" font-bold uppercase">Dificultad</p>
-                        <div class="text-right ">
-                            <p v-if="difficulty == DIFFICULTY.EASY" >FACIL</p>
-                            <p v-if="difficulty == DIFFICULTY.MEDIUM">MEDIA</p>
-                            <p v-if="difficulty == DIFFICULTY.HARD">DIFICIL</p>
+                <div class="options-panel">
+                    <!-- Dificultad -->
+                    <div class="option-row">
+                        <p class="option-label">Dificultad</p>
+                        <div class="option-value">
+                            <p v-if="DIFFICULTY.value === 'EASY'">FÁCIL</p>
+                            <p v-if="DIFFICULTY.value === 'MEDIUM'">MEDIA</p>
+                            <p v-if="DIFFICULTY.value === 'HARD'">DIFÍCIL</p>
                         </div>
                     </div>
-                      <!-- music on off -->
-                    <div class="flex items-center justify-between gap-4 text-xl">
-                        <p class="text-center font-bold uppercase">MUSICA</p>
-                        <SwitchButton v-model="isMusicOn" class=" p-2 rounded-xl border-shine flex gap-4 items-center justify-between" :class="{'bg-green-500': isMusicOn, 'bg-red-500':!isMusicOn}"/>
-                    </div>
-                    <div class="flex items-center justify-between gap-4 text-xl">
-                        <p class="text-center font-bold uppercase">SONIDOS</p>
-                        <SwitchButton v-model="isSoundsOn" class=" p-2 rounded-xl border-shine flex gap-4 items-center justify-between" :class="{'bg-green-500': isSoundsOn, 'bg-red-500':!isSoundsOn}"/>
+                    
+                    <!-- Música -->
+                    <div class="option-row">
+                        <p class="option-label">MÚSICA</p>
+                        <SwitchButton 
+                            v-model="audio.isMusicOn.value" 
+                            class="switch-container"
+                            :class="{'bg-green-500': audio.isMusicOn.value, 'bg-red-500': !audio.isMusicOn.value}"
+                        />
                     </div>
                     
+                    <!-- Sonidos -->
+                    <div class="option-row">
+                        <p class="option-label">SONIDOS</p>
+                        <SwitchButton 
+                            v-model="audio.isSoundsOn.value" 
+                            class="switch-container"
+                            :class="{'bg-green-500': audio.isSoundsOn.value, 'bg-red-500': !audio.isSoundsOn.value}"
+                        />
+                    </div>
                 </div>
-                
 
-                <article class="flex gap-4 flex-col items-center justify-center">
+                <article class="modal-buttons">
                     <div class="flex gap-4 flex-col md:flex-row">
-                        <button @click="togglePause" class="text-xl md:text-2xl border rounded-2xl p-4 w-72 md:w-[17rem] bg-gradient-to-r from-green-600 to-green-800  border-shine font-extrabold" >CONTINUAR</button>
-                        <button @click="menu" class="text-xl md:text-2xl border rounded-2xl p-4 w-72 md:w-[17rem] bg-gradient-to-r from-red-600 to-red-800 border-shine font-extrabold">SALIR</button>
+                        <button 
+                            @click="togglePause" 
+                            class="modal-button bg-gradient-to-r from-green-600 to-green-800"
+                        >
+                            CONTINUAR
+                        </button>
+                        <button 
+                            @click="menu" 
+                            class="modal-button bg-gradient-to-r from-red-600 to-red-800"
+                        >
+                            SALIR
+                        </button>
                     </div>
                 </article>
-
-
-
             </div>
         </article>
 
-        <!--MODAL GAME OVER -->
-        <article v-if="isGameOver">
-            <div class="w-screen h-screen absolute bg-gray-800 opacity-90 z-10 left-0 top-0 ">
-            </div>
-            <div class="absolute left-0 top-0 h-full w-full z-10 grid items-center justify-center">
-                <!-- titulo opciones -->
-                <h2 class="font-bold text-3xl text-gray-300 text-center mb-4 p-4 ">GAME OVER</h2>
+        <!-- MODAL GAME OVER -->
+        <article v-if="gameState.isGameOver.value">
+            <div class="modal-overlay"></div>
+            <div class="modal-container">
+                <h2 class="modal-title">GAME OVER</h2>
                 
-                <div class="grid gap-8 shadow border p-4 py-8 rounded-xl text-sm bg-gradient-to-r from-blue-600 to-blue-800 border-shine">
-                    <div class="grid justify-center gap-4 items-center text-xl">
-                        <p class="text-center font-bold uppercase">Puntaje</p>
-                        <div class="text-center font-bold text-5xl">
-                            <p>{{ score }}</p>
+                <div class="gameover-panel">
+                    <!-- Score -->
+                    <div class="gameover-score">
+                        <p class="gameover-label">Puntaje</p>
+                        <div class="gameover-value">
+                            <p>{{ gameState.score.value }}</p>
                         </div>
                     </div>
-                    <!-- NOMBRE -->
-                    <div  v-if="!hasName"  class="grid justify-center gap-4 items-center text-xl">
-                        <p class="font-bold uppercase text-center">Ingresa tu Nombre</p>
-                        <div class="text-center ">
-                            <input v-model="player" class="text-center text-orange-500 border-2 border-shine rounded-xl w-72 bg-gradient-to-r from-yellow-100 to-orange-100 border-shine font-extrabold p-2" type="text" placeholder="Ingresa Nombre">
+                    
+                    <!-- Input Nombre -->
+                    <div v-if="!hasName" class="gameover-name-input">
+                        <p class="gameover-label">Ingresa tu Nombre</p>
+                        <div class="text-center">
+                            <input 
+                                v-model="player" 
+                                class="name-input"
+                                type="text" 
+                                placeholder="Ingresa Nombre"
+                                maxlength="20"
+                            >
                         </div>
                         <div class="flex justify-center gap-4 mt-4">
-                            <button @click="submitPlayerScore" class="text-xl md:text-2xl border rounded-2xl p-3 w-72 md:w-[17rem] bg-gradient-to-r from-green-600 to-green-800  border-shine font-extrabold" >OK</button>
+                            <button 
+                                @click="submitPlayerScore" 
+                                class="modal-button bg-gradient-to-r from-green-600 to-green-800"
+                            >
+                                OK
+                            </button>
                         </div>
                     </div>
-                    <div  v-else class="grid justify-center gap-4 items-center text-xl">
-                        <p class="font-bold uppercase text-center">Nombre</p>
-                        <div class="p-4 text-5xl text-center font-bold">
+                    
+                    <!-- Mostrar Nombre -->
+                    <div v-else class="gameover-name-display">
+                        <p class="gameover-label">Nombre</p>
+                        <div class="gameover-name-value">
                             {{ player }}
                         </div>
                     </div>
                 </div>
 
-                <article v-if="hasName" class="flex gap-4 flex-col items-center justify-center">
-                    <button @click="menu" class="text-xl md:text-2xl border rounded-2xl p-3 w-72 md:w-[35rem] bg-gradient-to-r from-red-600 to-red-800 border-shine font-extrabold" >IR AL MENU</button>
-                    <button @click="restartGame" class="text-xl md:text-2xl border rounded-2xl p-3 w-72 md:w-[35rem] bg-gradient-to-r from-green-600 to-green-800  border-shine font-extrabold" >VOLVER A JUGAR</button>
+                <article v-if="hasName" class="modal-buttons">
+                    <button 
+                        @click="menu" 
+                        class="modal-button-full bg-gradient-to-r from-red-600 to-red-800"
+                    >
+                        IR AL MENÚ
+                    </button>
+                    <button 
+                        @click="restartGame" 
+                        class="modal-button-full bg-gradient-to-r from-green-600 to-green-800"
+                    >
+                        VOLVER A JUGAR
+                    </button>
                 </article>
-
             </div>
         </article>
     </div>
 </template>
 
 <style scoped>
-.deep-button {
-  background: linear-gradient(145deg,   lightgray, white,white, lightgray);
- 
-  box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.4), 
-              inset 1px 1px 5px rgba(255, 255, 255, 0.7), 
-              inset -1px -1px 5px rgba(0, 0, 0, 0.4);
-  color: #333;
-  cursor: pointer;
-  font-size: 16px;
-  text-align: center;
-  transition: all 0.3s ease;
-  user-select: none; /* Evita que el texto del botón se seleccione */
-  color: black;
-  font-weight: 700;
+/* ============================================================================
+   BOTONES 3D - Usar clase .deep-button directamente en el template
+   ============================================================================ */
+
+/* ============================================================================
+   DISPLAYS DE SCORE Y TIEMPO
+   ============================================================================ */
+.score-display,
+.time-display {
+    @apply p-2 border-4 rounded-xl relative w-32 mt-4 text-center bg-gradient-to-r from-blue-600 to-blue-800 grid items-center;
+    /* Aplicar border-shine manualmente */
+    border-color: rgba(255, 255, 255, 0.8);
+    box-shadow: 
+      0 0 10px rgba(255, 255, 255, 0.3),
+      inset 0 0 5px rgba(255, 255, 255, 0.2);
 }
 
-.deep-button:hover {
-  box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.4), 
-              inset 1px 1px 5px rgba(255, 255, 255, 0.7), 
-              inset -1px -1px 5px rgba(0, 0, 0, 0.4);
+.score-label,
+.time-label {
+    @apply absolute top-0 -mt-4 font-bold left-0 right-0 mx-auto select-none;
 }
 
-.deep-button-exit {
-  background: linear-gradient(145deg, #b62828, #fd0101);
-  box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.4), 
-              inset 1px 1px 5px rgba(255, 255, 255, 0.7), 
-              inset -1px -1px 5px rgba(0, 0, 0, 0.4);
-  color: #333;
-  cursor: pointer;
-  font-size: 16px;
-  text-align: center;
-  transition: all 0.3s ease;
-  user-select: none; /* Evita que el texto del botón se seleccione */
-  color: black;
-  font-weight: 700;
+.score-value {
+    @apply text-3xl font-extrabold;
 }
 
-.deep-button:active {
-  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.4), 
-              inset 1px 1px 5px rgba(255, 255, 255, 0.7);
-
+.time-value {
+    @apply text-xl font-bold;
 }
 
+/* ============================================================================
+   JOYSTICK BUTTONS
+   ============================================================================ */
+.joystick-button {
+    @apply text-7xl w-20 h-20 rounded-full;
+    /* deep-button styles */
+    background: linear-gradient(145deg, lightgray, white, white, lightgray);
+    box-shadow: 
+      5px 5px 15px rgba(0, 0, 0, 0.4), 
+      inset 1px 1px 5px rgba(255, 255, 255, 0.7), 
+      inset -1px -1px 5px rgba(0, 0, 0, 0.4);
+    color: #333;
+    cursor: pointer;
+    font-weight: 700;
+    user-select: none;
+    transition: all 0.3s ease;
+    /* border-shine */
+    border: 4px solid rgba(255, 255, 255, 0.8);
+}
+
+.joystick-button:hover {
+    box-shadow: 
+      5px 5px 15px rgba(0, 0, 0, 0.4), 
+      inset 1px 1px 5px rgba(255, 255, 255, 0.7), 
+      inset -1px -1px 5px rgba(0, 0, 0, 0.4);
+}
+
+.joystick-button:active {
+    box-shadow: 
+      inset 2px 2px 5px rgba(0, 0, 0, 0.4), 
+      inset 1px 1px 5px rgba(255, 255, 255, 0.7);
+}
+
+.joystick-button-small {
+    @apply rounded-full w-12 h-12;
+    background: linear-gradient(145deg, lightgray, white, white, lightgray);
+    box-shadow: 
+      5px 5px 15px rgba(0, 0, 0, 0.4), 
+      inset 1px 1px 5px rgba(255, 255, 255, 0.7), 
+      inset -1px -1px 5px rgba(0, 0, 0, 0.4);
+    color: #333;
+    cursor: pointer;
+    font-weight: 700;
+    user-select: none;
+    border: 4px solid rgba(255, 255, 255, 0.8);
+}
+
+.joystick-button-large {
+    @apply rounded-full w-16 h-16 text-4xl;
+    background: linear-gradient(145deg, lightgray, white, white, lightgray);
+    box-shadow: 
+      5px 5px 15px rgba(0, 0, 0, 0.4), 
+      inset 1px 1px 5px rgba(255, 255, 255, 0.7), 
+      inset -1px -1px 5px rgba(0, 0, 0, 0.4);
+    color: #333;
+    cursor: pointer;
+    font-weight: 700;
+    user-select: none;
+    border: 4px solid rgba(255, 255, 255, 0.8);
+}
+
+/* ============================================================================
+   MODALES
+   ============================================================================ */
+.modal-overlay {
+    @apply w-screen h-screen absolute bg-gray-800 opacity-90 z-10 left-0 top-0;
+}
+
+.modal-container {
+    @apply absolute left-0 top-0 h-full w-full z-10 grid items-center justify-center;
+}
+
+.modal-title {
+    @apply font-bold text-3xl text-gray-300 text-center mb-4 p-4;
+}
+
+/* ============================================================================
+   PANEL DE OPCIONES
+   ============================================================================ */
+.options-panel {
+    @apply grid gap-6 shadow border p-4 rounded-xl text-sm bg-gradient-to-r from-gray-400 to-gray-500;
+    border-color: rgba(255, 255, 255, 0.8);
+    box-shadow: 
+      0 0 10px rgba(255, 255, 255, 0.3),
+      inset 0 0 5px rgba(255, 255, 255, 0.2);
+}
+
+.option-row {
+    @apply grid grid-cols-2 gap-4 items-center text-xl;
+}
+
+.option-label {
+    @apply font-bold uppercase;
+}
+
+.option-value {
+    @apply text-right;
+}
+
+.switch-container {
+    @apply p-2 rounded-xl flex gap-4 items-center justify-between;
+    border-color: rgba(255, 255, 255, 0.8);
+    box-shadow: 
+      0 0 10px rgba(255, 255, 255, 0.3),
+      inset 0 0 5px rgba(255, 255, 255, 0.2);
+}
+
+/* ============================================================================
+   BOTONES DE MODAL
+   ============================================================================ */
+.modal-buttons {
+    @apply flex gap-4 flex-col items-center justify-center;
+}
+
+.modal-button {
+    @apply text-xl md:text-2xl border rounded-2xl p-4 w-72 md:w-[17rem] font-extrabold;
+    border-color: rgba(255, 255, 255, 0.8);
+    box-shadow: 
+      0 0 10px rgba(255, 255, 255, 0.3),
+      inset 0 0 5px rgba(255, 255, 255, 0.2);
+}
+
+.modal-button-full {
+    @apply text-xl md:text-2xl border rounded-2xl p-3 w-72 md:w-[35rem] font-extrabold;
+    border-color: rgba(255, 255, 255, 0.8);
+    box-shadow: 
+      0 0 10px rgba(255, 255, 255, 0.3),
+      inset 0 0 5px rgba(255, 255, 255, 0.2);
+}
+
+/* ============================================================================
+   GAME OVER PANEL
+   ============================================================================ */
+.gameover-panel {
+    @apply grid gap-8 shadow border p-4 py-8 rounded-xl text-sm bg-gradient-to-r from-blue-600 to-blue-800;
+    border-color: rgba(255, 255, 255, 0.8);
+    box-shadow: 
+      0 0 10px rgba(255, 255, 255, 0.3),
+      inset 0 0 5px rgba(255, 255, 255, 0.2);
+}
+
+.gameover-score {
+    @apply grid justify-center gap-4 items-center text-xl;
+}
+
+.gameover-label {
+    @apply text-center font-bold uppercase;
+}
+
+.gameover-value {
+    @apply text-center font-bold text-5xl;
+}
+
+.gameover-name-input {
+    @apply grid justify-center gap-4 items-center text-xl;
+}
+
+.name-input {
+    @apply text-center text-orange-500 rounded-xl w-72 bg-gradient-to-r from-yellow-100 to-orange-100 font-extrabold p-2;
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 
+      0 0 10px rgba(255, 255, 255, 0.3),
+      inset 0 0 5px rgba(255, 255, 255, 0.2);
+}
+
+.gameover-name-display {
+    @apply grid justify-center gap-4 items-center text-xl;
+}
+
+.gameover-name-value {
+    @apply p-4 text-5xl text-center font-bold;
+}
+
+.desktop-left-panel {
+    @apply flex flex-col gap-4;
+}
+
+.mobile-next-piece {
+    @apply flex justify-center mt-4 px-4;
+}
 </style>

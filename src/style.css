@@ -2,15 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================================
+   VARIABLES GLOBALES
+   ============================================================================ */
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
   color-scheme: dark light;
   color: rgba(255, 255, 255, 0.87);
   background-color: #242424;
-
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -18,3 +19,175 @@
   -webkit-text-size-adjust: 100%;
 }
 
+/* ============================================================================
+   UTILIDADES PERSONALIZADAS
+   ============================================================================ */
+
+@layer utilities {
+  /* Borde brillante con efecto de brillo */
+  .border-shine {
+    border-color: rgba(255, 255, 255, 0.8);
+    box-shadow: 
+      0 0 10px rgba(255, 255, 255, 0.3),
+      inset 0 0 5px rgba(255, 255, 255, 0.2);
+  }
+
+  /* Variantes de brillo */
+  .border-shine-strong {
+    border-color: rgba(255, 255, 255, 1);
+    box-shadow: 
+      0 0 20px rgba(255, 255, 255, 0.5),
+      inset 0 0 10px rgba(255, 255, 255, 0.3);
+  }
+
+  .border-shine-soft {
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow: 
+      0 0 5px rgba(255, 255, 255, 0.2),
+      inset 0 0 3px rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* ============================================================================
+   COMPONENTES PERSONALIZADOS
+   ============================================================================ */
+
+@layer components {
+  /* Botón con efecto 3D profundo */
+  .deep-button {
+    background: linear-gradient(145deg, lightgray, white, white, lightgray);
+    box-shadow: 
+      5px 5px 15px rgba(0, 0, 0, 0.4), 
+      inset 1px 1px 5px rgba(255, 255, 255, 0.7), 
+      inset -1px -1px 5px rgba(0, 0, 0, 0.4);
+    color: #333;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    user-select: none;
+  }
+
+  .deep-button:hover {
+    box-shadow: 
+      5px 5px 15px rgba(0, 0, 0, 0.4), 
+      inset 1px 1px 5px rgba(255, 255, 255, 0.7), 
+      inset -1px -1px 5px rgba(0, 0, 0, 0.4);
+  }
+
+  .deep-button:active {
+    box-shadow: 
+      inset 2px 2px 5px rgba(0, 0, 0, 0.4), 
+      inset 1px 1px 5px rgba(255, 255, 255, 0.7);
+  }
+
+  /* Texto brillante animado */
+  .shining {
+    background: linear-gradient(
+      90deg,
+      #fff,
+      #fff 40%,
+      #0ff 50%,
+      #fff 60%,
+      #fff
+    );
+    background-size: 200% auto;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shine 3s linear infinite;
+  }
+
+  @keyframes shine {
+    to {
+      background-position: 200% center;
+    }
+  }
+
+  /* Texto con movimiento */
+  .moving-text {
+    animation: moveText 2s ease-in-out infinite;
+  }
+
+  @keyframes moveText {
+    0%, 100% {
+      transform: translateX(0);
+    }
+    50% {
+      transform: translateX(10px);
+    }
+  }
+
+  /* Nombre del juego con estilo especial */
+  .game_name {
+    font-size: clamp(3rem, 10vw, 6rem);
+    font-weight: 900;
+    text-shadow: 
+      0 0 10px rgba(255, 255, 255, 0.8),
+      0 0 20px rgba(0, 255, 255, 0.6),
+      0 0 30px rgba(0, 255, 255, 0.4);
+    letter-spacing: 0.1em;
+  }
+}
+
+/* ============================================================================
+   ESTILOS BASE
+   ============================================================================ */
+
+@layer base {
+  /* Prevenir selección de texto en botones y controles */
+  button {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+
+  /* Estilos base para el juego */
+  body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  /* Scrollbar personalizado */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+  }
+}
+
+/* ============================================================================
+   UTILIDADES ADICIONALES
+   ============================================================================ */
+
+/* Centrar elementos de forma flexible */
+.flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Evitar el highlight azul en dispositivos móviles */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
