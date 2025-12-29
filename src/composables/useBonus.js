@@ -12,12 +12,13 @@ import {
  * Cada celda tiene una probabilidad de tener un multiplicador
  */
 const BONUS_CHANCES = [
-    { multiplier: 10, threshold: 8.2 },  // 0.2% chance
-    { multiplier: 5, threshold: 8.0 },   // 1.0% chance (8.0 - 8.2)
-    { multiplier: 4, threshold: 7.0 },   // 1.5% chance (7.0 - 8.0)
-    { multiplier: 3, threshold: 5.5 },   // 2.0% chance (5.5 - 7.0)
     { multiplier: 2, threshold: 3.5 },   // 3.5% chance
+    { multiplier: 3, threshold: 5.5 },   // 2.0% chance adicional (5.5 - 3.5)
+    { multiplier: 4, threshold: 7.0 },   // 1.5% chance adicional (7.0 - 5.5)
+    { multiplier: 5, threshold: 8.0 },   // 1.0% chance adicional (8.0 - 7.0)
+    { multiplier: 10, threshold: 8.2 },  // 0.2% chance adicional (8.2 - 8.0)
 ];
+
 
 /**
  * Composable para manejar el sistema de bonus
@@ -53,12 +54,18 @@ export function useBonus() {
     function calculateBonus() {
         const random = Math.random() * 100;
         
-        for (const { multiplier, threshold } of BONUS_CHANCES) {
+        console.log('🎲 Random:', random.toFixed(2));
+        
+        // ✅ CORRECCIÓN: Iterar normalmente desde i=0 hacia arriba
+        for (let i = 0; i < BONUS_CHANCES.length; i++) {
+            const { multiplier, threshold } = BONUS_CHANCES[i];
             if (random < threshold) {
+                console.log('✅ Bonus asignado:', multiplier, 'threshold:', threshold);
                 return multiplier;
             }
         }
         
+        console.log('❌ Sin bonus');
         return 0;
     }
 
@@ -115,7 +122,7 @@ export function useBonus() {
         }, duration * 1000);
     }
 
-    /**
+   /**
      * Procesa líneas completadas y calcula bonus
      * @param {Array} board - Tablero de juego
      * @param {Function} onLineRemoved - Callback al remover cada línea
@@ -138,7 +145,7 @@ export function useBonus() {
                 if (row.some((cell) => cell.bonus > 0)) {
                     row.forEach((cell) => {
                         if (cell.bonus > 0) {
-                            totalBonus += cell.bonus;
+                            totalBonus += cell.bonus; // ⚠️ ESTO suma los multiplicadores
                             bonusLineCount++;
                         }
                     });
@@ -150,8 +157,8 @@ export function useBonus() {
         
         return {
             linePositions,
-            totalBonus,
-            bonusLineCount,
+            totalBonus,      // Suma de todos los multiplicadores
+            bonusLineCount,  // Cantidad de celdas con bonus
             lineCount: linePositions.length
         };
     }

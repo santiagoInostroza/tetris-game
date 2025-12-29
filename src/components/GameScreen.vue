@@ -176,12 +176,14 @@ function removeLines() {
  * Procesa la eliminación de líneas una por una
  */
 function processLineRemoval(linePositions, totalBonus) {
+    console.log('📊 Líneas:', linePositions.length, 'Total Bonus:', totalBonus); // ← AÑADIR
+    
     let currentLine = 0;
     
     function removeNextLine() {
         if (currentLine >= linePositions.length) {
-            // Todas las líneas procesadas
             if (totalBonus > 0) {
+                console.log('🎉 Iniciando animación de bonus:', totalBonus); // ← AÑADIR
                 bonus.startBonusAnimation(
                     40, 
                     'X' + totalBonus, 
@@ -204,10 +206,11 @@ function processLineRemoval(linePositions, totalBonus) {
         const multiplier = bonus.getMultiplier();
         const lineScore = ((currentLine + 1) * BOARD_WIDTH) * (1 + (currentLine * 0.25)) * multiplier;
         
+        console.log(`📍 Línea ${currentLine + 1}: score=${lineScore}, multiplier=${multiplier}`); // ← AÑADIR
+        
         bonus.showLineScore(y, lineScore);
         bonus.playLineSound(currentLine);
         
-        // Actualizar score total en la última línea
         if (currentLine === linePositions.length - 1) {
             gameState.score.value += lineScore;
         }
