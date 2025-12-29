@@ -394,176 +394,169 @@ function draw(deltaTime) {
 
 <template>
     <!-- CONTENEDOR PRINCIPAL -->
-    <div class="grid justify-center">
+    <div class="game-container">
 
-        <!-- SCORE AND TIME - MOBILE -->
-        <article v-if="ISMOBILE" class="shadow rounded py-2">
-            <div class="flex justify-between w-screen px-4">
-                <!-- SCORE-->
-                <div class="score-display">
-                    <span class="score-label">Puntaje</span>
-                    <span class="score-value">{{ gameState.score.value }}</span>
+        <!-- ========== VERSIÓN MÓVIL ========== -->
+        <div v-if="ISMOBILE" class="mobile-layout">
+            <!-- Header: Score, Tiempo, Próxima Pieza -->
+            <div class="mobile-header">
+                <!-- Score y Tiempo -->
+                <div class="mobile-stats">
+                    <div class="stat-box">
+                        <span class="stat-label">Puntaje</span>
+                        <span class="stat-value">{{ gameState.score.value }}</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Tiempo</span>
+                        <span class="stat-value-small">{{ gameState.time.value }}</span>
+                    </div>
                 </div>
-                <!-- TIME -->
-                <div class="time-display">
-                    <span class="time-label">Tiempo</span>
-                    <span class="time-value">{{ gameState.time.value }}</span>
+                
+                <!-- Próxima Pieza -->
+                <div class="mobile-next-preview">
+                    <NextPiecePreview :nextPiece="gameState.nextPiece" />
                 </div>
             </div>
-        </article>        
 
-        <div class="flex gap-4">
-            <!-- SCORE - DESKTOP -->
-            <div v-if="!ISMOBILE">
-                <div class="score-display">
-                    <span class="score-label">Puntaje</span>
-                    <span class="score-value">{{ gameState.score.value }}</span>
-                </div>
-                <!-- ⭐ NUEVO: Próxima pieza (desktop) -->
-                <NextPiecePreview :nextPiece="gameState.nextPiece" />
-            </div> 
-            
-            <!-- CANVAS -->
-            <article class="grid justify-center mt-2 w-full" :style="{ height: HEIGHT_CANVAS + 'px' }">
-                <div>
-                    <canvas class="border-shine rounded-xl bg-blue-400" ref="canvas"></canvas>
-                </div>
-            </article>
-            
-            <!-- TIME - DESKTOP -->
-            <div v-if="!ISMOBILE">
-                <div class="grid gap-4">
-                    <div class="time-display">
-                        <span class="time-label">Tiempo</span>
-                        <span class="time-value">{{ gameState.time.value }}</span>
+            <!-- Canvas -->
+            <div class="mobile-canvas">
+                <canvas class="border-shine rounded-xl bg-blue-400" ref="canvas"></canvas>
+            </div>
+
+            <!-- Controles -->
+            <div class="mobile-controls" @contextmenu.prevent>
+                <div class="controls-left">
+                    <div class="dpad-row">
+                        <button  
+                            @touchstart.prevent="startMovement(DIRECTIONS.LEFT)"  
+                            @touchend.prevent="stopMovement(DIRECTIONS.LEFT)"
+                            @mousedown.prevent="startMovement(DIRECTIONS.LEFT)"
+                            @mouseup="stopMovement(DIRECTIONS.LEFT)"
+                            @mouseleave="stopMovement(DIRECTIONS.LEFT)"
+                            @contextmenu.prevent
+                            class="joystick-button rotate-90"
+                            aria-label="Mover izquierda"
+                        >
+                            ▼
+                        </button>
+                        
+                        <button  
+                            @touchstart.prevent="startMovement(DIRECTIONS.RIGHT)" 
+                            @touchend.prevent="stopMovement(DIRECTIONS.RIGHT)"
+                            @mousedown.prevent="startMovement(DIRECTIONS.RIGHT)"
+                            @mouseup="stopMovement(DIRECTIONS.RIGHT)"
+                            @mouseleave="stopMovement(DIRECTIONS.RIGHT)"
+                            @contextmenu.prevent
+                            class="joystick-button rotate-90 ml-[3rem]"
+                            aria-label="Mover derecha"
+                        >
+                            ▲
+                        </button>
                     </div>
+                    <div class="dpad-down">
+                        <button 
+                            @touchstart.prevent="startMovement(DIRECTIONS.DOWN)" 
+                            @touchend.prevent="stopMovement(DIRECTIONS.DOWN)"
+                            @mousedown.prevent="startMovement(DIRECTIONS.DOWN)"
+                            @mouseup="stopMovement(DIRECTIONS.DOWN)"
+                            @mouseleave="stopMovement(DIRECTIONS.DOWN)"
+                            @contextmenu.prevent
+                            class="joystick-button"
+                            aria-label="Mover abajo"
+                        >
+                            ▼
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="controls-right">
                     <button 
                         @click="togglePause" 
-                        class="w-32 p-2 rounded-xl deep-button border-shine" 
-                        style="font-size: 12px;"
+                        class="btn-options"
                     >
                         OPCIONES
+                    </button>
+                    
+                    <div class="action-buttons">
+                        <button 
+                            @touchstart.prevent="startMovement('space')" 
+                            @touchend.prevent="stopMovement('space')"
+                            @mousedown.prevent="startMovement('space')"
+                            @mouseup="stopMovement('space')"
+                            @mouseleave="stopMovement('space')"
+                            @contextmenu.prevent
+                            class="joystick-button-small grid"
+                            aria-label="Caída rápida"
+                        >
+                            <span class="mt-1">▼</span>
+                            <span class="-mt-4">▼</span>
+                        </button>
+                    </div>
+                    
+                    <button 
+                        @touchstart.prevent="startMovement(DIRECTIONS.ROTATE)" 
+                        @touchend.prevent="stopMovement(DIRECTIONS.ROTATE)"
+                        @mousedown.prevent="startMovement(DIRECTIONS.ROTATE)"
+                        @mouseup="stopMovement(DIRECTIONS.ROTATE)"
+                        @mouseleave="stopMovement(DIRECTIONS.ROTATE)"
+                        @contextmenu.prevent
+                        class="joystick-button-large rotate-180 grid" 
+                        aria-label="Rotar pieza"
+                    >
+                        ↻
                     </button>
                 </div>
             </div>
         </div>
 
-        <article v-if="ISMOBILE" class="mobile-next-piece">
-            <NextPiecePreview :nextPiece="gameState.nextPiece" />
-        </article>
-        
-        <!-- JOYSTICK - MOBILE -->
-        <article 
-            v-if="ISMOBILE" 
-            id="buttons_movil" 
-            class="flex justify-between items-stretch my-5 gap-4 px-4 select-none"
-            @contextmenu.prevent
-        >
-            <div class="h-50 w-50">
-                <div class="flex-between">
-                    <button  
-                        @touchstart.prevent="startMovement(DIRECTIONS.LEFT)"  
-                        @touchend.prevent="stopMovement(DIRECTIONS.LEFT)"
-                        @mousedown.prevent="startMovement(DIRECTIONS.LEFT)"
-                        @mouseup="stopMovement(DIRECTIONS.LEFT)"
-                        @mouseleave="stopMovement(DIRECTIONS.LEFT)"
-                        @contextmenu.prevent
-                        class="joystick-button rotate-90"
-                        aria-label="Mover izquierda"
-                    >
-                        ▼
-                    </button>
-                    
-                    <button  
-                        @touchstart.prevent="startMovement(DIRECTIONS.RIGHT)" 
-                        @touchend.prevent="stopMovement(DIRECTIONS.RIGHT)"
-                        @mousedown.prevent="startMovement(DIRECTIONS.RIGHT)"
-                        @mouseup="stopMovement(DIRECTIONS.RIGHT)"
-                        @mouseleave="stopMovement(DIRECTIONS.RIGHT)"
-                        @contextmenu.prevent
-                        class="joystick-button rotate-90 ml-[3rem]"
-                        aria-label="Mover derecha"
-                    >
-                        ▲
-                    </button>
+        <!-- ========== VERSIÓN DESKTOP ========== -->
+        <div v-else class="desktop-layout">
+            <div class="desktop-left-panel">
+                <div class="score-display">
+                    <span class="score-label">Puntaje</span>
+                    <span class="score-value">{{ gameState.score.value }}</span>
                 </div>
-                <div class="grid justify-center -mt-4">
-                    <button 
-                        @touchstart.prevent="startMovement(DIRECTIONS.DOWN)" 
-                        @touchend.prevent="stopMovement(DIRECTIONS.DOWN)"
-                        @mousedown.prevent="startMovement(DIRECTIONS.DOWN)"
-                        @mouseup="stopMovement(DIRECTIONS.DOWN)"
-                        @mouseleave="stopMovement(DIRECTIONS.DOWN)"
-                        @contextmenu.prevent
-                        class="joystick-button"
-                        aria-label="Mover abajo"
-                    >
-                        ▼
-                    </button>
-                </div>
+                <NextPiecePreview :nextPiece="gameState.nextPiece" />
             </div>
             
-            <div class="grid content-between justify-end">
+            <div class="desktop-canvas" :style="{ height: HEIGHT_CANVAS + 'px' }">
+                <canvas class="border-shine rounded-xl bg-blue-400" ref="canvas"></canvas>
+            </div>
+            
+            <div class="desktop-right-panel">
+                <div class="time-display">
+                    <span class="time-label">Tiempo</span>
+                    <span class="time-value">{{ gameState.time.value }}</span>
+                </div>
                 <button 
                     @click="togglePause" 
-                    class="w-16 h-6 rounded-xl deep-button border-shine -ml-4" 
+                    class="w-32 p-2 rounded-xl deep-button border-shine" 
                     style="font-size: 12px;"
                 >
                     OPCIONES
                 </button>
-                
-                <div class="ml-12">
-                    <button 
-                        @touchstart.prevent="startMovement('space')" 
-                        @touchend.prevent="stopMovement('space')"
-                        @mousedown.prevent="startMovement('space')"
-                        @mouseup="stopMovement('space')"
-                        @mouseleave="stopMovement('space')"
-                        @contextmenu.prevent
-                        class="joystick-button-small grid"
-                        aria-label="Caída rápida"
-                    >
-                        <span class="mt-1">▼</span>
-                        <span class="-mt-4">▼</span>
-                    </button>
-                </div>
-                
-                <button 
-                    @touchstart.prevent="startMovement(DIRECTIONS.ROTATE)" 
-                    @touchend.prevent="stopMovement(DIRECTIONS.ROTATE)"
-                    @mousedown.prevent="startMovement(DIRECTIONS.ROTATE)"
-                    @mouseup="stopMovement(DIRECTIONS.ROTATE)"
-                    @mouseleave="stopMovement(DIRECTIONS.ROTATE)"
-                    @contextmenu.prevent
-                    class="joystick-button-large rotate-180 grid -ml-4" 
-                    aria-label="Rotar pieza"
-                >
-                    ↻
-                </button>
             </div>
-        </article>            
+        </div>
     </div>
 
-    <!-- MODALES -->
+    <!-- MODALES (sin cambios) -->
     <div>
-        <!-- MODAL PAUSA -->
+        <!-- MODAL PAUSA-->
         <article v-if="gameState.isPaused.value && !gameState.isGameOver.value">
             <div class="modal-overlay"></div>
             <div class="modal-container">
                 <h2 class="modal-title">OPCIONES</h2>
                 
                 <div class="options-panel">
-                    <!-- Dificultad -->
                     <div class="option-row">
                         <p class="option-label">Dificultad</p>
                         <div class="option-value">
-                            <p v-if="DIFFICULTY.value === 'EASY'">FÁCIL</p>
-                            <p v-if="DIFFICULTY.value === 'MEDIUM'">MEDIA</p>
-                            <p v-if="DIFFICULTY.value === 'HARD'">DIFÍCIL</p>
+                            <p v-if="difficulty === 'EASY'">FÁCIL</p>
+                            <p v-if="difficulty === 'MEDIUM'">MEDIA</p>
+                            <p v-if="difficulty === 'HARD'">DIFÍCIL</p>
                         </div>
                     </div>
                     
-                    <!-- Música -->
                     <div class="option-row">
                         <p class="option-label">MÚSICA</p>
                         <SwitchButton 
@@ -573,7 +566,6 @@ function draw(deltaTime) {
                         />
                     </div>
                     
-                    <!-- Sonidos -->
                     <div class="option-row">
                         <p class="option-label">SONIDOS</p>
                         <SwitchButton 
@@ -610,7 +602,6 @@ function draw(deltaTime) {
                 <h2 class="modal-title">GAME OVER</h2>
                 
                 <div class="gameover-panel">
-                    <!-- Score -->
                     <div class="gameover-score">
                         <p class="gameover-label">Puntaje</p>
                         <div class="gameover-value">
@@ -618,7 +609,6 @@ function draw(deltaTime) {
                         </div>
                     </div>
                     
-                    <!-- Input Nombre -->
                     <div v-if="!hasName" class="gameover-name-input">
                         <p class="gameover-label">Ingresa tu Nombre</p>
                         <div class="text-center">
@@ -640,7 +630,6 @@ function draw(deltaTime) {
                         </div>
                     </div>
                     
-                    <!-- Mostrar Nombre -->
                     <div v-else class="gameover-name-display">
                         <p class="gameover-label">Nombre</p>
                         <div class="gameover-name-value">
@@ -670,16 +659,121 @@ function draw(deltaTime) {
 
 <style scoped>
 /* ============================================================================
-   BOTONES 3D - Usar clase .deep-button directamente en el template
+   CONTENEDOR PRINCIPAL
    ============================================================================ */
+.game-container {
+    @apply min-h-screen flex items-center justify-center;
+}
 
 /* ============================================================================
-   DISPLAYS DE SCORE Y TIEMPO
+   LAYOUT MÓVIL
+   ============================================================================ */
+.mobile-layout {
+    @apply w-screen flex flex-col;
+    height: 100vh;
+    height: 100dvh; /* Dynamic viewport height para móviles */
+}
+
+.mobile-header {
+    @apply px-4 pt-2 pb-3;
+}
+
+.mobile-stats {
+    @apply flex gap-2 mb-3;
+}
+
+.stat-box {
+    @apply flex-1 p-2 border-4 rounded-xl relative text-center bg-gradient-to-r from-blue-600 to-blue-800;
+    border-color: rgba(255, 255, 255, 0.8);
+    box-shadow: 
+      0 0 10px rgba(255, 255, 255, 0.3),
+      inset 0 0 5px rgba(255, 255, 255, 0.2);
+}
+
+.stat-label {
+    @apply absolute -top-3 left-0 right-0 text-xs font-bold;
+}
+
+.stat-value {
+    @apply text-2xl font-extrabold;
+}
+
+.stat-value-small {
+    @apply text-lg font-bold;
+}
+
+.mobile-next-preview {
+    @apply flex justify-center;
+}
+
+.mobile-canvas {
+    @apply flex-1 flex items-center justify-center px-2;
+    min-height: 0; /* Importante para flex */
+}
+
+.mobile-canvas canvas {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto !important;
+    height: auto !important;
+}
+
+.mobile-controls {
+    @apply flex justify-between items-stretch gap-4 px-4 py-3 select-none;
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.controls-left {
+    @apply flex flex-col;
+}
+
+.dpad-row {
+    @apply flex gap-12;
+}
+
+.dpad-down {
+    @apply grid justify-center -mt-4;
+}
+
+.controls-right {
+    @apply grid gap-2 items-center justify-items-end;
+    grid-template-rows: auto 1fr auto;
+}
+
+.btn-options {
+    @apply w-16 h-6 rounded-xl deep-button text-xs font-bold;
+    /* border-shine aplicado manualmente */
+    border: 4px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 
+      0 0 10px rgba(255, 255, 255, 0.3),
+      inset 0 0 5px rgba(255, 255, 255, 0.2);
+}
+
+.action-buttons {
+    @apply flex items-center;
+}
+/* ============================================================================
+   LAYOUT DESKTOP
+   ============================================================================ */
+.desktop-layout {
+    @apply flex gap-4 items-start justify-center p-4;
+}
+
+.desktop-left-panel,
+.desktop-right-panel {
+    @apply flex flex-col gap-4;
+}
+
+.desktop-canvas {
+    @apply grid place-items-center;
+}
+
+/* ============================================================================
+   DISPLAYS (DESKTOP)
    ============================================================================ */
 .score-display,
 .time-display {
     @apply p-2 border-4 rounded-xl relative w-32 mt-4 text-center bg-gradient-to-r from-blue-600 to-blue-800 grid items-center;
-    /* Aplicar border-shine manualmente */
     border-color: rgba(255, 255, 255, 0.8);
     box-shadow: 
       0 0 10px rgba(255, 255, 255, 0.3),
@@ -700,11 +794,9 @@ function draw(deltaTime) {
 }
 
 /* ============================================================================
-   JOYSTICK BUTTONS
+   BOTONES 3D
    ============================================================================ */
-.joystick-button {
-    @apply text-7xl w-20 h-20 rounded-full;
-    /* deep-button styles */
+.deep-button {
     background: linear-gradient(145deg, lightgray, white, white, lightgray);
     box-shadow: 
       5px 5px 15px rgba(0, 0, 0, 0.4), 
@@ -715,15 +807,37 @@ function draw(deltaTime) {
     font-weight: 700;
     user-select: none;
     transition: all 0.3s ease;
-    /* border-shine */
-    border: 4px solid rgba(255, 255, 255, 0.8);
 }
 
-.joystick-button:hover {
+.deep-button:hover {
     box-shadow: 
       5px 5px 15px rgba(0, 0, 0, 0.4), 
       inset 1px 1px 5px rgba(255, 255, 255, 0.7), 
       inset -1px -1px 5px rgba(0, 0, 0, 0.4);
+}
+
+.deep-button:active {
+    box-shadow: 
+      inset 2px 2px 5px rgba(0, 0, 0, 0.4), 
+      inset 1px 1px 5px rgba(255, 255, 255, 0.7);
+}
+
+/* ============================================================================
+   JOYSTICK BUTTONS
+   ============================================================================ */
+.joystick-button {
+    @apply text-7xl w-20 h-20 rounded-full;
+    background: linear-gradient(145deg, lightgray, white, white, lightgray);
+    box-shadow: 
+      5px 5px 15px rgba(0, 0, 0, 0.4), 
+      inset 1px 1px 5px rgba(255, 255, 255, 0.7), 
+      inset -1px -1px 5px rgba(0, 0, 0, 0.4);
+    color: #333;
+    cursor: pointer;
+    font-weight: 700;
+    user-select: none;
+    transition: all 0.3s ease;
+    border: 4px solid rgba(255, 255, 255, 0.8);
 }
 
 .joystick-button:active {
@@ -775,9 +889,6 @@ function draw(deltaTime) {
     @apply font-bold text-3xl text-gray-300 text-center mb-4 p-4;
 }
 
-/* ============================================================================
-   PANEL DE OPCIONES
-   ============================================================================ */
 .options-panel {
     @apply grid gap-6 shadow border p-4 rounded-xl text-sm bg-gradient-to-r from-gray-400 to-gray-500;
     border-color: rgba(255, 255, 255, 0.8);
@@ -806,9 +917,6 @@ function draw(deltaTime) {
       inset 0 0 5px rgba(255, 255, 255, 0.2);
 }
 
-/* ============================================================================
-   BOTONES DE MODAL
-   ============================================================================ */
 .modal-buttons {
     @apply flex gap-4 flex-col items-center justify-center;
 }
@@ -829,9 +937,6 @@ function draw(deltaTime) {
       inset 0 0 5px rgba(255, 255, 255, 0.2);
 }
 
-/* ============================================================================
-   GAME OVER PANEL
-   ============================================================================ */
 .gameover-panel {
     @apply grid gap-8 shadow border p-4 py-8 rounded-xl text-sm bg-gradient-to-r from-blue-600 to-blue-800;
     border-color: rgba(255, 255, 255, 0.8);
@@ -870,13 +975,5 @@ function draw(deltaTime) {
 
 .gameover-name-value {
     @apply p-4 text-5xl text-center font-bold;
-}
-
-.desktop-left-panel {
-    @apply flex flex-col gap-4;
-}
-
-.mobile-next-piece {
-    @apply flex justify-center mt-4 px-4;
 }
 </style>
