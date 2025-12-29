@@ -672,10 +672,12 @@ function draw(deltaTime) {
     @apply w-screen flex flex-col;
     height: 100vh;
     height: 100dvh; /* Dynamic viewport height para móviles */
+    overflow: hidden; /* Evitar scroll */
 }
 
 .mobile-header {
-    @apply px-2 pt-2 pb-2 flex justify-between items-start gap-2;
+    @apply px-2 pt-1 pb-1 flex justify-between items-start gap-2;
+    /* ✅ CAMBIO: Reducir padding vertical */
 }
 
 /* Stats compactos a la izquierda */
@@ -711,7 +713,7 @@ function draw(deltaTime) {
 }
 
 .mobile-next-preview-right :deep(.next-piece-container) {
-    transform: scale(0.85);
+    transform: scale(0.8); /* ✅ CAMBIO: Un poco más pequeño */
     transform-origin: top right;
 }
 
@@ -719,9 +721,13 @@ function draw(deltaTime) {
     @apply text-sm;
 }
 
-/* Resto sin cambios... */
+.mobile-next-preview-right :deep(.next-piece-canvas-wrapper) {
+    padding: 0.5rem; /* ✅ CAMBIO: Reducir padding interno */
+}
+
 .mobile-canvas {
-    @apply flex-1 flex items-center justify-center px-2;
+    @apply flex-1 flex items-center justify-center px-2 py-1;
+    /* ✅ CAMBIO: Reducir padding vertical */
     min-height: 0; /* Importante para flex */
 }
 
@@ -733,8 +739,10 @@ function draw(deltaTime) {
 }
 
 .mobile-controls {
-    @apply flex justify-between items-stretch gap-4 px-4 py-3 select-none;
-    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    @apply flex justify-between items-stretch gap-4 px-4 select-none;
+    /* ✅ CAMBIO: Más padding abajo para evitar que se corte */
+    padding-top: 0.5rem;
+    padding-bottom: max(1.5rem, calc(env(safe-area-inset-bottom) + 0.5rem));
 }
 
 .controls-left {
@@ -766,6 +774,8 @@ function draw(deltaTime) {
 .action-buttons {
     @apply flex items-center;
 }
+
+
 /* ============================================================================
    LAYOUT DESKTOP
    ============================================================================ */
