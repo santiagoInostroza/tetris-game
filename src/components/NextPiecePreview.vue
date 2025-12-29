@@ -128,7 +128,6 @@ watch(() => props.nextPiece.matrix, () => {
 
 <template>
     <div class="next-piece-container">
-        <h3 class="next-piece-title">Siguiente</h3>
         <div class="next-piece-canvas-wrapper">
             <canvas ref="canvas" class="next-piece-canvas"></canvas>
         </div>

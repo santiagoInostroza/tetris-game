@@ -400,20 +400,20 @@ function draw(deltaTime) {
         <div v-if="ISMOBILE" class="mobile-layout">
             <!-- Header: Score, Tiempo, Próxima Pieza -->
             <div class="mobile-header">
-                <!-- Score y Tiempo -->
-                <div class="mobile-stats">
-                    <div class="stat-box">
-                        <span class="stat-label">Puntaje</span>
-                        <span class="stat-value">{{ gameState.score.value }}</span>
+                <!-- Lado izquierdo: Score y Tiempo -->
+                <div class="mobile-stats-left">
+                    <div class="stat-box-compact">
+                        <span class="stat-label-compact">Puntaje</span>
+                        <span class="stat-value-compact">{{ gameState.score.value }}</span>
                     </div>
-                    <div class="stat-box">
-                        <span class="stat-label">Tiempo</span>
-                        <span class="stat-value-small">{{ gameState.time.value }}</span>
+                    <div class="stat-box-compact">
+                        <span class="stat-label-compact">Tiempo</span>
+                        <span class="stat-value-compact-small">{{ gameState.time.value }}</span>
                     </div>
                 </div>
                 
-                <!-- Próxima Pieza -->
-                <div class="mobile-next-preview">
+                <!-- Lado derecho: Próxima Pieza -->
+                <div class="mobile-next-preview-right">
                     <NextPiecePreview :nextPiece="gameState.nextPiece" />
                 </div>
             </div>
@@ -675,37 +675,51 @@ function draw(deltaTime) {
 }
 
 .mobile-header {
-    @apply px-4 pt-2 pb-3;
+    @apply px-2 pt-2 pb-2 flex justify-between items-start gap-2;
 }
 
-.mobile-stats {
-    @apply flex gap-2 mb-3;
+/* Stats compactos a la izquierda */
+.mobile-stats-left {
+    @apply flex flex-col gap-1 flex-shrink-0;
 }
 
-.stat-box {
-    @apply flex-1 p-2 border-4 rounded-xl relative text-center bg-gradient-to-r from-blue-600 to-blue-800;
+.stat-box-compact {
+    @apply p-1 px-2 border-2 rounded-lg relative text-center bg-gradient-to-r from-blue-600 to-blue-800;
     border-color: rgba(255, 255, 255, 0.8);
     box-shadow: 
-      0 0 10px rgba(255, 255, 255, 0.3),
-      inset 0 0 5px rgba(255, 255, 255, 0.2);
+      0 0 5px rgba(255, 255, 255, 0.3),
+      inset 0 0 3px rgba(255, 255, 255, 0.2);
+    min-width: 80px;
 }
 
-.stat-label {
-    @apply absolute -top-3 left-0 right-0 text-xs font-bold;
+.stat-label-compact {
+    @apply block text-[10px] font-bold mb-0.5;
 }
 
-.stat-value {
-    @apply text-2xl font-extrabold;
+.stat-value-compact {
+    @apply block text-lg font-extrabold leading-none;
 }
 
-.stat-value-small {
-    @apply text-lg font-bold;
+.stat-value-compact-small {
+    @apply block text-sm font-bold leading-none;
 }
 
-.mobile-next-preview {
-    @apply flex justify-center;
+/* Próxima pieza a la derecha */
+.mobile-next-preview-right {
+    @apply flex-1 flex justify-end items-start;
+    max-width: 60%;
 }
 
+.mobile-next-preview-right :deep(.next-piece-container) {
+    transform: scale(0.85);
+    transform-origin: top right;
+}
+
+.mobile-next-preview-right :deep(.next-piece-title) {
+    @apply text-sm;
+}
+
+/* Resto sin cambios... */
 .mobile-canvas {
     @apply flex-1 flex items-center justify-center px-2;
     min-height: 0; /* Importante para flex */
