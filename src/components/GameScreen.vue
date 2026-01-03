@@ -272,177 +272,22 @@ function stopMovement(direction) {
     movementStates[`isMoving${direction}`] = false;
     isTouching = Object.values(movementStates).some(value => value);
 }
-// ============================================================================
-// DETECCIÓN DE GESTOS (MEJORADO)
-// ============================================================================
-
-let touchStartX = 0;
-let touchStartY = 0;
-let currentDirection = null;
-let isHoldingDown = false;
-
-function handleTouchStart(event) {
-    const touch = event.touches ? event.touches[0] : event;
-    touchStartX = touch.clientX;
-    touchStartY = touch.clientY;
-    
-    const target = event.currentTarget;
-    const rect = target.getBoundingClientRect();
-    
-    detectDirection(touch.clientX, touch.clientY, rect, true);
-}
-
-function handleTouchMove(event) {
-    const touch = event.touches ? event.touches[0] : event;
-    const target = event.currentTarget;
-    const rect = target.getBoundingClientRect();
-    
-    detectDirection(touch.clientX, touch.clientY, rect, false);
-}
-
-function handleTouchEnd() {
-    // Detener todas las direcciones activas
-    if (currentDirection) {
-        if (Array.isArray(currentDirection)) {
-            // Es movimiento diagonal
-            currentDirection.forEach(dir => stopMovement(dir));
-        } else {
-            // Es movimiento simple
-            stopMovement(currentDirection);
-        }
-        currentDirection = null;
-    }
-    isHoldingDown = false;
-}
-
-function detectDirection(x, y, rect, isStart) {
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-    
-    const deltaX = x - centerX;
-    const deltaY = y - centerY;
-    
-    // Calcular distancia desde el centro
-    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-    const threshold = rect.width * 0.15; // 15% del ancho como zona muerta central
-    
-    if (distance < threshold) {
-        // Zona muerta central - no hacer nada
-        return;
-    }
-    
-    let newDirection = null;
-    
-    // Determinar si es movimiento diagonal o simple
-    const absX = Math.abs(deltaX);
-    const absY = Math.abs(deltaY);
-    const diagonalThreshold = 0.5; // Ratio para detectar diagonal
-    
-    // Si ambos ejes tienen valores significativos, es diagonal
-    if (absX > threshold && absY > threshold) {
-        const ratio = Math.min(absX, absY) / Math.max(absX, absY);
-        
-        if (ratio > diagonalThreshold) {
-            // Movimiento diagonal
-            const horizontal = deltaX > 0 ? DIRECTIONS.RIGHT : DIRECTIONS.LEFT;
-            const vertical = deltaY > 0 ? DIRECTIONS.DOWN : DIRECTIONS.ROTATE;
-            newDirection = [horizontal, vertical];
-        } else {
-            // Un eje domina
-            if (absX > absY) {
-                newDirection = deltaX > 0 ? DIRECTIONS.RIGHT : DIRECTIONS.LEFT;
-            } else {
-                newDirection = deltaY > 0 ? DIRECTIONS.DOWN : DIRECTIONS.ROTATE;
-            }
-        }
-    } else {
-        // Movimiento simple en un solo eje
-        if (absX > absY) {
-            newDirection = deltaX > 0 ? DIRECTIONS.RIGHT : DIRECTIONS.LEFT;
-        } else {
-            newDirection = deltaY > 0 ? DIRECTIONS.DOWN : DIRECTIONS.ROTATE;
-        }
-    }
-    
-    // Verificar si cambió la dirección
-    const dirChanged = !directionsEqual(newDirection, currentDirection);
-    
-    if (dirChanged) {
-        // Detener dirección anterior
-        if (currentDirection) {
-            if (Array.isArray(currentDirection)) {
-                currentDirection.forEach(dir => stopMovement(dir));
-            } else {
-                stopMovement(currentDirection);
-            }
-        }
-        
-        // Iniciar nueva dirección
-        if (newDirection) {
-            if (Array.isArray(newDirection)) {
-                newDirection.forEach(dir => startMovement(dir));
-            } else {
-                startMovement(newDirection);
-            }
-        }
-        
-        currentDirection = newDirection;
-    }
-}
-
-function directionsEqual(dir1, dir2) {
-    if (dir1 === dir2) return true;
-    if (!dir1 || !dir2) return false;
-    
-    // Comparar arrays
-    if (Array.isArray(dir1) && Array.isArray(dir2)) {
-        if (dir1.length !== dir2.length) return false;
-        return dir1.every((d, i) => d === dir2[i]);
-    }
-    
-    return false;
-}
 
 // ============================================================================
 // MOVIMIENTOS DIAGONALES (MANTENER PARA LAS ZONAS)
 // ============================================================================
 
-let diagonalInterval = null;
-
 function startDiagonal(direction) {
     if (direction === 'down-left') {
         startMovement(DIRECTIONS.LEFT);
         startMovement(DIRECTIONS.DOWN);
-        
-        diagonalInterval = setInterval(() => {
-            movePiece(
-                gameState.board, 
-                gameState.piece, 
-                DIRECTIONS.LEFT, 
-                { solidifyPiece, removeLines }
-            );
-        }, 100);
     } else if (direction === 'down-right') {
         startMovement(DIRECTIONS.RIGHT);
         startMovement(DIRECTIONS.DOWN);
-        
-        diagonalInterval = setInterval(() => {
-            movePiece(
-                gameState.board, 
-                gameState.piece, 
-                DIRECTIONS.RIGHT, 
-                { solidifyPiece, removeLines }
-            );
-        }, 100);
     }
 }
 
 function stopDiagonal(direction) {
-    if (diagonalInterval) {
-        clearInterval(diagonalInterval);
-        diagonalInterval = null;
-    }
-    
     if (direction === 'down-left') {
         stopMovement(DIRECTIONS.LEFT);
         stopMovement(DIRECTIONS.DOWN);
@@ -575,40 +420,78 @@ function draw(deltaTime) {
             <!-- Controles (abajo, fuera del flex) -->
             <div class="controls-area">
                 <div class="mobile-controls" @contextmenu.prevent>
-                    <!-- D-Pad -->
+                    <!-- D-Pad de 8 direcciones -->
                     <div class="dpad-container">
-                        <button  
-                            @touchstart.prevent="handleTouchStart"
-                            @touchmove.prevent="handleTouchMove"
-                            @touchend.prevent="handleTouchEnd"
-                            @mousedown.prevent="handleTouchStart"
-                            @mousemove.prevent="handleTouchMove"
-                            @mouseup="handleTouchEnd"
-                            @mouseleave="handleTouchEnd"
-                            @contextmenu.prevent
-                            class="dpad-zone"
-                            aria-label="Controles direccionales"
-                        >
-                            <div class="dpad-visual">
-                                <!-- Flechas visibles -->
-                                <div class="dpad-arrow dpad-left">◀</div>
-                                <div class="dpad-arrow dpad-up">▲</div>
-                                <div class="dpad-arrow dpad-down">▼</div>
-                                <div class="dpad-arrow dpad-right">▶</div>
-                                
-                                <!-- ⭐ NUEVO: Zonas diagonales invisibles -->
-                                <div class="dpad-diagonal dpad-down-left" 
-                                    @touchstart.prevent="startDiagonal('down-left')"
-                                    @touchend.prevent="stopDiagonal('down-left')">
-                                </div>
-                                <div class="dpad-diagonal dpad-down-right"
-                                    @touchstart.prevent="startDiagonal('down-right')"
-                                    @touchend.prevent="stopDiagonal('down-right')">
-                                </div>
-                                
-                                <div class="dpad-center"></div>
-                            </div>
-                        </button>
+                        <div class="dpad-grid">
+                            <!-- Fila superior -->
+                            <div class="dpad-cell empty"></div>
+                            <button 
+                                @touchstart.prevent="startMovement(DIRECTIONS.ROTATE)"
+                                @touchend.prevent="stopMovement(DIRECTIONS.ROTATE)"
+                                @mousedown.prevent="startMovement(DIRECTIONS.ROTATE)"
+                                @mouseup="stopMovement(DIRECTIONS.ROTATE)"
+                                @contextmenu.prevent
+                                class="dpad-cell dpad-btn"
+                            >
+                                <span class="dpad-icon">▲</span>
+                            </button>
+                            <div class="dpad-cell empty"></div>
+
+                            <!-- Fila media -->
+                            <button 
+                                @touchstart.prevent="startMovement(DIRECTIONS.LEFT)"
+                                @touchend.prevent="stopMovement(DIRECTIONS.LEFT)"
+                                @mousedown.prevent="startMovement(DIRECTIONS.LEFT)"
+                                @mouseup="stopMovement(DIRECTIONS.LEFT)"
+                                @contextmenu.prevent
+                                class="dpad-cell dpad-btn"
+                            >
+                                <span class="dpad-icon">◀</span>
+                            </button>
+                            <div class="dpad-cell dpad-center-dot"></div>
+                            <button 
+                                @touchstart.prevent="startMovement(DIRECTIONS.RIGHT)"
+                                @touchend.prevent="stopMovement(DIRECTIONS.RIGHT)"
+                                @mousedown.prevent="startMovement(DIRECTIONS.RIGHT)"
+                                @mouseup="stopMovement(DIRECTIONS.RIGHT)"
+                                @contextmenu.prevent
+                                class="dpad-cell dpad-btn"
+                            >
+                                <span class="dpad-icon">▶</span>
+                            </button>
+
+                            <!-- Fila inferior -->
+                            <button 
+                                @touchstart.prevent="startDiagonal('down-left')"
+                                @touchend.prevent="stopDiagonal('down-left')"
+                                @mousedown.prevent="startDiagonal('down-left')"
+                                @mouseup="stopDiagonal('down-left')"
+                                @contextmenu.prevent
+                                class="dpad-cell dpad-btn dpad-diagonal-btn"
+                            >
+                                <span class="dpad-icon diagonal">↙</span>
+                            </button>
+                            <button 
+                                @touchstart.prevent="startMovement(DIRECTIONS.DOWN)"
+                                @touchend.prevent="stopMovement(DIRECTIONS.DOWN)"
+                                @mousedown.prevent="startMovement(DIRECTIONS.DOWN)"
+                                @mouseup="stopMovement(DIRECTIONS.DOWN)"
+                                @contextmenu.prevent
+                                class="dpad-cell dpad-btn"
+                            >
+                                <span class="dpad-icon">▼</span>
+                            </button>
+                            <button 
+                                @touchstart.prevent="startDiagonal('down-right')"
+                                @touchend.prevent="stopDiagonal('down-right')"
+                                @mousedown.prevent="startDiagonal('down-right')"
+                                @mouseup="stopDiagonal('down-right')"
+                                @contextmenu.prevent
+                                class="dpad-cell dpad-btn dpad-diagonal-btn"
+                            >
+                                <span class="dpad-icon diagonal">↘</span>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Botón rotar -->
@@ -889,75 +772,85 @@ LAYOUT MÓVIL HORIZONTAL
 }
 
 /* ============================================================================
-   D-PAD (NUEVO DISEÑO)
+   D-PAD DE 8 DIRECCIONES
    ============================================================================ */
 .dpad-container {
     @apply relative;
 }
 
-.dpad-zone {
-    @apply relative rounded-xl;
-    width: 140px;
-    height: 140px;
-    background: linear-gradient(135deg, 
-        rgba(30, 41, 59, 0.95) 0%, 
-        rgba(15, 23, 42, 0.95) 100%);
-    border: 3px solid rgba(59, 130, 246, 0.5);
+.dpad-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 46px);
+    grid-template-rows: repeat(3, 46px);
+    gap: 2px;
+    background: rgba(15, 23, 42, 0.8);
+    padding: 4px;
+    border-radius: 12px;
+    border: 3px solid rgba(59, 130, 246, 0.3);
     box-shadow: 
         0 8px 16px rgba(0, 0, 0, 0.4),
-        inset 0 2px 4px rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
+        inset 0 2px 4px rgba(255, 255, 255, 0.05);
 }
 
-.dpad-visual {
-    @apply relative w-full h-full;
+.dpad-cell {
+    @apply relative flex items-center justify-center;
+    border-radius: 6px;
 }
 
-.dpad-arrow {
-    @apply absolute flex items-center justify-center text-3xl font-bold;
-    color: rgba(59, 130, 246, 0.8);
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-    width: 50px;
-    height: 50px;
+.dpad-btn {
+    background: linear-gradient(135deg, 
+        rgba(30, 58, 138, 0.9) 0%, 
+        rgba(30, 64, 175, 0.9) 100%);
+    border: 2px solid rgba(59, 130, 246, 0.4);
+    box-shadow: 
+        0 2px 4px rgba(0, 0, 0, 0.3),
+        inset 0 1px 2px rgba(255, 255, 255, 0.1);
     transition: all 0.1s ease;
 }
 
-.dpad-left {
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
+.dpad-btn:active {
+    background: linear-gradient(135deg, 
+        rgba(29, 78, 216, 1) 0%, 
+        rgba(37, 99, 235, 1) 100%);
+    box-shadow: 
+        inset 0 2px 4px rgba(0, 0, 0, 0.4);
+    transform: scale(0.95);
 }
 
-.dpad-right {
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
+.dpad-diagonal-btn {
+    background: linear-gradient(135deg, 
+        rgba(5, 150, 105, 0.85) 0%, 
+        rgba(16, 185, 129, 0.85) 100%);
+    border-color: rgba(16, 185, 129, 0.5);
 }
 
-.dpad-up {
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
+.dpad-diagonal-btn:active {
+    background: linear-gradient(135deg, 
+        rgba(4, 120, 87, 1) 0%, 
+        rgba(5, 150, 105, 1) 100%);
 }
 
-.dpad-down {
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
+.dpad-icon {
+    @apply text-2xl font-bold;
+    color: white;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    user-select: none;
 }
 
-.dpad-center {
-    @apply absolute rounded-full;
-    width: 30px;
-    height: 30px;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
+.dpad-icon.diagonal {
+    @apply text-xl;
+}
+
+.empty {
+    background: transparent;
+}
+
+.dpad-center-dot {
     background: radial-gradient(circle, 
-        rgba(59, 130, 246, 0.3) 0%, 
-        rgba(59, 130, 246, 0.1) 70%,
+        rgba(59, 130, 246, 0.4) 0%, 
+        rgba(59, 130, 246, 0.1) 50%,
         transparent 100%);
-    border: 2px solid rgba(59, 130, 246, 0.3);
+    border: 2px solid rgba(59, 130, 246, 0.2);
 }
 
 /* ============================================================================
