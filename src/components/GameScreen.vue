@@ -613,17 +613,17 @@ function draw(deltaTime) {
    LAYOUT MÓVIL HORIZONTAL
    ============================================================================ */
 .mobile-layout {
-    @apply w-full h-full flex flex-col;
+    @apply w-full h-full flex flex-col relative;
 }
 
 /* Canvas área (izquierda, 75% ancho) */
 .mobile-canvas-area {
-    @apply flex-1 flex items-center justify-center;
+    @apply flex items-center justify-center;
     width: 75%;
     position: absolute;
     left: 0;
-    top: 0;
-    bottom: 80px; /* Espacio para controles */
+    top: 10px; /* ✅ CAMBIO: Alineado con sidebar */
+    bottom: 100px; /* ✅ CAMBIO: Más espacio para controles */
 }
 
 .game-canvas {
@@ -644,8 +644,8 @@ function draw(deltaTime) {
     width: 25%;
     position: absolute;
     right: 0;
-    top: 0;
-    bottom: 80px;
+    top: 10px; /* ✅ CAMBIO: Mismo top que canvas */
+    bottom: 100px; /* ✅ CAMBIO: Más espacio para controles */
     overflow-y: auto;
 }
 
@@ -693,61 +693,100 @@ function draw(deltaTime) {
       inset 0 0 3px rgba(255, 255, 255, 0.2);
 }
 
-/* Controles (abajo, altura fija) */
+/* ============================================================================
+   CONTROLES (NUEVO DISEÑO)
+   ============================================================================ */
 .mobile-controls {
-    @apply flex justify-around items-center px-4 select-none;
+    @apply flex justify-around items-center px-6 select-none;
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
-    height: 80px;
-    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+    height: 100px; /* ✅ CAMBIO: Más alto */
+    padding-bottom: env(safe-area-inset-bottom, 10px); /* ✅ CAMBIO: Espacio para notch */
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.3), transparent);
 }
 
 .dpad-container {
-    @apply flex flex-col items-center gap-1;
+    @apply flex flex-col items-center;
+    gap: 0.25rem;
 }
 
 .dpad-horizontal {
-    @apply flex gap-8;
+    @apply flex items-center;
+    gap: 1rem;
 }
 
+/* ✅ NUEVO DISEÑO: Botones más modernos y elegantes */
 .btn-control {
-    @apply text-5xl w-16 h-16 rounded-full;
-    background: linear-gradient(145deg, lightgray, white, white, lightgray);
+    @apply w-14 h-14 rounded-lg flex items-center justify-center text-4xl font-bold;
+    background: linear-gradient(135deg, 
+        rgba(59, 130, 246, 0.9) 0%, 
+        rgba(37, 99, 235, 0.9) 100%);
+    border: 2px solid rgba(255, 255, 255, 0.4);
     box-shadow: 
-      3px 3px 10px rgba(0, 0, 0, 0.4), 
-      inset 1px 1px 3px rgba(255, 255, 255, 0.7), 
-      inset -1px -1px 3px rgba(0, 0, 0, 0.4);
-    color: #333;
-    font-weight: 700;
+        0 4px 6px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
     user-select: none;
-    border: 3px solid rgba(255, 255, 255, 0.8);
+    transition: all 0.15s ease;
+    backdrop-filter: blur(10px);
 }
 
 .btn-control:active {
+    transform: scale(0.95);
     box-shadow: 
-      inset 2px 2px 5px rgba(0, 0, 0, 0.4), 
-      inset 1px 1px 3px rgba(255, 255, 255, 0.7);
+        0 2px 4px rgba(0, 0, 0, 0.4),
+        inset 0 2px 4px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(135deg, 
+        rgba(37, 99, 235, 0.9) 0%, 
+        rgba(29, 78, 216, 0.9) 100%);
 }
 
 .btn-rotate {
-    @apply text-4xl w-16 h-16 rounded-full;
-    background: linear-gradient(145deg, lightgray, white, white, lightgray);
+    @apply w-16 h-16 rounded-full flex items-center justify-center text-5xl font-bold;
+    background: linear-gradient(135deg, 
+        rgba(16, 185, 129, 0.9) 0%, 
+        rgba(5, 150, 105, 0.9) 100%);
+    border: 3px solid rgba(255, 255, 255, 0.4);
     box-shadow: 
-      3px 3px 10px rgba(0, 0, 0, 0.4), 
-      inset 1px 1px 3px rgba(255, 255, 255, 0.7), 
-      inset -1px -1px 3px rgba(0, 0, 0, 0.4);
-    color: #333;
-    font-weight: 700;
+        0 6px 12px rgba(0, 0, 0, 0.4),
+        inset 0 2px 0 rgba(255, 255, 255, 0.3),
+        inset 0 -2px 0 rgba(0, 0, 0, 0.2);
+    color: white;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
     user-select: none;
-    border: 3px solid rgba(255, 255, 255, 0.8);
+    transition: all 0.15s ease;
+    backdrop-filter: blur(10px);
 }
 
 .btn-rotate:active {
+    transform: scale(0.95) rotate(20deg);
     box-shadow: 
-      inset 2px 2px 5px rgba(0, 0, 0, 0.4), 
-      inset 1px 1px 3px rgba(255, 255, 255, 0.7);
+        0 3px 6px rgba(0, 0, 0, 0.5),
+        inset 0 3px 6px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(135deg, 
+        rgba(5, 150, 105, 0.9) 0%, 
+        rgba(4, 120, 87, 0.9) 100%);
+}
+
+/* Efecto hover solo en desktop */
+@media (hover: hover) {
+    .btn-control:hover {
+        border-color: rgba(255, 255, 255, 0.6);
+        box-shadow: 
+            0 6px 8px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    }
+
+    .btn-rotate:hover {
+        border-color: rgba(255, 255, 255, 0.6);
+        box-shadow: 
+            0 8px 16px rgba(0, 0, 0, 0.4),
+            inset 0 2px 0 rgba(255, 255, 255, 0.4);
+    }
 }
 
 /* ============================================================================
