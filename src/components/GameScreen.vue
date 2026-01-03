@@ -25,6 +25,7 @@ import NextPiecePreview from './NextPiecePreview.vue';
 
 const emit = defineEmits(['gameOver', 'menu']);
 
+
 // ============================================================================
 // COMPOSABLES
 // ============================================================================
@@ -271,6 +272,185 @@ function stopMovement(direction) {
     movementStates[`isMoving${direction}`] = false;
     isTouching = Object.values(movementStates).some(value => value);
 }
+// ============================================================================
+// DETECCIÓN DE GESTOS (MEJORADO)
+// ============================================================================
+
+let touchStartX = 0;
+let touchStartY = 0;
+let currentDirection = null;
+let isHoldingDown = false;
+
+function handleTouchStart(event) {
+    const touch = event.touches ? event.touches[0] : event;
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
+    
+    const target = event.currentTarget;
+    const rect = target.getBoundingClientRect();
+    
+    detectDirection(touch.clientX, touch.clientY, rect, true);
+}
+
+function handleTouchMove(event) {
+    const touch = event.touches ? event.touches[0] : event;
+    const target = event.currentTarget;
+    const rect = target.getBoundingClientRect();
+    
+    detectDirection(touch.clientX, touch.clientY, rect, false);
+}
+
+function handleTouchEnd() {
+    // Detener todas las direcciones activas
+    if (currentDirection) {
+        if (Array.isArray(currentDirection)) {
+            // Es movimiento diagonal
+            currentDirection.forEach(dir => stopMovement(dir));
+        } else {
+            // Es movimiento simple
+            stopMovement(currentDirection);
+        }
+        currentDirection = null;
+    }
+    isHoldingDown = false;
+}
+
+function detectDirection(x, y, rect, isStart) {
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    
+    const deltaX = x - centerX;
+    const deltaY = y - centerY;
+    
+    // Calcular distancia desde el centro
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    const threshold = rect.width * 0.15; // 15% del ancho como zona muerta central
+    
+    if (distance < threshold) {
+        // Zona muerta central - no hacer nada
+        return;
+    }
+    
+    let newDirection = null;
+    
+    // Determinar si es movimiento diagonal o simple
+    const absX = Math.abs(deltaX);
+    const absY = Math.abs(deltaY);
+    const diagonalThreshold = 0.5; // Ratio para detectar diagonal
+    
+    // Si ambos ejes tienen valores significativos, es diagonal
+    if (absX > threshold && absY > threshold) {
+        const ratio = Math.min(absX, absY) / Math.max(absX, absY);
+        
+        if (ratio > diagonalThreshold) {
+            // Movimiento diagonal
+            const horizontal = deltaX > 0 ? DIRECTIONS.RIGHT : DIRECTIONS.LEFT;
+            const vertical = deltaY > 0 ? DIRECTIONS.DOWN : DIRECTIONS.ROTATE;
+            newDirection = [horizontal, vertical];
+        } else {
+            // Un eje domina
+            if (absX > absY) {
+                newDirection = deltaX > 0 ? DIRECTIONS.RIGHT : DIRECTIONS.LEFT;
+            } else {
+                newDirection = deltaY > 0 ? DIRECTIONS.DOWN : DIRECTIONS.ROTATE;
+            }
+        }
+    } else {
+        // Movimiento simple en un solo eje
+        if (absX > absY) {
+            newDirection = deltaX > 0 ? DIRECTIONS.RIGHT : DIRECTIONS.LEFT;
+        } else {
+            newDirection = deltaY > 0 ? DIRECTIONS.DOWN : DIRECTIONS.ROTATE;
+        }
+    }
+    
+    // Verificar si cambió la dirección
+    const dirChanged = !directionsEqual(newDirection, currentDirection);
+    
+    if (dirChanged) {
+        // Detener dirección anterior
+        if (currentDirection) {
+            if (Array.isArray(currentDirection)) {
+                currentDirection.forEach(dir => stopMovement(dir));
+            } else {
+                stopMovement(currentDirection);
+            }
+        }
+        
+        // Iniciar nueva dirección
+        if (newDirection) {
+            if (Array.isArray(newDirection)) {
+                newDirection.forEach(dir => startMovement(dir));
+            } else {
+                startMovement(newDirection);
+            }
+        }
+        
+        currentDirection = newDirection;
+    }
+}
+
+function directionsEqual(dir1, dir2) {
+    if (dir1 === dir2) return true;
+    if (!dir1 || !dir2) return false;
+    
+    // Comparar arrays
+    if (Array.isArray(dir1) && Array.isArray(dir2)) {
+        if (dir1.length !== dir2.length) return false;
+        return dir1.every((d, i) => d === dir2[i]);
+    }
+    
+    return false;
+}
+
+// ============================================================================
+// MOVIMIENTOS DIAGONALES (MANTENER PARA LAS ZONAS)
+// ============================================================================
+
+let diagonalInterval = null;
+
+function startDiagonal(direction) {
+    if (direction === 'down-left') {
+        startMovement(DIRECTIONS.LEFT);
+        startMovement(DIRECTIONS.DOWN);
+        
+        diagonalInterval = setInterval(() => {
+            movePiece(
+                gameState.board, 
+                gameState.piece, 
+                DIRECTIONS.LEFT, 
+                { solidifyPiece, removeLines }
+            );
+        }, 100);
+    } else if (direction === 'down-right') {
+        startMovement(DIRECTIONS.RIGHT);
+        startMovement(DIRECTIONS.DOWN);
+        
+        diagonalInterval = setInterval(() => {
+            movePiece(
+                gameState.board, 
+                gameState.piece, 
+                DIRECTIONS.RIGHT, 
+                { solidifyPiece, removeLines }
+            );
+        }, 100);
+    }
+}
+
+function stopDiagonal(direction) {
+    if (diagonalInterval) {
+        clearInterval(diagonalInterval);
+        diagonalInterval = null;
+    }
+    
+    if (direction === 'down-left') {
+        stopMovement(DIRECTIONS.LEFT);
+        stopMovement(DIRECTIONS.DOWN);
+    } else if (direction === 'down-right') {
+        stopMovement(DIRECTIONS.RIGHT);
+        stopMovement(DIRECTIONS.DOWN);
+    }
+}
 
 // ============================================================================
 // RENDERIZADO
@@ -355,98 +535,96 @@ function draw(deltaTime) {
 
         <!-- ========== VERSIÓN MÓVIL ========== -->
         <div v-if="ISMOBILE" class="mobile-layout">
-            <!-- Canvas (izquierda, grande) -->
-            <div class="mobile-canvas-area">
-                <canvas class="game-canvas" ref="canvas"></canvas>
-            </div>
-
-            <!-- Panel derecho (vertical, compacto) -->
-            <div class="mobile-sidebar">
-                <!-- Puntaje -->
-                <div class="stat-vertical">
-                    <span class="stat-label-v">PUNTAJE</span>
-                    <span class="stat-value-v">{{ gameState.score.value }}</span>
+            <!-- Área de juego (arriba) -->
+            <div class="game-area">
+                <!-- Canvas (izquierda, 75%) -->
+                <div class="mobile-canvas-area">
+                    <canvas class="game-canvas" ref="canvas"></canvas>
                 </div>
 
-                <!-- Tiempo -->
-                <div class="stat-vertical">
-                    <span class="stat-label-v">TIEMPO</span>
-                    <span class="stat-value-v-small">{{ gameState.time.value }}</span>
-                </div>
-
-                <!-- Próxima Pieza -->
-                <div class="next-preview-vertical">
-                    <span class="next-label">SIGUIENTE</span>
-                    <NextPiecePreview :nextPiece="gameState.nextPiece" />
-                </div>
-
-                <!-- Botón Opciones -->
-                <button 
-                    @click="togglePause" 
-                    class="btn-options-vertical"
-                >
-                    OPCIONES
-                </button>
-            </div>
-
-            <!-- Controles (abajo, sin botón de bajar rápido) -->
-            <div class="mobile-controls" @contextmenu.prevent>
-                <!-- D-Pad izquierda -->
-                <div class="dpad-container">
-                    <div class="dpad-horizontal">
-                        <button  
-                            @touchstart.prevent="startMovement(DIRECTIONS.LEFT)"  
-                            @touchend.prevent="stopMovement(DIRECTIONS.LEFT)"
-                            @mousedown.prevent="startMovement(DIRECTIONS.LEFT)"
-                            @mouseup="stopMovement(DIRECTIONS.LEFT)"
-                            @mouseleave="stopMovement(DIRECTIONS.LEFT)"
-                            @contextmenu.prevent
-                            class="btn-control rotate-90"
-                            aria-label="Mover izquierda"
-                        >
-                            ▼
-                        </button>
-                        
-                        <button  
-                            @touchstart.prevent="startMovement(DIRECTIONS.RIGHT)" 
-                            @touchend.prevent="stopMovement(DIRECTIONS.RIGHT)"
-                            @mousedown.prevent="startMovement(DIRECTIONS.RIGHT)"
-                            @mouseup="stopMovement(DIRECTIONS.RIGHT)"
-                            @mouseleave="stopMovement(DIRECTIONS.RIGHT)"
-                            @contextmenu.prevent
-                            class="btn-control rotate-90"
-                            aria-label="Mover derecha"
-                        >
-                            ▲
-                        </button>
+                <!-- Panel derecho (25%) -->
+                <div class="mobile-sidebar">
+                    <!-- Puntaje -->
+                    <div class="stat-vertical">
+                        <span class="stat-label-v">PUNTAJE</span>
+                        <span class="stat-value-v">{{ gameState.score.value }}</span>
                     </div>
+
+                    <!-- Tiempo -->
+                    <div class="stat-vertical">
+                        <span class="stat-label-v">TIEMPO</span>
+                        <span class="stat-value-v-small">{{ gameState.time.value }}</span>
+                    </div>
+
+                    <!-- Próxima Pieza -->
+                    <div class="next-preview-vertical">
+                        <span class="next-label">SIGUIENTE</span>
+                        <NextPiecePreview :nextPiece="gameState.nextPiece" />
+                    </div>
+
+                    <!-- Botón Opciones -->
                     <button 
-                        @touchstart.prevent="startMovement(DIRECTIONS.DOWN)" 
-                        @touchend.prevent="stopMovement(DIRECTIONS.DOWN)"
-                        @mousedown.prevent="startMovement(DIRECTIONS.DOWN)"
-                        @mouseup="stopMovement(DIRECTIONS.DOWN)"
-                        @mouseleave="stopMovement(DIRECTIONS.DOWN)"
-                        @contextmenu.prevent
-                        class="btn-control"
-                        aria-label="Mover abajo"
+                        @click="togglePause" 
+                        class="btn-options-vertical"
                     >
-                        ▼
+                        OPCIONES
                     </button>
                 </div>
+            </div>
 
-                <!-- Botón rotar derecha -->
-                <button 
-                    @touchstart.prevent="startMovement(DIRECTIONS.ROTATE)" 
-                    @touchend.prevent="stopMovement(DIRECTIONS.ROTATE)"
-                    @mousedown.prevent="startMovement(DIRECTIONS.ROTATE)"
-                    @mouseup="stopMovement(DIRECTIONS.ROTATE)"
-                    @mouseleave="stopMovement(DIRECTIONS.ROTATE)"
-                    @contextmenu.prevent
-                    class="btn-rotate rotate-180" 
-                    aria-label="Rotar pieza"
-                >
-                    ↻
-                </button>
+            <!-- Controles (abajo, fuera del flex) -->
+            <div class="controls-area">
+                <div class="mobile-controls" @contextmenu.prevent>
+                    <!-- D-Pad -->
+                    <div class="dpad-container">
+                        <button  
+                            @touchstart.prevent="handleTouchStart"
+                            @touchmove.prevent="handleTouchMove"
+                            @touchend.prevent="handleTouchEnd"
+                            @mousedown.prevent="handleTouchStart"
+                            @mousemove.prevent="handleTouchMove"
+                            @mouseup="handleTouchEnd"
+                            @mouseleave="handleTouchEnd"
+                            @contextmenu.prevent
+                            class="dpad-zone"
+                            aria-label="Controles direccionales"
+                        >
+                            <div class="dpad-visual">
+                                <!-- Flechas visibles -->
+                                <div class="dpad-arrow dpad-left">◀</div>
+                                <div class="dpad-arrow dpad-up">▲</div>
+                                <div class="dpad-arrow dpad-down">▼</div>
+                                <div class="dpad-arrow dpad-right">▶</div>
+                                
+                                <!-- ⭐ NUEVO: Zonas diagonales invisibles -->
+                                <div class="dpad-diagonal dpad-down-left" 
+                                    @touchstart.prevent="startDiagonal('down-left')"
+                                    @touchend.prevent="stopDiagonal('down-left')">
+                                </div>
+                                <div class="dpad-diagonal dpad-down-right"
+                                    @touchstart.prevent="startDiagonal('down-right')"
+                                    @touchend.prevent="stopDiagonal('down-right')">
+                                </div>
+                                
+                                <div class="dpad-center"></div>
+                            </div>
+                        </button>
+                    </div>
+
+                    <!-- Botón rotar -->
+                    <button 
+                        @touchstart.prevent="startMovement(DIRECTIONS.ROTATE)" 
+                        @touchend.prevent="stopMovement(DIRECTIONS.ROTATE)"
+                        @mousedown.prevent="startMovement(DIRECTIONS.ROTATE)"
+                        @mouseup="stopMovement(DIRECTIONS.ROTATE)"
+                        @mouseleave="stopMovement(DIRECTIONS.ROTATE)"
+                        @contextmenu.prevent
+                        class="btn-rotate-new" 
+                        aria-label="Rotar pieza"
+                    >
+                        <span class="rotate-icon">↻</span>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -608,22 +786,26 @@ function draw(deltaTime) {
     height: 100dvh;
     overflow: hidden;
 }
-
-/* ============================================================================
-   LAYOUT MÓVIL HORIZONTAL
+/*
+LAYOUT MÓVIL HORIZONTAL
    ============================================================================ */
 .mobile-layout {
-    @apply w-full h-full flex flex-col relative;
+    @apply w-full flex flex-col;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+}
+
+/* Área de juego (canvas + sidebar) */
+.game-area {
+    @apply flex flex-1;
+    min-height: 0;
 }
 
 /* Canvas área (izquierda, 75% ancho) */
 .mobile-canvas-area {
-    @apply flex items-center justify-center;
+    @apply flex items-center justify-center p-2;
     width: 75%;
-    position: absolute;
-    left: 0;
-    top: 10px; /* ✅ CAMBIO: Alineado con sidebar */
-    bottom: 100px; /* ✅ CAMBIO: Más espacio para controles */
 }
 
 .game-canvas {
@@ -640,13 +822,8 @@ function draw(deltaTime) {
 
 /* Panel derecho (vertical, 25% ancho) */
 .mobile-sidebar {
-    @apply flex flex-col gap-2 p-2;
+    @apply flex flex-col gap-2 p-2 overflow-y-auto;
     width: 25%;
-    position: absolute;
-    right: 0;
-    top: 10px; /* ✅ CAMBIO: Mismo top que canvas */
-    bottom: 100px; /* ✅ CAMBIO: Más espacio para controles */
-    overflow-y: auto;
 }
 
 .stat-vertical {
@@ -677,11 +854,12 @@ function draw(deltaTime) {
     @apply text-[9px] font-bold;
 }
 
-.next-preview-vertical :deep(.next-piece-canvas-wrapper) {
+/* ✅ CORREGIDO: Usar >>> en lugar de :deep() */
+.next-preview-vertical >>> .next-piece-canvas-wrapper {
     padding: 0.25rem !important;
 }
 
-.next-preview-vertical :deep(.next-piece-container) {
+.next-preview-vertical >>> .next-piece-container {
     transform: scale(0.6);
 }
 
@@ -694,99 +872,156 @@ function draw(deltaTime) {
 }
 
 /* ============================================================================
-   CONTROLES (NUEVO DISEÑO)
+   ÁREA DE CONTROLES (NUEVO)
    ============================================================================ */
+.controls-area {
+    @apply flex items-center justify-center;
+    height: 140px;
+    background: linear-gradient(to bottom, 
+        transparent 0%, 
+        rgba(0, 0, 0, 0.3) 20%,
+        rgba(0, 0, 0, 0.5) 100%);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
 .mobile-controls {
-    @apply flex justify-around items-center px-6 select-none;
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 100px; /* ✅ CAMBIO: Más alto */
-    padding-bottom: env(safe-area-inset-bottom, 10px); /* ✅ CAMBIO: Espacio para notch */
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.3), transparent);
+    @apply flex justify-around items-center w-full px-8 select-none;
 }
 
+/* ============================================================================
+   D-PAD (NUEVO DISEÑO)
+   ============================================================================ */
 .dpad-container {
-    @apply flex flex-col items-center;
-    gap: 0.25rem;
+    @apply relative;
 }
 
-.dpad-horizontal {
-    @apply flex items-center;
-    gap: 1rem;
-}
-
-/* ✅ NUEVO DISEÑO: Botones más modernos y elegantes */
-.btn-control {
-    @apply w-14 h-14 rounded-lg flex items-center justify-center text-4xl font-bold;
+.dpad-zone {
+    @apply relative rounded-xl;
+    width: 140px;
+    height: 140px;
     background: linear-gradient(135deg, 
-        rgba(59, 130, 246, 0.9) 0%, 
-        rgba(37, 99, 235, 0.9) 100%);
-    border: 2px solid rgba(255, 255, 255, 0.4);
+        rgba(30, 41, 59, 0.95) 0%, 
+        rgba(15, 23, 42, 0.95) 100%);
+    border: 3px solid rgba(59, 130, 246, 0.5);
     box-shadow: 
-        0 4px 6px rgba(0, 0, 0, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3),
-        inset 0 -1px 0 rgba(0, 0, 0, 0.2);
-    color: white;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-    user-select: none;
-    transition: all 0.15s ease;
+        0 8px 16px rgba(0, 0, 0, 0.4),
+        inset 0 2px 4px rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
 }
 
-.btn-control:active {
-    transform: scale(0.95);
-    box-shadow: 
-        0 2px 4px rgba(0, 0, 0, 0.4),
-        inset 0 2px 4px rgba(0, 0, 0, 0.3);
-    background: linear-gradient(135deg, 
-        rgba(37, 99, 235, 0.9) 0%, 
-        rgba(29, 78, 216, 0.9) 100%);
+.dpad-visual {
+    @apply relative w-full h-full;
 }
 
-.btn-rotate {
-    @apply w-16 h-16 rounded-full flex items-center justify-center text-5xl font-bold;
+.dpad-arrow {
+    @apply absolute flex items-center justify-center text-3xl font-bold;
+    color: rgba(59, 130, 246, 0.8);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    width: 50px;
+    height: 50px;
+    transition: all 0.1s ease;
+}
+
+.dpad-left {
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.dpad-right {
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.dpad-up {
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.dpad-down {
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.dpad-center {
+    @apply absolute rounded-full;
+    width: 30px;
+    height: 30px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, 
+        rgba(59, 130, 246, 0.3) 0%, 
+        rgba(59, 130, 246, 0.1) 70%,
+        transparent 100%);
+    border: 2px solid rgba(59, 130, 246, 0.3);
+}
+
+/* ============================================================================
+   ZONAS DIAGONALES (INVISIBLES)
+   ============================================================================ */
+.dpad-diagonal {
+    @apply absolute;
+    width: 45px;
+    height: 45px;
+    /* Invisible pero funcional */
+    background: transparent;
+    /* Debug: descomentar para ver las zonas
+    background: rgba(255, 0, 0, 0.2);
+    border: 1px dashed red;
+    */
+    z-index: 10;
+}
+
+.dpad-down-left {
+    bottom: 5px;
+    left: 5px;
+    border-radius: 0 0 0 8px;
+}
+
+.dpad-down-right {
+    bottom: 5px;
+    right: 5px;
+    border-radius: 0 0 8px 0;
+}
+
+/* Feedback visual al presionar (opcional) */
+.dpad-diagonal:active {
+    background: rgba(59, 130, 246, 0.2);
+}
+
+/* ============================================================================
+   BOTÓN ROTAR (NUEVO)
+   ============================================================================ */
+.btn-rotate-new {
+    @apply relative rounded-full flex items-center justify-center;
+    width: 100px;
+    height: 100px;
     background: linear-gradient(135deg, 
-        rgba(16, 185, 129, 0.9) 0%, 
-        rgba(5, 150, 105, 0.9) 100%);
-    border: 3px solid rgba(255, 255, 255, 0.4);
+        rgba(16, 185, 129, 0.95) 0%, 
+        rgba(5, 150, 105, 0.95) 100%);
+    border: 4px solid rgba(255, 255, 255, 0.3);
     box-shadow: 
-        0 6px 12px rgba(0, 0, 0, 0.4),
-        inset 0 2px 0 rgba(255, 255, 255, 0.3),
-        inset 0 -2px 0 rgba(0, 0, 0, 0.2);
-    color: white;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
-    user-select: none;
-    transition: all 0.15s ease;
+        0 8px 16px rgba(0, 0, 0, 0.4),
+        inset 0 2px 4px rgba(255, 255, 255, 0.2);
     backdrop-filter: blur(10px);
+    transition: all 0.15s ease;
 }
 
-.btn-rotate:active {
-    transform: scale(0.95) rotate(20deg);
+.btn-rotate-new:active {
+    transform: scale(0.95) rotate(30deg);
     box-shadow: 
-        0 3px 6px rgba(0, 0, 0, 0.5),
-        inset 0 3px 6px rgba(0, 0, 0, 0.3);
-    background: linear-gradient(135deg, 
-        rgba(5, 150, 105, 0.9) 0%, 
-        rgba(4, 120, 87, 0.9) 100%);
+        0 4px 8px rgba(0, 0, 0, 0.5),
+        inset 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
-/* Efecto hover solo en desktop */
-@media (hover: hover) {
-    .btn-control:hover {
-        border-color: rgba(255, 255, 255, 0.6);
-        box-shadow: 
-            0 6px 8px rgba(0, 0, 0, 0.3),
-            inset 0 1px 0 rgba(255, 255, 255, 0.4);
-    }
-
-    .btn-rotate:hover {
-        border-color: rgba(255, 255, 255, 0.6);
-        box-shadow: 
-            0 8px 16px rgba(0, 0, 0, 0.4),
-            inset 0 2px 0 rgba(255, 255, 255, 0.4);
-    }
+.rotate-icon {
+    @apply text-6xl font-bold;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 /* ============================================================================
