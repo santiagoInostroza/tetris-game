@@ -2,7 +2,7 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { ISMOBILE, HEIGHT_CANVAS, BLOCK_SIZE, BOARD_WIDTH, BOARD_HEIGHT, DIRECTIONS } from '/src/utils/consts.js';
 import { checkCollision } from '/src/utils/helpers.js';
-import { DIFFICULTY } from '/src/utils/config.js';
+import { difficulty } from '/src/utils/config.js';
 import { name } from '/src/utils/player.js';
 import { PIECES_IMAGES } from '/src/utils/images.js';
 
@@ -219,7 +219,7 @@ async function submitPlayerScore() {
             name: player.value,
             score: gameState.score.value,
             time: gameState.time.value,
-            difficulty: DIFFICULTY.value,
+            difficulty: difficulty.value,
         };
         
         await createPlayer(newPlayer);

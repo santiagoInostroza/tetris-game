@@ -4,12 +4,12 @@ import { ISPRODUCTION } from '/src/utils/consts.js';
 import { playerID, setName } from '/src/utils/player.js';
 
 // ============================================================================
-// CONFIGURACIÓN DE API
+// CONFIGURACIÓN DE API - SUPABASE
 // ============================================================================
 
-const API_CONFIG = {
-    local: 'http://localhost/api/',
-    production: 'https://tetrisbackend.saig.cl/api/',
+const SUPABASE_CONFIG = {
+    url: 'qyhvhcksequoqdqqrbdk.supabase.co',
+    anonKey: 'sb_publishable_9AXBUSTlN-p0O87dg36HYw_zUbPipyo',     
 };
 
 const IPGEOLOCATION_CONFIG = {
@@ -17,8 +17,8 @@ const IPGEOLOCATION_CONFIG = {
     baseUrl: 'https://api.ipgeolocation.io/ipgeo',
 };
 
-// Seleccionar URL base según entorno
-const API_BASE_URL = ISPRODUCTION ? API_CONFIG.production : API_CONFIG.production;
+// URL base de Supabase
+const API_BASE_URL = `https://${SUPABASE_CONFIG.url}/rest/v1`;
 
 // ============================================================================
 // ESTADO DE LA API
@@ -28,14 +28,16 @@ let isAPIAvailable = true;
 let apiHealthCheckDone = false;
 
 // ============================================================================
-// INSTANCIA DE AXIOS CONFIGURADA
+// INSTANCIA DE AXIOS CONFIGURADA PARA SUPABASE
 // ============================================================================
 
 const apiClient = axios.create({
     baseURL: API_BASE_URL,
-    timeout: 5000, // 5 segundos timeout
+    timeout: 5000,
     headers: {
         'Content-Type': 'application/json',
+        'apikey': SUPABASE_CONFIG.anonKey,
+        'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
     },
 });
 
@@ -71,7 +73,6 @@ if (!ISPRODUCTION) {
 let cachedPlayerData = null;
 let cachedGeoData = null;
 
-// Caché de jugadores en memoria (para modo offline)
 const playersCache = {
     [DIFFICULTY.EASY]: [],
     [DIFFICULTY.MEDIUM]: [],
@@ -82,10 +83,6 @@ const playersCache = {
 // VERIFICACIÓN DE SALUD DE LA API
 // ============================================================================
 
-/**
- * Verifica si hay conexión con la API
- * @returns {Promise<boolean>}
- */
 async function checkAPIHealth() {
     if (apiHealthCheckDone) {
         return isAPIAvailable;
@@ -94,7 +91,10 @@ async function checkAPIHealth() {
     try {
         await apiClient.get('/players', { 
             timeout: 3000,
-            params: { quantity: 1, difficulty: DIFFICULTY.MEDIUM }
+            params: { 
+                select: 'id',
+                limit: 1
+            }
         });
         isAPIAvailable = true;
         apiHealthCheckDone = true;
@@ -113,13 +113,9 @@ async function checkAPIHealth() {
 // ============================================================================
 
 /**
- * Obtiene la lista de jugadores
- * @param {number} quantity - Cantidad de jugadores a obtener (default: 5)
- * @param {string} difficulty - Nivel de dificultad (default: MEDIUM)
- * @returns {Promise<Object>} Respuesta con los datos de jugadores
+ * Obtiene la lista de jugadores (top scores por dificultad)
  */
 export async function fetchPlayers(quantity = 5, difficulty = DIFFICULTY.MEDIUM) {
-    // Verificar salud de API primero
     await checkAPIHealth();
 
     if (!isAPIAvailable) {
@@ -133,8 +129,9 @@ export async function fetchPlayers(quantity = 5, difficulty = DIFFICULTY.MEDIUM)
     try {
         const response = await apiClient.get('/players', {
             params: {
-                quantity,
-                difficulty,
+                difficulty: `eq.${difficulty}`,
+                order: 'score.desc,created_at.desc',
+                limit: quantity,
             },
         });
 
@@ -156,9 +153,7 @@ export async function fetchPlayers(quantity = 5, difficulty = DIFFICULTY.MEDIUM)
 }
 
 /**
- * Obtiene un jugador específico por ID
- * @param {string} playerId - ID del jugador
- * @returns {Promise<Object|null>} Datos del jugador o null si no existe
+ * Obtiene un jugador específico por player_id (UUID)
  */
 export async function fetchPlayer(playerId) {
     if (!playerId) {
@@ -166,7 +161,6 @@ export async function fetchPlayer(playerId) {
         return null;
     }
 
-    // Verificar salud de API primero
     await checkAPIHealth();
 
     if (!isAPIAvailable) {
@@ -175,8 +169,14 @@ export async function fetchPlayer(playerId) {
     }
 
     try {
-        const response = await apiClient.get(`/players/${playerId}`);
-        return response.data;
+        const response = await apiClient.get('/players', {
+            params: {
+                player_id: `eq.${playerId}`,
+                limit: 1,
+            }
+        });
+        
+        return response.data?.[0] || null;
     } catch (error) {
         if (error.response?.status === 404) {
             console.log('ℹ️ Jugador no encontrado:', playerId);
@@ -195,27 +195,22 @@ export async function fetchPlayer(playerId) {
 }
 
 /**
- * Crea un nuevo jugador o actualiza el puntaje
- * @param {Object} newPlayer - Datos del nuevo jugador
- * @returns {Promise<Object>} Respuesta del servidor
+ * Crea un nuevo jugador (Supabase siempre crea nuevo registro)
  */
 export async function createPlayer(newPlayer) {
-    // Validación de datos
     if (!newPlayer?.name || newPlayer?.score === undefined) {
         throw new Error('Nombre y puntaje son requeridos');
     }
 
-    // Verificar salud de API primero
     await checkAPIHealth();
 
     if (!isAPIAvailable) {
         console.warn('⚠️ API no disponible - no se puede guardar puntaje');
         
-        // Guardar en caché local
         const localPlayer = {
             ...newPlayer,
             id: Date.now(),
-            date: new Date().toISOString().split('T')[0],
+            created_at: new Date().toISOString(),
             country: 'Local',
             city: 'Local',
         };
@@ -237,59 +232,54 @@ export async function createPlayer(newPlayer) {
     try {
         let playerData;
 
-        // Si ya tenemos datos en caché, usarlos
-        if (cachedPlayerData) {
-            playerData = {
-                ...cachedPlayerData,
-                score: newPlayer.score,
-                time: newPlayer.time,
-                difficulty: newPlayer.difficulty,
-                player_id: playerID,
-            };
-        } else {
-            // Obtener datos de geolocalización
-            const geoData = await getUserGeolocationData();
-            
-            playerData = {
-                name: newPlayer.name,
-                score: newPlayer.score,
-                time: newPlayer.time,
-                difficulty: newPlayer.difficulty,
-                player_id: playerID,
-                country: geoData.country_name,
-                city: geoData.city,
-                latitude: geoData.latitude,
-                longitude: geoData.longitude,
-                country_flag: geoData.country_flag,
-            };
+        // Obtener datos de geolocalización
+        const geoData = cachedGeoData || await getUserGeolocationData();
+        
+        playerData = {
+            name: newPlayer.name,
+            score: newPlayer.score,
+            time: newPlayer.time,
+            difficulty: newPlayer.difficulty,
+            player_id: playerID,
+            country: geoData.country_name,
+            city: geoData.city,
+            latitude: geoData.latitude,
+            longitude: geoData.longitude,
+            country_flag: geoData.country_flag,
+        };
 
-            // Cachear para futuros usos
-            cachedPlayerData = playerData;
-        }
+        console.log('📤 Datos a enviar:', JSON.stringify(playerData, null, 2));
 
-        const response = await apiClient.post('/players', playerData);
+        // Supabase: POST crea nuevo registro
+        const response = await apiClient.post('/players', playerData, {
+            headers: {
+                'Prefer': 'return=representation' // Retorna el objeto creado
+            }
+        });
         
         // Actualizar caché
-        if (response.data) {
+        if (response.data?.[0]) {
             if (!playersCache[newPlayer.difficulty]) {
                 playersCache[newPlayer.difficulty] = [];
             }
-            playersCache[newPlayer.difficulty].unshift(response.data);
+            playersCache[newPlayer.difficulty].unshift(response.data[0]);
             playersCache[newPlayer.difficulty] = playersCache[newPlayer.difficulty].slice(0, 10);
         }
         
-        return response;
+        return {
+            data: response.data[0],
+            message: 'Puntaje guardado exitosamente'
+        };
     } catch (error) {
-        console.error('❌ Error al crear/actualizar jugador:', error.message);
+        console.error('❌ Error al crear jugador:', error.message);
         
         if (error.code === 'ERR_NETWORK' || error.code === 'ECONNABORTED') {
             isAPIAvailable = false;
             
-            // Guardar en caché local como fallback
             const localPlayer = {
                 ...newPlayer,
                 id: Date.now(),
-                date: new Date().toISOString().split('T')[0],
+                created_at: new Date().toISOString(),
                 country: 'Local',
                 city: 'Local',
             };
@@ -316,19 +306,14 @@ export async function createPlayer(newPlayer) {
 // GEOLOCALIZACIÓN
 // ============================================================================
 
-/**
- * Obtiene datos de geolocalización del usuario
- * @returns {Promise<Object>} Datos de geolocalización
- */
 async function getUserGeolocationData() {
-    // Si ya está en caché, retornar
     if (cachedGeoData) {
         return cachedGeoData;
     }
 
     try {
         const url = `${IPGEOLOCATION_CONFIG.baseUrl}?apiKey=${IPGEOLOCATION_CONFIG.apiKey}`;
-        const response = await fetch(url, { timeout: 3000 });
+        const response = await fetch(url);
         
         if (!response.ok) {
             throw new Error('Error en la respuesta de geolocalización');
@@ -336,7 +321,6 @@ async function getUserGeolocationData() {
 
         const data = await response.json();
         
-        // Validar que tenga los campos necesarios
         const geoData = {
             country_name: data.country_name || 'Desconocido',
             city: data.city || 'Desconocido',
@@ -345,14 +329,11 @@ async function getUserGeolocationData() {
             country_flag: data.country_flag || '',
         };
 
-        // Cachear
         cachedGeoData = geoData;
-        
         return geoData;
     } catch (error) {
         console.warn('⚠️ Error al obtener geolocalización:', error.message);
         
-        // Retornar datos por defecto si falla
         return {
             country_name: 'Desconocido',
             city: 'Desconocido',
@@ -367,9 +348,6 @@ async function getUserGeolocationData() {
 // INICIALIZACIÓN
 // ============================================================================
 
-/**
- * Carga los datos del jugador actual si existe
- */
 async function initializePlayer() {
     try {
         const player = await fetchPlayer(playerID);
@@ -383,7 +361,6 @@ async function initializePlayer() {
     }
 }
 
-// Inicializar al cargar el módulo (no bloqueante)
 initializePlayer().catch(() => {
     console.log('ℹ️ Iniciando en modo offline');
 });
@@ -392,9 +369,6 @@ initializePlayer().catch(() => {
 // UTILIDADES
 // ============================================================================
 
-/**
- * Limpia el caché de datos
- */
 export function clearCache() {
     cachedPlayerData = null;
     cachedGeoData = null;
@@ -403,9 +377,6 @@ export function clearCache() {
     });
 }
 
-/**
- * Obtiene el estado de la API
- */
 export function getAPIStatus() {
     return {
         isAvailable: isAPIAvailable,
@@ -413,9 +384,6 @@ export function getAPIStatus() {
     };
 }
 
-/**
- * Fuerza un recheck de la API
- */
 export async function recheckAPI() {
     apiHealthCheckDone = false;
     return await checkAPIHealth();
