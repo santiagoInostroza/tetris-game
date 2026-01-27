@@ -43,6 +43,7 @@ const canvas = ref(null);
 const context = ref(null);
 const player = ref(null);
 const hasName = ref(false);
+const isSavingScore = ref(false); 
 
 // Estado de movimiento táctil
 const movementStates = {
@@ -210,8 +211,9 @@ function endGame() {
 }
 
 async function submitPlayerScore() {
-    if (!player.value) return;
+    if (!player.value || isSavingScore.value) return; // ✅ Prevenir doble guardado
     
+    isSavingScore.value = true; // ✅ Marcar como guardando
     hasName.value = true;
     
     try {
@@ -223,14 +225,18 @@ async function submitPlayerScore() {
         };
         
         await createPlayer(newPlayer);
+        console.log('✅ Puntaje guardado correctamente');
     } catch (error) {
         console.error("Error al agregar el puntaje:", error);
+        isSavingScore.value = false; // ✅ Resetear en caso de error
     }
+    // No reseteamos isSavingScore en success para evitar re-guardado
 }
 
 function restartGame() {
     gameState.resetGameState();
     bonus.resetBonus();
+    isSavingScore.value = false; // ✅ Resetear al reiniciar
     gameLoop.startLoop(draw, handleAutoDrop); 
 }
 
@@ -271,6 +277,13 @@ function startMovement(direction) {
 function stopMovement(direction) {
     movementStates[`isMoving${direction}`] = false;
     isTouching = Object.values(movementStates).some(value => value);
+}
+
+function stopAllMovements() {
+    Object.keys(movementStates).forEach(key => {
+        movementStates[key] = false;
+    });
+    isTouching = false;
 }
 
 // ============================================================================
@@ -410,29 +423,22 @@ function draw(deltaTime) {
             <!-- Controles (abajo, fuera del flex) -->
             <div class="controls-area">
                 <div class="mobile-controls" @contextmenu.prevent>
-                    <!-- D-Pad de 4 direcciones -->
+                    <!-- D-Pad de 4 direcciones (SIN botón arriba) -->
                     <div class="dpad-container">
-                        <div class="dpad-grid-simple">
+                        <div class="dpad-grid-cross">
                             <!-- Fila superior -->
                             <div class="dpad-cell empty"></div>
-                            <button 
-                                @touchstart.prevent="startMovement(DIRECTIONS.ROTATE)"
-                                @touchend.prevent="stopMovement(DIRECTIONS.ROTATE)"
-                                @mousedown.prevent="startMovement(DIRECTIONS.ROTATE)"
-                                @mouseup="stopMovement(DIRECTIONS.ROTATE)"
-                                @contextmenu.prevent
-                                class="dpad-cell dpad-btn dpad-up"
-                            >
-                                <span class="dpad-icon">▲</span>
-                            </button>
+                            <div class="dpad-cell empty"></div>
                             <div class="dpad-cell empty"></div>
 
                             <!-- Fila media -->
                             <button 
                                 @touchstart.prevent="startMovement(DIRECTIONS.LEFT)"
                                 @touchend.prevent="stopMovement(DIRECTIONS.LEFT)"
+                                @touchcancel.prevent="stopMovement(DIRECTIONS.LEFT)"
                                 @mousedown.prevent="startMovement(DIRECTIONS.LEFT)"
                                 @mouseup="stopMovement(DIRECTIONS.LEFT)"
+                                @mouseleave="stopMovement(DIRECTIONS.LEFT)"
                                 @contextmenu.prevent
                                 class="dpad-cell dpad-btn dpad-left"
                             >
@@ -442,8 +448,10 @@ function draw(deltaTime) {
                             <button 
                                 @touchstart.prevent="startMovement(DIRECTIONS.RIGHT)"
                                 @touchend.prevent="stopMovement(DIRECTIONS.RIGHT)"
+                                @touchcancel.prevent="stopMovement(DIRECTIONS.RIGHT)"
                                 @mousedown.prevent="startMovement(DIRECTIONS.RIGHT)"
                                 @mouseup="stopMovement(DIRECTIONS.RIGHT)"
+                                @mouseleave="stopMovement(DIRECTIONS.RIGHT)"
                                 @contextmenu.prevent
                                 class="dpad-cell dpad-btn dpad-right"
                             >
@@ -455,8 +463,10 @@ function draw(deltaTime) {
                             <button 
                                 @touchstart.prevent="startMovement(DIRECTIONS.DOWN)"
                                 @touchend.prevent="stopMovement(DIRECTIONS.DOWN)"
+                                @touchcancel.prevent="stopMovement(DIRECTIONS.DOWN)"
                                 @mousedown.prevent="startMovement(DIRECTIONS.DOWN)"
                                 @mouseup="stopMovement(DIRECTIONS.DOWN)"
+                                @mouseleave="stopMovement(DIRECTIONS.DOWN)"
                                 @contextmenu.prevent
                                 class="dpad-cell dpad-btn dpad-down"
                             >
@@ -468,22 +478,25 @@ function draw(deltaTime) {
 
                     <!-- Botones de acción -->
                     <div class="action-buttons">
-                        <!-- Botón DROP -->
+                        <!-- Botón BAJAR -->
                         <button 
                             @touchstart.prevent="handleHardDrop"
+                            @touchend.prevent="stopAllMovements"
+                            @touchcancel.prevent="stopAllMovements"
                             @mousedown.prevent="handleHardDrop"
                             @contextmenu.prevent
                             class="btn-action btn-drop" 
                             aria-label="Bajar rápido"
                         >
                             <span class="action-icon">⇣</span>
-                            <span class="action-label">DROP</span>
+                            <span class="action-label">BAJAR</span>
                         </button>
 
-                        <!-- Botón rotar -->
+                        <!-- Botón ROTAR -->
                         <button 
                             @touchstart.prevent="startMovement(DIRECTIONS.ROTATE)" 
                             @touchend.prevent="stopMovement(DIRECTIONS.ROTATE)"
+                            @touchcancel.prevent="stopMovement(DIRECTIONS.ROTATE)"
                             @mousedown.prevent="startMovement(DIRECTIONS.ROTATE)"
                             @mouseup="stopMovement(DIRECTIONS.ROTATE)"
                             @mouseleave="stopMovement(DIRECTIONS.ROTATE)"
@@ -738,13 +751,12 @@ function draw(deltaTime) {
       0 0 5px rgba(255, 255, 255, 0.3),
       inset 0 0 3px rgba(255, 255, 255, 0.2);
 }
-
 /* ============================================================================
    ÁREA DE CONTROLES
    ============================================================================ */
 .controls-area {
     @apply flex items-center justify-center;
-    height: 140px;
+    height: 160px; /* ✅ Aumentado de 140px a 160px */
     background: linear-gradient(to bottom, 
         transparent 0%, 
         rgba(0, 0, 0, 0.3) 20%,
@@ -753,17 +765,17 @@ function draw(deltaTime) {
 }
 
 .mobile-controls {
-    @apply flex justify-around items-center w-full px-8 select-none;
+    @apply flex justify-around items-center w-full px-4; /* ✅ Reducido padding de px-8 a px-4 */
 }
 
 /* ============================================================================
-   D-PAD DE 4 DIRECCIONES
+   D-PAD EN CRUZ (SIN BOTÓN ARRIBA)
    ============================================================================ */
 .dpad-container {
     @apply relative;
 }
 
-.dpad-grid-simple {
+.dpad-grid-cross {
     display: grid;
     grid-template-columns: repeat(3, 60px);
     grid-template-rows: repeat(3, 60px);
@@ -791,6 +803,7 @@ function draw(deltaTime) {
         0 4px 8px rgba(0, 0, 0, 0.3),
         inset 0 2px 4px rgba(255, 255, 255, 0.15);
     transition: all 0.12s ease;
+    touch-action: none; /* ✅ Prevenir scroll mientras se presiona */
 }
 
 .dpad-btn:active {
@@ -807,6 +820,7 @@ function draw(deltaTime) {
     color: white;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
     user-select: none;
+    pointer-events: none; /* ✅ Evitar que el icono capture eventos */
 }
 
 .empty {
@@ -822,7 +836,7 @@ function draw(deltaTime) {
 }
 
 /* ============================================================================
-   BOTONES DE ACCIÓN (DROP Y ROTAR)
+   BOTONES DE ACCIÓN
    ============================================================================ */
 .action-buttons {
     @apply flex flex-col gap-3;
@@ -838,6 +852,7 @@ function draw(deltaTime) {
         inset 0 2px 4px rgba(255, 255, 255, 0.2);
     backdrop-filter: blur(10px);
     transition: all 0.15s ease;
+    touch-action: none; /* ✅ Prevenir scroll */
 }
 
 .btn-action:active {
@@ -875,12 +890,14 @@ function draw(deltaTime) {
     @apply text-4xl font-bold leading-none;
     color: white;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+    pointer-events: none; /* ✅ Evitar que el icono capture eventos */
 }
 
 .action-label {
     @apply text-xs font-bold tracking-wider;
     color: white;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    pointer-events: none; /* ✅ Evitar que el label capture eventos */
 }
 
 /* ============================================================================
