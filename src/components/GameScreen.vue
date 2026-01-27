@@ -9,8 +9,8 @@ import { PIECES_IMAGES } from '/src/utils/images.js';
 import { handleKeyDown, handleKeyUp, movePiece, speedDown, continueMovement } from '/src/utils/keyboardControls.js';
 import { drawSquare, showScoreOnCompletedLines, bonus as drawBonus, drawSquareWithBonus } from '/src/utils/draw.js';
 import { createPlayer } from '/src/api/apiPlayer.js';
-
 import SwitchButton from './components/SwitchButton.vue';
+import { useActiveSessions } from '/src/composables/useActiveSessions.js';
 
 // Composables
 import { useGameState } from '/src/composables/useGameState.js';
@@ -18,6 +18,7 @@ import { useGameAudio } from '/src/composables/useGameAudio.js';
 import { useBonus } from '/src/composables/useBonus.js';
 import { useGameLoop } from '/src/composables/useGameLoop.js';
 import NextPiecePreview from './NextPiecePreview.vue';
+
 
 // ============================================================================
 // PROPS Y EMITS
@@ -34,6 +35,7 @@ const gameState = useGameState();
 const audio = useGameAudio();
 const bonus = useBonus();
 const gameLoop = useGameLoop(gameState, bonus, audio);
+const activeSessions = useActiveSessions();
 
 // ============================================================================
 // REFS Y ESTADO LOCAL
@@ -66,6 +68,11 @@ onMounted(() => {
     
     setupEventListeners();
     setupBrowserBehavior();
+    
+    // ✅ NUEVO: Iniciar sesión activa si tiene nombre
+    if (player.value) {
+        activeSessions.startSession(player.value, 0);
+    }
     
     gameLoop.startLoop(draw, handleAutoDrop);
 });
@@ -191,6 +198,8 @@ function processLineRemoval(linePositions, totalBonus) {
         
         if (currentLine === linePositions.length - 1) {
             gameState.score.value += lineScore;
+            // ✅ NUEVO: Actualizar puntaje en tiempo real
+            activeSessions.updateScore(gameState.score.value);
         }
         
         currentLine++;
@@ -200,10 +209,14 @@ function processLineRemoval(linePositions, totalBonus) {
     removeNextLine();
 }
 
+
 function endGame() {
     gameState.isGameOver.value = true;
     pause();
     audio.stopMusic();
+    
+    // ✅ NUEVO: Terminar sesión activa
+    activeSessions.endSession();
     
     if (hasName.value && gameState.score.value > 0) {
         submitPlayerScore();
@@ -236,7 +249,13 @@ async function submitPlayerScore() {
 function restartGame() {
     gameState.resetGameState();
     bonus.resetBonus();
-    isSavingScore.value = false; // ✅ Resetear al reiniciar
+    isSavingScore.value = false;
+    
+    // ✅ NUEVO: Reiniciar sesión activa
+    if (player.value) {
+        activeSessions.startSession(player.value, 0);
+    }
+    
     gameLoop.startLoop(draw, handleAutoDrop); 
 }
 
@@ -247,6 +266,11 @@ function handleAutoDrop() {
         DIRECTIONS.DOWN, 
         { solidifyPiece, removeLines }
     );
+}
+
+function menu() {
+    activeSessions.endSession();
+    emit('menu');
 }
 
 // ============================================================================
@@ -263,10 +287,6 @@ function togglePause() {
     } else {
         gameLoop.resumeLoop(draw, handleAutoDrop);
     }
-}
-
-function menu() {
-    emit('menu');
 }
 
 function startMovement(direction) {

@@ -1,8 +1,10 @@
 <script setup>
-import { defineEmits, onMounted, ref, computed } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { fetchPlayers } from '/src/api/apiPlayer.js';
 import { ISMOBILE } from '/src/utils/consts.js';
 import { difficulty } from '/src/utils/config.js';
+import { playerID } from '/src/utils/player.js'; // ✅ AGREGAR
+import { useActiveSessions } from '/src/composables/useActiveSessions.js'; // ✅ AGREGAR
 
 // ============================================================================
 // EMITS
@@ -17,6 +19,9 @@ const emit = defineEmits(['startGame', 'setConfig', 'scores']);
 const topPlayers = ref([]);
 const isLoading = ref(true);
 
+// ✅ NUEVO: Inicializar composable de sesiones activas
+const activeSessions = useActiveSessions();
+
 // ============================================================================
 // COMPUTED
 // ============================================================================
@@ -24,6 +29,9 @@ const isLoading = ref(true);
 const containerHeight = computed(() => {
     return ISMOBILE ? 'calc(100vh - 50px)' : '100vh';
 });
+
+// ✅ NUEVO: Computed para online count
+const onlineCount = computed(() => activeSessions.onlineCount.value);
 
 // ============================================================================
 // MÉTODOS
@@ -145,6 +153,27 @@ onMounted(() => {
                     </table>
                 </div>
             </article>
+
+            <!-- ✅ NUEVO: Jugadores Online -->
+            <article v-if="onlineCount > 0" class="online-players-section">
+                <h2 class="online-title">
+                    🔴 EN VIVO: {{ onlineCount }} {{ onlineCount === 1 ? 'jugador' : 'jugadores' }}
+                </h2>
+                
+                <div class="online-players-container">
+                    <div 
+                        v-for="(player, index) in activeSessions.activePlayers.value.slice(0, 5)" 
+                        :key="player.player_id"
+                        class="online-player"
+                        :class="{ 'is-me': player.player_id === playerID }"
+                    >
+                        <span class="online-rank">#{{ index + 1 }}</span>
+                        <span class="online-name">{{ player.player_name }}</span>
+                        <span class="online-score">{{ player.current_score.toLocaleString() }}</span>
+                        <span v-if="player.player_id === playerID" class="you-badge">TÚ</span>
+                    </div>
+                </div>
+            </article>
         </article>
 
         <!-- Menu Buttons -->
@@ -199,7 +228,6 @@ onMounted(() => {
 
 .top-players-container {
     @apply shadow border p-4 rounded-xl w-72 md:w-[35rem] text-sm bg-gradient-to-r from-blue-600 to-blue-800 min-h-[250px] flex items-center justify-center;
-    /* border-shine aplicado manualmente */
     border-color: rgba(255, 255, 255, 0.8);
     box-shadow: 
       0 0 10px rgba(255, 255, 255, 0.3),
@@ -254,6 +282,60 @@ onMounted(() => {
 }
 
 /* ============================================================================
+   JUGADORES ONLINE
+   ============================================================================ */
+.online-players-section {
+    @apply grid justify-center mt-4;
+}
+
+.online-title {
+    @apply w-max p-3 text-2xl font-extrabold mx-auto mb-3;
+    color: #10b981;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.online-players-container {
+    @apply shadow border p-4 rounded-xl w-72 md:w-[35rem] text-sm bg-gradient-to-r from-green-600 to-green-800;
+    border-color: rgba(255, 255, 255, 0.8);
+    box-shadow: 
+      0 0 10px rgba(255, 255, 255, 0.3),
+      inset 0 0 5px rgba(255, 255, 255, 0.2);
+}
+
+.online-player {
+    @apply flex items-center gap-3 p-2 border-t border-white/20 text-white;
+}
+
+.online-player:first-child {
+    @apply border-t-0;
+}
+
+.online-player.is-me {
+    @apply bg-yellow-500/20 rounded;
+}
+
+.online-rank {
+    @apply font-bold text-lg w-8;
+}
+
+.online-name {
+    @apply flex-1 truncate;
+}
+
+.online-score {
+    @apply font-bold text-lg;
+}
+
+.you-badge {
+    @apply px-2 py-1 bg-yellow-500 text-black text-xs font-bold rounded;
+}
+
+/* ============================================================================
    BOTONES
    ============================================================================ */
 .menu-buttons {
@@ -262,7 +344,6 @@ onMounted(() => {
 
 .btn-primary {
     @apply text-xl md:text-2xl border rounded-2xl p-3 w-72 md:w-[35rem] bg-gradient-to-r from-green-600 to-green-800 font-extrabold hover:from-green-700 hover:to-green-900 transition-all;
-    /* border-shine aplicado manualmente */
     border-color: rgba(255, 255, 255, 0.8);
     box-shadow: 
       0 0 10px rgba(255, 255, 255, 0.3),
@@ -275,7 +356,6 @@ onMounted(() => {
 
 .btn-secondary {
     @apply text-xl md:text-2xl border rounded-2xl p-3 w-72 md:w-[17rem] bg-gradient-to-r from-blue-600 to-blue-800 font-extrabold hover:from-blue-700 hover:to-blue-900 transition-all;
-    /* border-shine aplicado manualmente */
     border-color: rgba(255, 255, 255, 0.8);
     box-shadow: 
       0 0 10px rgba(255, 255, 255, 0.3),
