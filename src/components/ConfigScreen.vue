@@ -100,7 +100,11 @@ function isSelected(value) {
    LAYOUT
    ============================================================================ */
 .config-container {
-    @apply h-screen flex flex-col justify-between pb-8;
+    @apply w-screen flex flex-col justify-between;
+    height: 100vh;
+    height: 100dvh; /* ✅ Usar dvh para móviles */
+    overflow-y: auto; /* ✅ Permitir scroll si es necesario */
+    padding-bottom: env(safe-area-inset-bottom, 1rem); /* ✅ Respeta notch */
 }
 
 .config-title {
@@ -116,7 +120,6 @@ function isSelected(value) {
 
 .difficulty-button {
     @apply backdrop-blur rounded-xl p-6 min-w-[200px] flex flex-col gap-2 items-center text-center transition-all duration-300 cursor-pointer;
-    /* border-shine aplicado manualmente */
     border: 2px solid rgba(255, 255, 255, 0.8);
     box-shadow: 
       0 0 10px rgba(255, 255, 255, 0.3),
@@ -152,14 +155,34 @@ function isSelected(value) {
    ============================================================================ */
 .menu-button-container {
     @apply flex gap-4 flex-col items-center justify-center;
+    padding-bottom: 2rem; /* ✅ Más padding abajo */
 }
 
 .menu-button {
     @apply text-xl md:text-2xl border rounded-2xl p-3 w-72 md:w-[35rem] bg-gradient-to-r from-green-600 to-green-800 font-extrabold hover:from-green-700 hover:to-green-900 transition-all;
-    /* border-shine aplicado manualmente */
     border-color: rgba(255, 255, 255, 0.8);
     box-shadow: 
       0 0 10px rgba(255, 255, 255, 0.3),
       inset 0 0 5px rgba(255, 255, 255, 0.2);
+}
+
+/* ============================================================================
+   MOBILE FIXES
+   ============================================================================ */
+@media (max-width: 768px) {
+    .config-container {
+        padding: 1rem 0.5rem;
+    }
+    
+    .difficulty-button {
+        min-width: 150px;
+        padding: 1rem;
+    }
+    
+    .config-title {
+        font-size: 1.5rem;
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+    }
 }
 </style>
