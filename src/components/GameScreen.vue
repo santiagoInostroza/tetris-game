@@ -426,12 +426,7 @@ function draw(deltaTime) {
                     <!-- D-Pad de 4 direcciones (SIN botón arriba) -->
                     <div class="dpad-container">
                         <div class="dpad-grid-cross">
-                            <!-- Fila superior -->
-                            <div class="dpad-cell empty"></div>
-                            <div class="dpad-cell empty"></div>
-                            <div class="dpad-cell empty"></div>
-
-                            <!-- Fila media -->
+                            <!-- Fila superior: izquierda, centro, derecha -->
                             <button 
                                 @touchstart.prevent="startMovement(DIRECTIONS.LEFT)"
                                 @touchend.prevent="stopMovement(DIRECTIONS.LEFT)"
@@ -458,7 +453,7 @@ function draw(deltaTime) {
                                 <span class="dpad-icon">▶</span>
                             </button>
 
-                            <!-- Fila inferior -->
+                            <!-- Fila inferior: vacío, abajo, vacío -->
                             <div class="dpad-cell empty"></div>
                             <button 
                                 @touchstart.prevent="startMovement(DIRECTIONS.DOWN)"
@@ -475,7 +470,6 @@ function draw(deltaTime) {
                             <div class="dpad-cell empty"></div>
                         </div>
                     </div>
-
                     <!-- Botones de acción -->
                     <div class="action-buttons">
                         <!-- Botón BAJAR -->
@@ -681,8 +675,12 @@ function draw(deltaTime) {
     overflow: hidden;
 }
 
+
+/* ✅ CAMBIO: El área de juego ahora tiene altura calculada */
 .game-area {
-    @apply flex flex-1;
+    @apply flex;
+    height: calc(100vh - 160px); /* ✅ Restar exactamente la altura de controles */
+    height: calc(100dvh - 160px);
     min-height: 0;
 }
 
@@ -756,7 +754,8 @@ function draw(deltaTime) {
    ============================================================================ */
 .controls-area {
     @apply flex items-center justify-center;
-    height: 160px; /* ✅ Aumentado de 140px a 160px */
+    height: 160px; /* ✅ Altura fija */
+    flex-shrink: 0; /* ✅ No se encoge */
     background: linear-gradient(to bottom, 
         transparent 0%, 
         rgba(0, 0, 0, 0.3) 20%,
@@ -765,7 +764,7 @@ function draw(deltaTime) {
 }
 
 .mobile-controls {
-    @apply flex justify-around items-center w-full px-4; /* ✅ Reducido padding de px-8 a px-4 */
+    @apply flex justify-around items-center w-full px-4;
 }
 
 /* ============================================================================
@@ -777,8 +776,8 @@ function draw(deltaTime) {
 
 .dpad-grid-cross {
     display: grid;
-    grid-template-columns: repeat(3, 60px);
-    grid-template-rows: repeat(3, 60px);
+    grid-template-columns: repeat(3, 60px); /* 3 columnas */
+    grid-template-rows: repeat(2, 60px);    /* ✅ SOLO 2 filas ahora */
     gap: 4px;
     background: rgba(15, 23, 42, 0.9);
     padding: 8px;
@@ -803,7 +802,7 @@ function draw(deltaTime) {
         0 4px 8px rgba(0, 0, 0, 0.3),
         inset 0 2px 4px rgba(255, 255, 255, 0.15);
     transition: all 0.12s ease;
-    touch-action: none; /* ✅ Prevenir scroll mientras se presiona */
+    touch-action: none;
 }
 
 .dpad-btn:active {
@@ -820,7 +819,7 @@ function draw(deltaTime) {
     color: white;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
     user-select: none;
-    pointer-events: none; /* ✅ Evitar que el icono capture eventos */
+    pointer-events: none;
 }
 
 .empty {
@@ -839,7 +838,8 @@ function draw(deltaTime) {
    BOTONES DE ACCIÓN
    ============================================================================ */
 .action-buttons {
-    @apply flex flex-col gap-3;
+    @apply flex flex-col;
+    gap: 12px; /* ✅ Aumentado de 3px a 12px */
 }
 
 .btn-action {
@@ -852,7 +852,7 @@ function draw(deltaTime) {
         inset 0 2px 4px rgba(255, 255, 255, 0.2);
     backdrop-filter: blur(10px);
     transition: all 0.15s ease;
-    touch-action: none; /* ✅ Prevenir scroll */
+    touch-action: none;
 }
 
 .btn-action:active {
@@ -890,14 +890,14 @@ function draw(deltaTime) {
     @apply text-4xl font-bold leading-none;
     color: white;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
-    pointer-events: none; /* ✅ Evitar que el icono capture eventos */
+    pointer-events: none;
 }
 
 .action-label {
     @apply text-xs font-bold tracking-wider;
     color: white;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-    pointer-events: none; /* ✅ Evitar que el label capture eventos */
+    pointer-events: none;
 }
 
 /* ============================================================================
