@@ -3,8 +3,6 @@ import { ref, onMounted, computed } from 'vue';
 import { fetchPlayers } from '/src/api/apiPlayer.js';
 import { ISMOBILE } from '/src/utils/consts.js';
 import { difficulty } from '/src/utils/config.js';
-import { playerID } from '/src/utils/player.js'; // ✅ AGREGAR
-import { useActiveSessions } from '/src/composables/useActiveSessions.js'; // ✅ AGREGAR
 
 // ============================================================================
 // EMITS
@@ -18,9 +16,6 @@ const emit = defineEmits(['startGame', 'setConfig', 'scores']);
 
 const topPlayers = ref([]);
 const isLoading = ref(true);
-
-// ✅ NUEVO: Inicializar composable de sesiones activas
-const activeSessions = useActiveSessions();
 
 // ============================================================================
 // COMPUTED
@@ -151,27 +146,6 @@ onMounted(() => {
                             </tr>
                         </tbody>
                     </table>
-                </div>
-            </article>
-
-            <!-- ✅ NUEVO: Jugadores Online -->
-            <article v-if="onlineCount > 0" class="online-players-section">
-                <h2 class="online-title">
-                    🔴 EN VIVO: {{ onlineCount }} {{ onlineCount === 1 ? 'jugador' : 'jugadores' }}
-                </h2>
-                
-                <div class="online-players-container">
-                    <div 
-                        v-for="(player, index) in activeSessions.activePlayers.value.slice(0, 5)" 
-                        :key="player.player_id"
-                        class="online-player"
-                        :class="{ 'is-me': player.player_id === playerID }"
-                    >
-                        <span class="online-rank">#{{ index + 1 }}</span>
-                        <span class="online-name">{{ player.player_name }}</span>
-                        <span class="online-score">{{ player.current_score.toLocaleString() }}</span>
-                        <span v-if="player.player_id === playerID" class="you-badge">TÚ</span>
-                    </div>
                 </div>
             </article>
         </article>
