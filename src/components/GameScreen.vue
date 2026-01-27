@@ -5,6 +5,7 @@ import { checkCollision } from '/src/utils/helpers.js';
 import { difficulty } from '/src/utils/config.js';
 import { name } from '/src/utils/player.js';
 import { PIECES_IMAGES } from '/src/utils/images.js';
+import { playerID } from '/src/utils/player.js';
 
 import { handleKeyDown, handleKeyUp, movePiece, speedDown, continueMovement } from '/src/utils/keyboardControls.js';
 import { drawSquare, showScoreOnCompletedLines, bonus as drawBonus, drawSquareWithBonus } from '/src/utils/draw.js';
@@ -437,6 +438,38 @@ function draw(deltaTime) {
                     >
                         OPCIONES
                     </button>
+
+                    <!-- ✅ NUEVO: Jugadores Online -->
+                    <div v-if="activeSessions.onlineCount.value > 0" class="online-panel-vertical">
+                        <div class="online-header-v">
+                            <span class="online-dot">🔴</span>
+                            <span class="online-count-v">{{ activeSessions.onlineCount.value }}</span>
+                        </div>
+                        
+                        <div class="online-list-v">
+                            <!-- Mi posición (siempre visible si estoy jugando) -->
+                            <div 
+                                v-if="activeSessions.myCurrentRank.value" 
+                                class="online-item-v online-me-v"
+                            >
+                                <span class="online-rank-v">#{{ activeSessions.myCurrentRank.value }}</span>
+                                <span class="online-name-v">TÚ</span>
+                                <span class="online-score-v">{{ gameState.score.value.toLocaleString() }}</span>
+                            </div>
+                            
+                            <!-- Top 10 jugadores -->
+                            <div 
+                                v-for="(player, index) in activeSessions.activePlayers.value.slice(0, 10)" 
+                                :key="player.player_id"
+                                class="online-item-v"
+                                :class="{ 'online-highlight-v': player.player_id === playerID }"
+                            >
+                                <span class="online-rank-v">#{{ index + 1 }}</span>
+                                <span class="online-name-v">{{ player.player_name }}</span>
+                                <span class="online-score-v">{{ player.current_score.toLocaleString() }}</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -552,6 +585,38 @@ function draw(deltaTime) {
                 >
                     OPCIONES
                 </button>
+
+                <!-- ✅ NUEVO: Jugadores Online Desktop -->
+                <div v-if="activeSessions.onlineCount.value > 0" class="online-panel-desktop">
+                    <div class="online-header-desktop">
+                        <span class="online-dot">🔴</span>
+                        <span class="online-count-desktop">{{ activeSessions.onlineCount.value }} EN VIVO</span>
+                    </div>
+                    
+                    <div class="online-list-desktop">
+                        <!-- Mi posición -->
+                        <div 
+                            v-if="activeSessions.myCurrentRank.value" 
+                            class="online-item-desktop online-me-desktop"
+                        >
+                            <span class="online-rank-desktop">#{{ activeSessions.myCurrentRank.value }}</span>
+                            <span class="online-name-desktop">TÚ</span>
+                            <span class="online-score-desktop">{{ gameState.score.value.toLocaleString() }}</span>
+                        </div>
+                        
+                        <!-- Top 10 -->
+                        <div 
+                            v-for="(player, index) in activeSessions.activePlayers.value.slice(0, 10)" 
+                            :key="player.player_id"
+                            class="online-item-desktop"
+                            :class="{ 'online-highlight-desktop': player.player_id === playerID }"
+                        >
+                            <span class="online-rank-desktop">#{{ index + 1 }}</span>
+                            <span class="online-name-desktop">{{ player.player_name }}</span>
+                            <span class="online-score-desktop">{{ player.current_score.toLocaleString() }}</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -1086,4 +1151,160 @@ function draw(deltaTime) {
 .gameover-name-value {
     @apply p-4 text-5xl text-center font-bold;
 }
+
+/* ============================================================================
+   PANEL JUGADORES ONLINE - MÓVIL
+   ============================================================================ */
+.online-panel-vertical {
+    @apply border-2 rounded-lg overflow-hidden;
+    background: rgba(21, 128, 61, 0.3); /* Verde transparente */
+    backdrop-filter: blur(8px);
+    border-color: rgba(16, 185, 129, 0.5);
+    max-height: 180px;
+}
+
+.online-header-v {
+    @apply flex items-center justify-center gap-1 p-1 border-b;
+    background: rgba(5, 150, 105, 0.4);
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.online-dot {
+    @apply text-xs;
+    animation: pulse-dot 2s infinite;
+}
+
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+.online-count-v {
+    @apply text-[10px] font-bold;
+    color: #10b981;
+}
+
+.online-list-v {
+    @apply overflow-y-auto;
+    max-height: 150px;
+}
+
+.online-list-v::-webkit-scrollbar {
+    width: 3px;
+}
+
+.online-list-v::-webkit-scrollbar-thumb {
+    background: rgba(16, 185, 129, 0.5);
+    border-radius: 10px;
+}
+
+.online-item-v {
+    @apply flex items-center gap-1 p-1 border-b text-white text-[9px];
+    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.online-item-v:last-child {
+    @apply border-b-0;
+}
+
+.online-me-v {
+    @apply sticky top-0 z-10;
+    background: rgba(234, 179, 8, 0.3) !important;
+    border-color: rgba(234, 179, 8, 0.5) !important;
+}
+
+.online-highlight-v {
+    background: rgba(234, 179, 8, 0.2);
+}
+
+.online-rank-v {
+    @apply font-bold w-6 text-center;
+    color: #10b981;
+}
+
+.online-name-v {
+    @apply flex-1 truncate;
+    font-size: 8px;
+}
+
+.online-score-v {
+    @apply font-bold;
+    font-size: 9px;
+}
+
+/* ============================================================================
+   PANEL JUGADORES ONLINE - DESKTOP
+   ============================================================================ */
+.online-panel-desktop {
+    @apply mt-4 border-2 rounded-xl overflow-hidden w-32;
+    background: rgba(21, 128, 61, 0.3);
+    backdrop-filter: blur(10px);
+    border-color: rgba(16, 185, 129, 0.5);
+    box-shadow: 
+      0 0 10px rgba(16, 185, 129, 0.3),
+      inset 0 0 5px rgba(16, 185, 129, 0.1);
+}
+
+.online-header-desktop {
+    @apply flex items-center justify-center gap-2 p-2 border-b;
+    background: rgba(5, 150, 105, 0.4);
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.online-count-desktop {
+    @apply text-xs font-bold;
+    color: #10b981;
+}
+
+.online-list-desktop {
+    @apply overflow-y-auto;
+    max-height: 300px;
+}
+
+.online-list-desktop::-webkit-scrollbar {
+    width: 4px;
+}
+
+.online-list-desktop::-webkit-scrollbar-thumb {
+    background: rgba(16, 185, 129, 0.5);
+    border-radius: 10px;
+}
+
+.online-item-desktop {
+    @apply flex flex-col gap-1 p-2 border-b text-white text-xs;
+    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.online-item-desktop:last-child {
+    @apply border-b-0;
+}
+
+.online-me-desktop {
+    @apply sticky top-0 z-10;
+    background: rgba(234, 179, 8, 0.3) !important;
+    border-color: rgba(234, 179, 8, 0.5) !important;
+}
+
+.online-highlight-desktop {
+    background: rgba(234, 179, 8, 0.2);
+}
+
+.online-rank-desktop {
+    @apply font-bold text-center;
+    color: #10b981;
+    font-size: 11px;
+}
+
+.online-name-desktop {
+    @apply truncate text-center font-semibold;
+    font-size: 10px;
+}
+
+.online-score-desktop {
+    @apply font-bold text-center;
+    font-size: 11px;
+}
+
 </style>
