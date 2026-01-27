@@ -6,7 +6,7 @@ import { difficulty } from '/src/utils/config.js';
 import { name } from '/src/utils/player.js';
 import { PIECES_IMAGES } from '/src/utils/images.js';
 
-import { handleKeyDown, handleKeyUp, movePiece, continueMovement } from '/src/utils/keyboardControls.js';
+import { handleKeyDown, handleKeyUp, movePiece, speedDown, continueMovement } from '/src/utils/keyboardControls.js';
 import { drawSquare, showScoreOnCompletedLines, bonus as drawBonus, drawSquareWithBonus } from '/src/utils/draw.js';
 import { createPlayer } from '/src/api/apiPlayer.js';
 
@@ -274,27 +274,17 @@ function stopMovement(direction) {
 }
 
 // ============================================================================
-// MOVIMIENTOS DIAGONALES (MANTENER PARA LAS ZONAS)
+// HARD DROP
 // ============================================================================
 
-function startDiagonal(direction) {
-    if (direction === 'down-left') {
-        startMovement(DIRECTIONS.LEFT);
-        startMovement(DIRECTIONS.DOWN);
-    } else if (direction === 'down-right') {
-        startMovement(DIRECTIONS.RIGHT);
-        startMovement(DIRECTIONS.DOWN);
-    }
-}
-
-function stopDiagonal(direction) {
-    if (direction === 'down-left') {
-        stopMovement(DIRECTIONS.LEFT);
-        stopMovement(DIRECTIONS.DOWN);
-    } else if (direction === 'down-right') {
-        stopMovement(DIRECTIONS.RIGHT);
-        stopMovement(DIRECTIONS.DOWN);
-    }
+function handleHardDrop() {
+    if (gameState.isPaused.value || gameState.isGameOver.value) return;
+    
+    speedDown(
+        gameState.board, 
+        gameState.piece, 
+        { solidifyPiece, removeLines, updateDropCounter: gameState.updateDropCounter }
+    );
 }
 
 // ============================================================================
@@ -420,9 +410,9 @@ function draw(deltaTime) {
             <!-- Controles (abajo, fuera del flex) -->
             <div class="controls-area">
                 <div class="mobile-controls" @contextmenu.prevent>
-                    <!-- D-Pad de 8 direcciones -->
+                    <!-- D-Pad de 4 direcciones -->
                     <div class="dpad-container">
-                        <div class="dpad-grid">
+                        <div class="dpad-grid-simple">
                             <!-- Fila superior -->
                             <div class="dpad-cell empty"></div>
                             <button 
@@ -431,7 +421,7 @@ function draw(deltaTime) {
                                 @mousedown.prevent="startMovement(DIRECTIONS.ROTATE)"
                                 @mouseup="stopMovement(DIRECTIONS.ROTATE)"
                                 @contextmenu.prevent
-                                class="dpad-cell dpad-btn"
+                                class="dpad-cell dpad-btn dpad-up"
                             >
                                 <span class="dpad-icon">▲</span>
                             </button>
@@ -444,7 +434,7 @@ function draw(deltaTime) {
                                 @mousedown.prevent="startMovement(DIRECTIONS.LEFT)"
                                 @mouseup="stopMovement(DIRECTIONS.LEFT)"
                                 @contextmenu.prevent
-                                class="dpad-cell dpad-btn"
+                                class="dpad-cell dpad-btn dpad-left"
                             >
                                 <span class="dpad-icon">◀</span>
                             </button>
@@ -455,58 +445,56 @@ function draw(deltaTime) {
                                 @mousedown.prevent="startMovement(DIRECTIONS.RIGHT)"
                                 @mouseup="stopMovement(DIRECTIONS.RIGHT)"
                                 @contextmenu.prevent
-                                class="dpad-cell dpad-btn"
+                                class="dpad-cell dpad-btn dpad-right"
                             >
                                 <span class="dpad-icon">▶</span>
                             </button>
 
                             <!-- Fila inferior -->
-                            <button 
-                                @touchstart.prevent="startDiagonal('down-left')"
-                                @touchend.prevent="stopDiagonal('down-left')"
-                                @mousedown.prevent="startDiagonal('down-left')"
-                                @mouseup="stopDiagonal('down-left')"
-                                @contextmenu.prevent
-                                class="dpad-cell dpad-btn dpad-diagonal-btn"
-                            >
-                                <span class="dpad-icon diagonal">↙</span>
-                            </button>
+                            <div class="dpad-cell empty"></div>
                             <button 
                                 @touchstart.prevent="startMovement(DIRECTIONS.DOWN)"
                                 @touchend.prevent="stopMovement(DIRECTIONS.DOWN)"
                                 @mousedown.prevent="startMovement(DIRECTIONS.DOWN)"
                                 @mouseup="stopMovement(DIRECTIONS.DOWN)"
                                 @contextmenu.prevent
-                                class="dpad-cell dpad-btn"
+                                class="dpad-cell dpad-btn dpad-down"
                             >
                                 <span class="dpad-icon">▼</span>
                             </button>
-                            <button 
-                                @touchstart.prevent="startDiagonal('down-right')"
-                                @touchend.prevent="stopDiagonal('down-right')"
-                                @mousedown.prevent="startDiagonal('down-right')"
-                                @mouseup="stopDiagonal('down-right')"
-                                @contextmenu.prevent
-                                class="dpad-cell dpad-btn dpad-diagonal-btn"
-                            >
-                                <span class="dpad-icon diagonal">↘</span>
-                            </button>
+                            <div class="dpad-cell empty"></div>
                         </div>
                     </div>
 
-                    <!-- Botón rotar -->
-                    <button 
-                        @touchstart.prevent="startMovement(DIRECTIONS.ROTATE)" 
-                        @touchend.prevent="stopMovement(DIRECTIONS.ROTATE)"
-                        @mousedown.prevent="startMovement(DIRECTIONS.ROTATE)"
-                        @mouseup="stopMovement(DIRECTIONS.ROTATE)"
-                        @mouseleave="stopMovement(DIRECTIONS.ROTATE)"
-                        @contextmenu.prevent
-                        class="btn-rotate-new" 
-                        aria-label="Rotar pieza"
-                    >
-                        <span class="rotate-icon">↻</span>
-                    </button>
+                    <!-- Botones de acción -->
+                    <div class="action-buttons">
+                        <!-- Botón DROP -->
+                        <button 
+                            @touchstart.prevent="handleHardDrop"
+                            @mousedown.prevent="handleHardDrop"
+                            @contextmenu.prevent
+                            class="btn-action btn-drop" 
+                            aria-label="Bajar rápido"
+                        >
+                            <span class="action-icon">⇣</span>
+                            <span class="action-label">DROP</span>
+                        </button>
+
+                        <!-- Botón rotar -->
+                        <button 
+                            @touchstart.prevent="startMovement(DIRECTIONS.ROTATE)" 
+                            @touchend.prevent="stopMovement(DIRECTIONS.ROTATE)"
+                            @mousedown.prevent="startMovement(DIRECTIONS.ROTATE)"
+                            @mouseup="stopMovement(DIRECTIONS.ROTATE)"
+                            @mouseleave="stopMovement(DIRECTIONS.ROTATE)"
+                            @contextmenu.prevent
+                            class="btn-action btn-rotate" 
+                            aria-label="Rotar pieza"
+                        >
+                            <span class="action-icon">↻</span>
+                            <span class="action-label">ROTAR</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -669,8 +657,9 @@ function draw(deltaTime) {
     height: 100dvh;
     overflow: hidden;
 }
-/*
-LAYOUT MÓVIL HORIZONTAL
+
+/* ============================================================================
+   LAYOUT MÓVIL HORIZONTAL
    ============================================================================ */
 .mobile-layout {
     @apply w-full flex flex-col;
@@ -679,13 +668,11 @@ LAYOUT MÓVIL HORIZONTAL
     overflow: hidden;
 }
 
-/* Área de juego (canvas + sidebar) */
 .game-area {
     @apply flex flex-1;
     min-height: 0;
 }
 
-/* Canvas área (izquierda, 75% ancho) */
 .mobile-canvas-area {
     @apply flex items-center justify-center p-2;
     width: 75%;
@@ -703,7 +690,6 @@ LAYOUT MÓVIL HORIZONTAL
       inset 0 0 5px rgba(255, 255, 255, 0.2);
 }
 
-/* Panel derecho (vertical, 25% ancho) */
 .mobile-sidebar {
     @apply flex flex-col gap-2 p-2 overflow-y-auto;
     width: 25%;
@@ -737,7 +723,6 @@ LAYOUT MÓVIL HORIZONTAL
     @apply text-[9px] font-bold;
 }
 
-/* ✅ CORREGIDO: Usar >>> en lugar de :deep() */
 .next-preview-vertical >>> .next-piece-canvas-wrapper {
     padding: 0.25rem !important;
 }
@@ -755,7 +740,7 @@ LAYOUT MÓVIL HORIZONTAL
 }
 
 /* ============================================================================
-   ÁREA DE CONTROLES (NUEVO)
+   ÁREA DE CONTROLES
    ============================================================================ */
 .controls-area {
     @apply flex items-center justify-center;
@@ -772,73 +757,56 @@ LAYOUT MÓVIL HORIZONTAL
 }
 
 /* ============================================================================
-   D-PAD DE 8 DIRECCIONES
+   D-PAD DE 4 DIRECCIONES
    ============================================================================ */
 .dpad-container {
     @apply relative;
 }
 
-.dpad-grid {
+.dpad-grid-simple {
     display: grid;
-    grid-template-columns: repeat(3, 46px);
-    grid-template-rows: repeat(3, 46px);
-    gap: 2px;
-    background: rgba(15, 23, 42, 0.8);
-    padding: 4px;
-    border-radius: 12px;
-    border: 3px solid rgba(59, 130, 246, 0.3);
+    grid-template-columns: repeat(3, 60px);
+    grid-template-rows: repeat(3, 60px);
+    gap: 4px;
+    background: rgba(15, 23, 42, 0.9);
+    padding: 8px;
+    border-radius: 16px;
+    border: 3px solid rgba(59, 130, 246, 0.4);
     box-shadow: 
-        0 8px 16px rgba(0, 0, 0, 0.4),
-        inset 0 2px 4px rgba(255, 255, 255, 0.05);
+        0 10px 20px rgba(0, 0, 0, 0.5),
+        inset 0 2px 4px rgba(255, 255, 255, 0.08);
 }
 
 .dpad-cell {
     @apply relative flex items-center justify-center;
-    border-radius: 6px;
+    border-radius: 8px;
 }
 
 .dpad-btn {
     background: linear-gradient(135deg, 
-        rgba(30, 58, 138, 0.9) 0%, 
-        rgba(30, 64, 175, 0.9) 100%);
-    border: 2px solid rgba(59, 130, 246, 0.4);
+        rgba(37, 99, 235, 0.95) 0%, 
+        rgba(29, 78, 216, 0.95) 100%);
+    border: 3px solid rgba(96, 165, 250, 0.5);
     box-shadow: 
-        0 2px 4px rgba(0, 0, 0, 0.3),
-        inset 0 1px 2px rgba(255, 255, 255, 0.1);
-    transition: all 0.1s ease;
+        0 4px 8px rgba(0, 0, 0, 0.3),
+        inset 0 2px 4px rgba(255, 255, 255, 0.15);
+    transition: all 0.12s ease;
 }
 
 .dpad-btn:active {
     background: linear-gradient(135deg, 
         rgba(29, 78, 216, 1) 0%, 
-        rgba(37, 99, 235, 1) 100%);
+        rgba(30, 64, 175, 1) 100%);
     box-shadow: 
-        inset 0 2px 4px rgba(0, 0, 0, 0.4);
-    transform: scale(0.95);
-}
-
-.dpad-diagonal-btn {
-    background: linear-gradient(135deg, 
-        rgba(5, 150, 105, 0.85) 0%, 
-        rgba(16, 185, 129, 0.85) 100%);
-    border-color: rgba(16, 185, 129, 0.5);
-}
-
-.dpad-diagonal-btn:active {
-    background: linear-gradient(135deg, 
-        rgba(4, 120, 87, 1) 0%, 
-        rgba(5, 150, 105, 1) 100%);
+        inset 0 3px 6px rgba(0, 0, 0, 0.5);
+    transform: scale(0.92);
 }
 
 .dpad-icon {
-    @apply text-2xl font-bold;
+    @apply text-3xl font-bold;
     color: white;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
     user-select: none;
-}
-
-.dpad-icon.diagonal {
-    @apply text-xl;
 }
 
 .empty {
@@ -847,56 +815,24 @@ LAYOUT MÓVIL HORIZONTAL
 
 .dpad-center-dot {
     background: radial-gradient(circle, 
-        rgba(59, 130, 246, 0.4) 0%, 
-        rgba(59, 130, 246, 0.1) 50%,
+        rgba(59, 130, 246, 0.5) 0%, 
+        rgba(59, 130, 246, 0.15) 50%,
         transparent 100%);
-    border: 2px solid rgba(59, 130, 246, 0.2);
+    border: 2px solid rgba(59, 130, 246, 0.3);
 }
 
 /* ============================================================================
-   ZONAS DIAGONALES (INVISIBLES)
+   BOTONES DE ACCIÓN (DROP Y ROTAR)
    ============================================================================ */
-.dpad-diagonal {
-    @apply absolute;
-    width: 45px;
-    height: 45px;
-    /* Invisible pero funcional */
-    background: transparent;
-    /* Debug: descomentar para ver las zonas
-    background: rgba(255, 0, 0, 0.2);
-    border: 1px dashed red;
-    */
-    z-index: 10;
+.action-buttons {
+    @apply flex flex-col gap-3;
 }
 
-.dpad-down-left {
-    bottom: 5px;
-    left: 5px;
-    border-radius: 0 0 0 8px;
-}
-
-.dpad-down-right {
-    bottom: 5px;
-    right: 5px;
-    border-radius: 0 0 8px 0;
-}
-
-/* Feedback visual al presionar (opcional) */
-.dpad-diagonal:active {
-    background: rgba(59, 130, 246, 0.2);
-}
-
-/* ============================================================================
-   BOTÓN ROTAR (NUEVO)
-   ============================================================================ */
-.btn-rotate-new {
-    @apply relative rounded-full flex items-center justify-center;
-    width: 100px;
-    height: 100px;
-    background: linear-gradient(135deg, 
-        rgba(16, 185, 129, 0.95) 0%, 
-        rgba(5, 150, 105, 0.95) 100%);
-    border: 4px solid rgba(255, 255, 255, 0.3);
+.btn-action {
+    @apply relative rounded-2xl flex flex-col items-center justify-center gap-1;
+    width: 110px;
+    height: 65px;
+    border: 3px solid rgba(255, 255, 255, 0.4);
     box-shadow: 
         0 8px 16px rgba(0, 0, 0, 0.4),
         inset 0 2px 4px rgba(255, 255, 255, 0.2);
@@ -904,21 +840,51 @@ LAYOUT MÓVIL HORIZONTAL
     transition: all 0.15s ease;
 }
 
-.btn-rotate-new:active {
-    transform: scale(0.95) rotate(30deg);
+.btn-action:active {
+    transform: scale(0.93);
     box-shadow: 
         0 4px 8px rgba(0, 0, 0, 0.5),
         inset 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
-.rotate-icon {
-    @apply text-6xl font-bold;
+.btn-drop {
+    background: linear-gradient(135deg, 
+        rgba(239, 68, 68, 0.95) 0%, 
+        rgba(220, 38, 38, 0.95) 100%);
+}
+
+.btn-drop:active {
+    background: linear-gradient(135deg, 
+        rgba(220, 38, 38, 1) 0%, 
+        rgba(185, 28, 28, 1) 100%);
+}
+
+.btn-rotate {
+    background: linear-gradient(135deg, 
+        rgba(16, 185, 129, 0.95) 0%, 
+        rgba(5, 150, 105, 0.95) 100%);
+}
+
+.btn-rotate:active {
+    background: linear-gradient(135deg, 
+        rgba(5, 150, 105, 1) 0%, 
+        rgba(4, 120, 87, 1) 100%);
+}
+
+.action-icon {
+    @apply text-4xl font-bold leading-none;
     color: white;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+.action-label {
+    @apply text-xs font-bold tracking-wider;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 /* ============================================================================
-   LAYOUT DESKTOP (sin cambios)
+   LAYOUT DESKTOP
    ============================================================================ */
 .desktop-layout {
     @apply flex gap-4 items-start justify-center p-4;
@@ -982,7 +948,7 @@ LAYOUT MÓVIL HORIZONTAL
 }
 
 /* ============================================================================
-   MODALES (sin cambios)
+   MODALES
    ============================================================================ */
 .modal-overlay {
     @apply w-screen h-screen absolute bg-gray-800 opacity-90 z-10 left-0 top-0;
