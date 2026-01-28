@@ -439,34 +439,35 @@ function draw(deltaTime) {
                         OPCIONES
                     </button>
 
-                    <!-- ✅ NUEVO: Jugadores Online -->
+                    <!-- ✅ NUEVO: Jugadores Online (móvil) -->
                     <div v-if="activeSessions.onlineCount.value > 0" class="online-panel-vertical">
                         <div class="online-header-v">
                             <span class="online-dot">🔴</span>
-                            <span class="online-count-v">{{ activeSessions.onlineCount.value }}</span>
+                            <span class="online-count-v">{{ activeSessions.onlineCount.value }} EN VIVO</span>
                         </div>
                         
                         <div class="online-list-v">
-                            <!-- Mi posición (siempre visible si estoy jugando) -->
                             <div 
-                                v-if="activeSessions.myCurrentRank.value" 
-                                class="online-item-v online-me-v"
-                            >
-                                <span class="online-rank-v">#{{ activeSessions.myCurrentRank.value }}</span>
-                                <span class="online-name-v">TÚ</span>
-                                <span class="online-score-v">{{ gameState.score.value.toLocaleString() }}</span>
-                            </div>
-                            
-                            <!-- Top 10 jugadores -->
-                            <div 
-                                v-for="(player, index) in activeSessions.activePlayers.value.slice(0, 10)" 
+                                v-for="(player, index) in activeSessions.displayPlayers.value" 
                                 :key="player.player_id"
                                 class="online-item-v"
-                                :class="{ 'online-highlight-v': player.player_id === playerID }"
+                                :class="{ 
+                                    'online-me-v': player.player_id === playerID,
+                                    'online-separator-v': index === 10 && activeSessions.myCurrentRank.value > 10
+                                }"
                             >
-                                <span class="online-rank-v">#{{ index + 1 }}</span>
-                                <span class="online-name-v">{{ player.player_name }}</span>
+                                <span class="online-rank-v">
+                                    #{{ player.position || (activeSessions.activePlayers.value.findIndex(p => p.player_id === player.player_id) + 1) }}
+                                </span>
+                                <span class="online-name-v" :title="player.player_name">
+                                    {{ player.player_id === playerID ? 'TÚ' : player.player_name }}
+                                </span>
                                 <span class="online-score-v">{{ player.current_score.toLocaleString() }}</span>
+                            </div>
+                            
+                            <!-- Separador visual si no estoy en top 10 -->
+                            <div v-if="activeSessions.myCurrentRank.value > 10" class="online-divider-v">
+                                <span class="divider-text-v">...</span>
                             </div>
                         </div>
                     </div>
@@ -590,30 +591,33 @@ function draw(deltaTime) {
                 <div v-if="activeSessions.onlineCount.value > 0" class="online-panel-desktop">
                     <div class="online-header-desktop">
                         <span class="online-dot">🔴</span>
-                        <span class="online-count-desktop">{{ activeSessions.onlineCount.value }} EN VIVO</span>
+                        <span class="online-count-desktop">{{ activeSessions.onlineCount.value }}</span>
                     </div>
                     
                     <div class="online-list-desktop">
-                        <!-- Mi posición -->
                         <div 
-                            v-if="activeSessions.myCurrentRank.value" 
-                            class="online-item-desktop online-me-desktop"
-                        >
-                            <span class="online-rank-desktop">#{{ activeSessions.myCurrentRank.value }}</span>
-                            <span class="online-name-desktop">TÚ</span>
-                            <span class="online-score-desktop">{{ gameState.score.value.toLocaleString() }}</span>
-                        </div>
-                        
-                        <!-- Top 10 -->
-                        <div 
-                            v-for="(player, index) in activeSessions.activePlayers.value.slice(0, 10)" 
+                            v-for="(player, index) in activeSessions.displayPlayers.value" 
                             :key="player.player_id"
                             class="online-item-desktop"
-                            :class="{ 'online-highlight-desktop': player.player_id === playerID }"
+                            :class="{ 
+                                'online-me-desktop': player.player_id === playerID,
+                                'online-top-desktop': index < 3
+                            }"
                         >
-                            <span class="online-rank-desktop">#{{ index + 1 }}</span>
-                            <span class="online-name-desktop">{{ player.player_name }}</span>
-                            <span class="online-score-desktop">{{ player.current_score.toLocaleString() }}</span>
+                            <div class="online-rank-desktop">
+                                #{{ player.position || (activeSessions.activePlayers.value.findIndex(p => p.player_id === player.player_id) + 1) }}
+                            </div>
+                            <div class="online-name-desktop" :title="player.player_name">
+                                {{ player.player_id === playerID ? 'TÚ' : player.player_name }}
+                            </div>
+                            <div class="online-score-desktop">
+                                {{ player.current_score.toLocaleString() }}
+                            </div>
+                        </div>
+                        
+                        <!-- Separador si no estoy en top 10 -->
+                        <div v-if="activeSessions.myCurrentRank.value > 10" class="online-divider-desktop">
+                            <span class="divider-text-desktop">· · ·</span>
                         </div>
                     </div>
                 </div>
@@ -1157,10 +1161,10 @@ function draw(deltaTime) {
    ============================================================================ */
 .online-panel-vertical {
     @apply border-2 rounded-lg overflow-hidden;
-    background: rgba(21, 128, 61, 0.3); /* Verde transparente */
-    backdrop-filter: blur(8px);
+    background: rgba(21, 128, 61, 0.25);
+    backdrop-filter: blur(10px);
     border-color: rgba(16, 185, 129, 0.5);
-    max-height: 180px;
+    max-height: 200px;
 }
 
 .online-header-v {
@@ -1180,13 +1184,13 @@ function draw(deltaTime) {
 }
 
 .online-count-v {
-    @apply text-[10px] font-bold;
+    @apply text-[9px] font-bold;
     color: #10b981;
 }
 
 .online-list-v {
     @apply overflow-y-auto;
-    max-height: 150px;
+    max-height: 170px;
 }
 
 .online-list-v::-webkit-scrollbar {
@@ -1199,9 +1203,10 @@ function draw(deltaTime) {
 }
 
 .online-item-v {
-    @apply flex items-center gap-1 p-1 border-b text-white text-[9px];
+    @apply flex items-center gap-1 px-1 py-1.5 border-b text-white text-[9px];
     border-color: rgba(255, 255, 255, 0.1);
-    background: rgba(0, 0, 0, 0.1);
+    background: rgba(0, 0, 0, 0.15);
+    transition: background 0.2s;
 }
 
 .online-item-v:last-child {
@@ -1209,18 +1214,20 @@ function draw(deltaTime) {
 }
 
 .online-me-v {
-    @apply sticky top-0 z-10;
-    background: rgba(234, 179, 8, 0.3) !important;
+    background: rgba(234, 179, 8, 0.4) !important;
     border-color: rgba(234, 179, 8, 0.5) !important;
+    font-weight: bold;
 }
 
-.online-highlight-v {
-    background: rgba(234, 179, 8, 0.2);
+.online-separator-v {
+    @apply border-t-2;
+    border-top-color: rgba(234, 179, 8, 0.5) !important;
 }
 
 .online-rank-v {
-    @apply font-bold w-6 text-center;
+    @apply font-bold w-7 text-center flex-shrink-0;
     color: #10b981;
+    font-size: 8px;
 }
 
 .online-name-v {
@@ -1229,21 +1236,31 @@ function draw(deltaTime) {
 }
 
 .online-score-v {
-    @apply font-bold;
-    font-size: 9px;
+    @apply font-bold flex-shrink-0;
+    font-size: 8px;
+}
+
+.online-divider-v {
+    @apply text-center py-1;
+    background: rgba(0, 0, 0, 0.2);
+    border-top: 1px dashed rgba(255, 255, 255, 0.2);
+}
+
+.divider-text-v {
+    @apply text-white/50 text-xs;
 }
 
 /* ============================================================================
    PANEL JUGADORES ONLINE - DESKTOP
    ============================================================================ */
 .online-panel-desktop {
-    @apply mt-4 border-2 rounded-xl overflow-hidden w-32;
-    background: rgba(21, 128, 61, 0.3);
+    @apply mt-4 border-2 rounded-xl overflow-hidden w-40;
+    background: rgba(21, 128, 61, 0.25);
     backdrop-filter: blur(10px);
     border-color: rgba(16, 185, 129, 0.5);
     box-shadow: 
-      0 0 10px rgba(16, 185, 129, 0.3),
-      inset 0 0 5px rgba(16, 185, 129, 0.1);
+      0 0 15px rgba(16, 185, 129, 0.4),
+      inset 0 0 10px rgba(16, 185, 129, 0.1);
 }
 
 .online-header-desktop {
@@ -1259,11 +1276,11 @@ function draw(deltaTime) {
 
 .online-list-desktop {
     @apply overflow-y-auto;
-    max-height: 300px;
+    max-height: 350px;
 }
 
 .online-list-desktop::-webkit-scrollbar {
-    width: 4px;
+    width: 5px;
 }
 
 .online-list-desktop::-webkit-scrollbar-thumb {
@@ -1272,9 +1289,10 @@ function draw(deltaTime) {
 }
 
 .online-item-desktop {
-    @apply flex flex-col gap-1 p-2 border-b text-white text-xs;
+    @apply flex flex-col gap-0.5 p-2 border-b text-white;
     border-color: rgba(255, 255, 255, 0.1);
-    background: rgba(0, 0, 0, 0.1);
+    background: rgba(0, 0, 0, 0.15);
+    transition: all 0.2s;
 }
 
 .online-item-desktop:last-child {
@@ -1282,29 +1300,38 @@ function draw(deltaTime) {
 }
 
 .online-me-desktop {
-    @apply sticky top-0 z-10;
-    background: rgba(234, 179, 8, 0.3) !important;
+    background: rgba(234, 179, 8, 0.4) !important;
     border-color: rgba(234, 179, 8, 0.5) !important;
 }
 
-.online-highlight-desktop {
-    background: rgba(234, 179, 8, 0.2);
+.online-top-desktop {
+    background: rgba(16, 185, 129, 0.15);
 }
 
 .online-rank-desktop {
     @apply font-bold text-center;
     color: #10b981;
-    font-size: 11px;
+    font-size: 12px;
 }
 
 .online-name-desktop {
     @apply truncate text-center font-semibold;
-    font-size: 10px;
+    font-size: 11px;
 }
 
 .online-score-desktop {
     @apply font-bold text-center;
-    font-size: 11px;
+    font-size: 12px;
+}
+
+.online-divider-desktop {
+    @apply text-center py-2;
+    background: rgba(0, 0, 0, 0.2);
+    border-top: 2px dashed rgba(255, 255, 255, 0.2);
+}
+
+.divider-text-desktop {
+    @apply text-white/50 text-sm;
 }
 
 </style>

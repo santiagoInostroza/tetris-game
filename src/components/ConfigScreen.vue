@@ -1,6 +1,7 @@
 <script setup>
-import { defineEmits, computed } from 'vue';
+import { defineEmits, computed, ref } from 'vue';
 import { DIFFICULTY, difficulty, setDifficulty } from '/src/utils/config.js';
+import { name, setName } from '/src/utils/player.js'; // ✅ NUEVO
 
 // ============================================================================
 // EMITS
@@ -40,6 +41,8 @@ const difficulties = [
 // COMPUTED
 // ============================================================================
 
+const isEditingName = ref(false);
+const tempName = ref(name || '');
 const currentDifficulty = computed(() => difficulty.value);
 
 // ============================================================================
@@ -57,6 +60,24 @@ function menu() {
 function isSelected(value) {
     return currentDifficulty.value === value;
 }
+
+function startEditName() {
+    tempName.value = name || '';
+    isEditingName.value = true;
+}
+
+function saveName() {
+    if (tempName.value.trim()) {
+        setName(tempName.value.trim());
+        isEditingName.value = false;
+    }
+}
+
+function cancelEdit() {
+    isEditingName.value = false;
+    tempName.value = name || '';
+}
+
 </script>
 
 <template>
@@ -64,6 +85,33 @@ function isSelected(value) {
         <h1 class="shining game_name text-center">TETRIS</h1>
         
         <div>
+            <div class="name-section">
+                <h2 class="config-title">TU NOMBRE</h2>
+                
+                <div v-if="!isEditingName" class="name-display">
+                    <p class="current-name">{{ name || 'Sin nombre' }}</p>
+                    <button @click="startEditName" class="btn-edit-name">
+                        CAMBIAR
+                    </button>
+                </div>
+                
+                <div v-else class="name-edit">
+                    <input 
+                        v-model="tempName"
+                        @keyup.enter="saveName"
+                        @keyup.esc="cancelEdit"
+                        type="text"
+                        placeholder="Tu nombre"
+                        maxlength="20"
+                        class="name-input-config"
+                        autofocus
+                    />
+                    <div class="name-edit-buttons">
+                        <button @click="saveName" class="btn-save">GUARDAR</button>
+                        <button @click="cancelEdit" class="btn-cancel">CANCELAR</button>
+                    </div>
+                </div>
+            </div>
             <h2 class="config-title">DIFICULTAD</h2>
             
             <article class="difficulty-selector">
@@ -164,6 +212,69 @@ function isSelected(value) {
     box-shadow: 
       0 0 10px rgba(255, 255, 255, 0.3),
       inset 0 0 5px rgba(255, 255, 255, 0.2);
+}
+
+
+/* ============================================================================
+   SECCIÓN DE NOMBRE
+   ============================================================================ */
+.name-section {
+    @apply mb-8;
+}
+
+.name-display {
+    @apply flex flex-col md:flex-row gap-4 items-center justify-center;
+}
+
+.current-name {
+    @apply text-2xl font-bold text-green-400 px-6 py-3 rounded-xl;
+    background: rgba(16, 185, 129, 0.2);
+    border: 2px solid rgba(16, 185, 129, 0.5);
+}
+
+.btn-edit-name {
+    @apply px-6 py-3 rounded-xl font-bold transition-all;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.btn-edit-name:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+.name-edit {
+    @apply flex flex-col gap-4 items-center;
+}
+
+.name-input-config {
+    @apply w-72 text-center text-xl font-bold p-3 rounded-xl;
+    background: rgba(255, 255, 255, 0.95);
+    color: #1e40af;
+    border: 3px solid rgba(255, 255, 255, 0.5);
+}
+
+.name-input-config:focus {
+    outline: none;
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);
+}
+
+.name-edit-buttons {
+    @apply flex gap-4;
+}
+
+.btn-save {
+    @apply px-6 py-2 rounded-xl font-bold;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+}
+
+.btn-cancel {
+    @apply px-6 py-2 rounded-xl font-bold;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    border: 2px solid rgba(255, 255, 255, 0.5);
 }
 
 /* ============================================================================

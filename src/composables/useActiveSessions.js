@@ -1,4 +1,4 @@
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
 import { createClient } from '@supabase/supabase-js';
 import { playerID } from '/src/utils/player.js';
 import { difficulty } from '/src/utils/config.js';
@@ -8,8 +8,8 @@ import { difficulty } from '/src/utils/config.js';
 // ============================================================================
 
 const SUPABASE_CONFIG = {
-    url: 'qyhvhcksequoqdqqrbdk.supabase.co', 
-    anonKey: 'sb_publishable_9AXBUSTlN-p0O87dg36HYw_zUbPipyo',
+    url: 'XXXXXXXX.supabase.co', // ⚠️ TU URL
+    anonKey: 'eyJhbGc...', // ⚠️ TU KEY
 };
 
 const supabase = createClient(
@@ -25,10 +25,23 @@ export function useActiveSessions() {
     const activePlayers = ref([]);
     const onlineCount = ref(0);
     const myCurrentRank = ref(null);
+    const myCurrentPlayer = ref(null);
     
     let heartbeatInterval = null;
     let subscription = null;
     let isSessionActive = false;
+
+    // ✅ NUEVO: Computed para top 10 + yo (si no estoy en top 10)
+    const displayPlayers = computed(() => {
+        const top10 = activePlayers.value.slice(0, 10);
+        
+        // Si no estoy en el top 10, agregarme al final
+        if (myCurrentRank.value && myCurrentRank.value > 10 && myCurrentPlayer.value) {
+            return [...top10, myCurrentPlayer.value];
+        }
+        
+        return top10;
+    });
 
     /**
      * Registra el jugador actual como activo
@@ -58,6 +71,9 @@ export function useActiveSessions() {
 
             isSessionActive = true;
             console.log('✅ Sesión iniciada:', data);
+
+            // Cargar lista inmediatamente para mostrar al jugador
+            await loadActiveSessions();
 
             // Enviar heartbeat cada 10 segundos
             startHeartbeat();
@@ -124,6 +140,8 @@ export function useActiveSessions() {
                 .eq('player_id', playerID);
             
             isSessionActive = false;
+            myCurrentRank.value = null;
+            myCurrentPlayer.value = null;
             console.log('✅ Sesión terminada');
         } catch (error) {
             console.error('❌ Error al terminar sesión:', error);
@@ -201,15 +219,26 @@ export function useActiveSessions() {
             activePlayers.value = data || [];
             onlineCount.value = data?.length || 0;
             
-            // Calcular mi posición
+            // Calcular mi posición y datos
             const myIndex = data?.findIndex(p => p.player_id === playerID);
-            myCurrentRank.value = myIndex !== -1 ? myIndex + 1 : null;
+            if (myIndex !== -1) {
+                myCurrentRank.value = myIndex + 1;
+                myCurrentPlayer.value = { 
+                    ...data[myIndex],
+                    position: myIndex + 1 
+                };
+            } else {
+                myCurrentRank.value = null;
+                myCurrentPlayer.value = null;
+            }
             
-            console.log('👥 Jugadores activos:', onlineCount.value);
+            console.log('👥 Jugadores activos:', onlineCount.value, '- Mi posición:', myCurrentRank.value);
         } catch (error) {
             console.error('❌ Error al cargar sesiones:', error);
             activePlayers.value = [];
             onlineCount.value = 0;
+            myCurrentRank.value = null;
+            myCurrentPlayer.value = null;
         }
     }
 
@@ -235,8 +264,10 @@ export function useActiveSessions() {
 
     return {
         activePlayers,
+        displayPlayers, // ✅ NUEVO: Lista optimizada para mostrar
         onlineCount,
         myCurrentRank,
+        myCurrentPlayer, // ✅ NUEVO
         startSession,
         updateScore,
         endSession,

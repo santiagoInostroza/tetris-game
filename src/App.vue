@@ -4,7 +4,8 @@ import MenuScreen from './components/MenuScreen.vue'
 import GameScreen from './components/GameScreen.vue'
 import ConfigScreen from './components/ConfigScreen.vue'
 import ScoreScreen from './components/ScoreScreen.vue'
-import { ref } from 'vue'
+import { ref, onMounted  } from 'vue'
+import { setName, hasPlayerName } from './utils/player.js';
 
 let theme = ref('db')
 let showMainScreen = ref(false)
@@ -12,6 +13,10 @@ let showMenuScreen = ref(true)
 let showGameScreen = ref(false)
 let showConfigScreen = ref(false)
 let showScoreScreen = ref(false)
+
+const currentScreen = ref('menu');
+const showNameModal = ref(false);
+const tempName = ref('');
 
 
 const setTheme = (newTheme) => {
@@ -24,6 +29,7 @@ const setTheme = (newTheme) => {
 }
 
 const startGame = () => {
+    currentScreen.value = 'game';
     showMainScreen.value = false
     showMenuScreen.value = false
     showGameScreen.value = true
@@ -32,14 +38,16 @@ const startGame = () => {
 }
 
 const gameOver = () => {
-    showMainScreen.value = false
-    showMenuScreen.value = true
-    showGameScreen.value = false
-    showConfigScreen.value = false
-    showScoreScreen.value = false
+   currentScreen.value = 'menu';
+  showMainScreen.value = false
+  showMenuScreen.value = true
+  showGameScreen.value = false
+  showConfigScreen.value = false
+  showScoreScreen.value = false
 }
 
 const setConfig = () => {
+    currentScreen.value = 'config';
     showMainScreen.value = false
     showMenuScreen.value = false
     showGameScreen.value = false
@@ -48,6 +56,7 @@ const setConfig = () => {
 }
 
 const menu = () => {
+  currentScreen.value = 'menu';
     showMainScreen.value = false
     showMenuScreen.value = true
     showGameScreen.value = false
@@ -56,6 +65,7 @@ const menu = () => {
 }
 
 const scores = () => {
+   currentScreen.value = 'scores';
     showMainScreen.value = false
     showMenuScreen.value = false
     showGameScreen.value = false
@@ -63,6 +73,20 @@ const scores = () => {
     showScoreScreen.value = true
 }
 
+const saveName = () => {
+   if (tempName.value.trim()) {
+        setName(tempName.value.trim());
+        showNameModal.value = false;
+    }
+}
+
+
+onMounted(() => {
+    // ✅ Verificar si el usuario tiene nombre
+    if (!hasPlayerName()) {
+        showNameModal.value = true;
+    }
+});
 
 </script>
 

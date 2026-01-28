@@ -135,9 +135,21 @@ export async function fetchPlayers(quantity = 5, difficulty = DIFFICULTY.MEDIUM)
             },
         });
 
-        // Cachear para uso offline
+        // ✅ AGREGAR: Formatear fechas
         if (response.data) {
-            playersCache[difficulty] = response.data;
+            const playersWithFormattedDates = response.data.map(player => ({
+                ...player,
+                date: player.created_at ? 
+                    new Date(player.created_at).toISOString().split('T')[0] : 
+                    new Date().toISOString().split('T')[0]
+            }));
+            
+            playersCache[difficulty] = playersWithFormattedDates;
+            
+            return {
+                ...response,
+                data: playersWithFormattedDates
+            };
         }
 
         return response;
@@ -258,11 +270,18 @@ export async function createPlayer(newPlayer) {
         });
         
         // Actualizar caché
-        if (response.data?.[0]) {
+       if (response.data?.[0]) {
+            const playerWithFormattedDate = {
+                ...response.data[0],
+                date: response.data[0].created_at ? 
+                    new Date(response.data[0].created_at).toISOString().split('T')[0] : 
+                    new Date().toISOString().split('T')[0]
+            };
+            
             if (!playersCache[newPlayer.difficulty]) {
                 playersCache[newPlayer.difficulty] = [];
             }
-            playersCache[newPlayer.difficulty].unshift(response.data[0]);
+            playersCache[newPlayer.difficulty].unshift(playerWithFormattedDate);
             playersCache[newPlayer.difficulty] = playersCache[newPlayer.difficulty].slice(0, 10);
         }
         

@@ -3,6 +3,9 @@ import { ref, onMounted, computed } from 'vue';
 import { fetchPlayers } from '/src/api/apiPlayer.js';
 import { ISMOBILE } from '/src/utils/consts.js';
 import { difficulty } from '/src/utils/config.js';
+import { playerID, name } from '/src/utils/player.js'; // ✅ Importar name
+import { useActiveSessions } from '/src/composables/useActiveSessions.js';
+
 
 // ============================================================================
 // EMITS
@@ -85,6 +88,13 @@ function scores() {
 onMounted(() => {
     loadTopPlayers();
 });
+
+const greeting = computed(() => {
+    if (name) {
+        return `¡Hola, ${name}!`;
+    }
+    return '¡Bienvenido!';
+});
 </script>
 
 <template>
@@ -95,6 +105,8 @@ onMounted(() => {
         <!-- Header -->
         <article class="menu-header">
             <h1 class="shining game_name text-center">TETRIS</h1>
+
+            <p class="greeting-text">{{ greeting }}</p>
             
             <!-- Top 5 Table -->
             <article class="top-players-section">
@@ -115,37 +127,40 @@ onMounted(() => {
                     
                     <!-- Players Table -->
                     <table v-else class="players-table">
-                        <thead>
-                            <tr>
-                                <th class="table-header">Pos.</th>
-                                <th class="table-header w-full">Nombre</th>
-                                <th class="table-header w-32 hidden md:table-cell">Fecha</th>
-                                <th class="table-header w-24">País</th>
-                                <th class="table-header text-right">Puntaje</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr 
-                                v-for="(player, index) in topPlayers" 
-                                :key="player.id"
-                                class="table-row"
-                            >
-                                <td class="table-cell">
-                                    <span class="position-badge" :class="`position-${index + 1}`">
-                                        {{ index + 1 }}
-                                    </span>
-                                </td>
-                                <td class="table-cell truncate">{{ player.name }}</td>
-                                <td class="table-cell hidden md:table-cell">{{ player.date }}</td>
-                                <td class="table-cell" :title="player.country">
-                                    {{ formatCountry(player.country) }}
-                                </td>
-                                <td class="table-cell text-right font-bold">
-                                    {{ player.score?.toLocaleString() }}
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <thead>
+                        <tr>
+                            <th class="table-header">Pos.</th>
+                            <th class="table-header w-full">Nombre</th>
+                            <th class="table-header w-32 hidden md:table-cell">Fecha</th>
+                            <th class="table-header w-24">País</th>
+                            <th class="table-header text-right">Puntaje</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr 
+                            v-for="(player, index) in topPlayers" 
+                            :key="player.id"
+                            class="table-row"
+                        >
+                            <td class="table-cell">
+                                <!-- ✅ MEJORADO: Badges más bonitos -->
+                                <span class="position-badge" :class="`position-${index + 1}`">
+                                    {{ index + 1 }}
+                                </span>
+                            </td>
+                            <td class="table-cell truncate font-semibold">{{ player.name }}</td>
+                            <td class="table-cell hidden md:table-cell text-sm opacity-80">
+                                {{ player.date || '-' }}
+                            </td>
+                            <td class="table-cell text-sm" :title="player.country">
+                                {{ formatCountry(player.country) }}
+                            </td>
+                            <td class="table-cell text-right font-bold text-green-400">
+                                {{ player.score?.toLocaleString() }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
                 </div>
             </article>
         </article>
@@ -238,21 +253,28 @@ onMounted(() => {
 .table-cell {
     @apply p-2 py-1 text-white;
 }
-
 .position-badge {
-    @apply inline-flex items-center justify-center w-6 h-6 rounded-full font-bold text-xs;
+    @apply inline-flex items-center justify-center w-7 h-7 rounded-full font-bold text-xs;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .position-1 {
-    @apply bg-yellow-400 text-yellow-900;
+    @apply bg-gradient-to-br from-yellow-300 to-yellow-500 text-yellow-900;
+    box-shadow: 0 0 10px rgba(234, 179, 8, 0.5);
 }
 
 .position-2 {
-    @apply bg-gray-300 text-gray-900;
+    @apply bg-gradient-to-br from-gray-200 to-gray-400 text-gray-900;
+    box-shadow: 0 0 8px rgba(156, 163, 175, 0.5);
 }
 
 .position-3 {
-    @apply bg-orange-400 text-orange-900;
+    @apply bg-gradient-to-br from-orange-300 to-orange-500 text-orange-900;
+    box-shadow: 0 0 8px rgba(251, 146, 60, 0.5);
+}
+
+.position-4, .position-5 {
+    @apply bg-gradient-to-br from-blue-400 to-blue-600 text-white;
 }
 
 /* ============================================================================
@@ -334,5 +356,15 @@ onMounted(() => {
     box-shadow: 
       0 0 10px rgba(255, 255, 255, 0.3),
       inset 0 0 5px rgba(255, 255, 255, 0.2);
+}
+.greeting-text {
+    @apply text-xl md:text-2xl font-bold text-center text-green-400 mb-4;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 </style>
