@@ -1,85 +1,14 @@
 <script setup>
-import MainScreen from './components/MainScreen.vue'
-import MenuScreen from './components/MenuScreen.vue'
-import GameScreen from './components/GameScreen.vue'
-import ConfigScreen from './components/ConfigScreen.vue'
-import ScoreScreen from './components/ScoreScreen.vue'
-import { ref, onMounted  } from 'vue'
+import { ref, onMounted } from 'vue';
+import MenuScreen from './components/MenuScreen.vue';
+import ConfigScreen from './components/ConfigScreen.vue';
+import GameScreen from './components/GameScreen.vue';
+import ScoreScreen from './components/ScoreScreen.vue';
 import { setName, hasPlayerName } from './utils/player.js';
-
-let theme = ref('db')
-let showMainScreen = ref(false)
-let showMenuScreen = ref(true)
-let showGameScreen = ref(false)
-let showConfigScreen = ref(false)
-let showScoreScreen = ref(false)
 
 const currentScreen = ref('menu');
 const showNameModal = ref(false);
 const tempName = ref('');
-
-
-const setTheme = (newTheme) => {
-    theme.value = newTheme 
-    showMainScreen.value = false
-    showMenuScreen.value = true
-    showGameScreen.value = false
-    showConfigScreen.value = false
-    showScoreScreen.value = false
-}
-
-const startGame = () => {
-    currentScreen.value = 'game';
-    showMainScreen.value = false
-    showMenuScreen.value = false
-    showGameScreen.value = true
-    showConfigScreen.value = false
-    showScoreScreen.value = false
-}
-
-const gameOver = () => {
-   currentScreen.value = 'menu';
-  showMainScreen.value = false
-  showMenuScreen.value = true
-  showGameScreen.value = false
-  showConfigScreen.value = false
-  showScoreScreen.value = false
-}
-
-const setConfig = () => {
-    currentScreen.value = 'config';
-    showMainScreen.value = false
-    showMenuScreen.value = false
-    showGameScreen.value = false
-    showConfigScreen.value = true
-    showScoreScreen.value = false
-}
-
-const menu = () => {
-  currentScreen.value = 'menu';
-    showMainScreen.value = false
-    showMenuScreen.value = true
-    showGameScreen.value = false
-    showConfigScreen.value = false
-    showScoreScreen.value = false
-}
-
-const scores = () => {
-   currentScreen.value = 'scores';
-    showMainScreen.value = false
-    showMenuScreen.value = false
-    showGameScreen.value = false
-    showConfigScreen.value = false
-    showScoreScreen.value = true
-}
-
-const saveName = () => {
-   if (tempName.value.trim()) {
-        setName(tempName.value.trim());
-        showNameModal.value = false;
-    }
-}
-
 
 onMounted(() => {
     // ✅ Verificar si el usuario tiene nombre
@@ -88,172 +17,165 @@ onMounted(() => {
     }
 });
 
+function startGame() {
+    currentScreen.value = 'game';
+}
+
+function setConfig() {
+    currentScreen.value = 'config';
+}
+
+function menu() {
+    currentScreen.value = 'menu';
+}
+
+function scores() {
+    currentScreen.value = 'scores';
+}
+
+function gameOver() {
+    currentScreen.value = 'menu';
+}
+
+// ✅ NUEVO: Guardar nombre
+function saveName() {
+    if (tempName.value.trim()) {
+        setName(tempName.value.trim());
+        showNameModal.value = false;
+    }
+}
 </script>
 
 <template>
-  <div class="h-full  text-white text-border-black	bg">
+    <div class="app-container">
+        <MenuScreen 
+            v-if="currentScreen === 'menu'"
+            @start-game="startGame"
+            @set-config="setConfig"
+            @scores="scores"
+        />
+        
+        <ConfigScreen 
+            v-if="currentScreen === 'config'"
+            @menu="menu"
+        />
+        
+        <GameScreen 
+            v-if="currentScreen === 'game'"
+            @menu="menu"
+            @game-over="gameOver"
+        />
+        
+        <ScoreScreen 
+            v-if="currentScreen === 'scores'"
+            @menu="menu"
+        />
 
-    <section v-if="showMainScreen" id="main_screen" class="bg ">
-      <MainScreen @setTheme="setTheme" />
-    </section>
-
-    <section v-if="showMenuScreen" id="menu_screen" class="bg">
-      <MenuScreen :theme="theme" @startGame="startGame" @setConfig="setConfig" @scores="scores"/>
-    </section>
-
-    <section v-if="showGameScreen" id="game_screen" class="bg_dif">
-      <GameScreen @gameOver="gameOver" @menu="menu" />
-    </section>
-
-    <!-- CONFIGURACION -->
-    <section v-if="showConfigScreen" id="config_screen" class="bg_dif">
-      <ConfigScreen @menu="menu"/>
-    </section>
-
-    <!-- PUNTAJES -->
-    <section v-if="showScoreScreen" id="score_screen" class="bg_dif">
-      <ScoreScreen @menu="menu"/>
-    </section>
-
-  </div>
+        <!-- ✅ NUEVO: Modal para pedir nombre -->
+        <div v-if="showNameModal" class="modal-overlay-name">
+            <div class="modal-container-name">
+                <div class="modal-content-name">
+                    <h2 class="modal-title-name">¡Bienvenido a Tetris!</h2>
+                    <p class="modal-subtitle-name">¿Cómo te llamas?</p>
+                    
+                    <input 
+                        v-model="tempName"
+                        @keyup.enter="saveName"
+                        type="text"
+                        placeholder="Tu nombre"
+                        maxlength="20"
+                        class="name-input-modal"
+                        autofocus
+                    />
+                    
+                    <button 
+                        @click="saveName"
+                        :disabled="!tempName.trim()"
+                        class="btn-save-name"
+                        :class="{ 'opacity-50': !tempName.trim() }"
+                    >
+                        COMENZAR
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </template>
 
 <style scoped>
-
-</style>
-
-<style>
-.border-shine{
-  border: solid 3px white; /* Crea un borde sólido blanco */
-  
-  /* Agrega un brillo alrededor del canvas */
-  box-shadow: 
-    0 0 5px black,
-    /* 0 0 10px black, */
-    /* 0 0 15px black, */
-    /* 0 0 20px black,  */
-    /* 0 0 25px black, */
-    /* 0 0 30px black, */
-    0 0 35px black; 
-}
-.bg {
-    /* The image used */
-    background-image: url("/src/assets/img/bg4.png");
-    /* difuminado */
-    background-color: rgba(0, 0, 0, 0.5);
-
-    /* Full height */
-    height: 100%; 
-
-    /* Center and scale the image nicely */
+/* ============================================================================
+   FONDO DE PANTALLA
+   ============================================================================ */
+.app-container {
+    @apply min-h-screen w-full;
+     background-image: url('/bg4.png');
+    background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    background-size: cover;
+    background-attachment: fixed;
 }
 
-.bg_dif {
-    /* La imagen utilizada */
-    background-image: url("/src/assets/img/bg4.png");
-
-    /* Color de fondo con opacidad */
-    background-color: rgba(0, 0, 0, 0.5);
-
-    /* Altura completa */
-    height: 100%; 
-
-    /* Posicionar y escalar la imagen adecuadamente */
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: cover;
-
-    /* Crear un pseudo-elemento para el efecto de desenfoque */
-    position: relative;
-    z-index: 1;
+/* ============================================================================
+   MODAL DE NOMBRE
+   ============================================================================ */
+.modal-overlay-name {
+    @apply fixed inset-0 bg-black/80 z-50 flex items-center justify-center;
+    backdrop-filter: blur(5px);
 }
 
-.bg_dif::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    background-image: inherit;
-    background-position: inherit;
-    background-repeat: inherit;
-    background-size: inherit;
-    z-index: -1;
-
-    /* Aplicar el filtro de desenfoque */
-    filter: blur(8px); /* Ajusta el valor de desenfoque según sea necesario */
+.modal-container-name {
+    @apply w-full max-w-md mx-4;
 }
 
-  
-  .text-border-black {
-      text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
-  }
-  
-  .game_name{
-    font-size: 5.3rem;
-    font-weight: 900;
-    color: #fff;
-    margin: 0;
-    text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #fff, 0 0 40px #ff00de, 0 0 70px #ff00de, 0 0 80px #ff00de, 0 0 100px #ff00de, 0 0 150px #ff00de;
-  }
-  .shining {
-    animation: shine 2s linear infinite;
-  }
+.modal-content-name {
+    @apply bg-gradient-to-br from-blue-600 to-blue-800 p-8 rounded-2xl border-2;
+    border-color: rgba(255, 255, 255, 0.8);
+    box-shadow: 
+      0 0 20px rgba(255, 255, 255, 0.3),
+      inset 0 0 10px rgba(255, 255, 255, 0.1);
+}
 
-  .moving-text {
-    animation: moveText 6s linear infinite;
-  }
+.modal-title-name {
+    @apply text-3xl font-extrabold text-center mb-2 text-white;
+}
 
-  @keyframes shine {
-    0% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.1;
-    }
-    100% {
-        opacity: 1;
-    }
-  }
+.modal-subtitle-name {
+    @apply text-lg text-center mb-6 text-white/80;
+}
 
+.name-input-modal {
+    @apply w-full text-center text-2xl font-bold p-4 rounded-xl mb-6;
+    background: rgba(255, 255, 255, 0.95);
+    color: #1e40af;
+    border: 3px solid rgba(255, 255, 255, 0.5);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
 
+.name-input-modal:focus {
+    outline: none;
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);
+}
 
-  @keyframes moveText {
-      0% {
-        margin-left: 170px;
-      }
-      50% {
-          margin-left: -10px;
-      }
-      100% {
-          margin-left: 170px;
-      }
-    }
-    
+.btn-save-name {
+    @apply w-full text-2xl font-extrabold p-4 rounded-xl;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border: 3px solid rgba(255, 255, 255, 0.5);
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s;
+}
 
-  /* media desktop */
+.btn-save-name:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
 
-  @media (min-width: 768px) {
-    .game_name{
-      font-size: 10rem;
-    }
+.btn-save-name:active:not(:disabled) {
+    transform: translateY(0);
+}
 
-    @keyframes moveText {
-      0% {
-        margin-left: 450px;
-      }
-      50% {
-          margin-left: -10px;
-      }
-      100% {
-          margin-left: 450px;
-      }
-    }
-    
-  }
-
+.btn-save-name:disabled {
+    cursor: not-allowed;
+}
 </style>

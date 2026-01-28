@@ -19,6 +19,7 @@ const emit = defineEmits(['startGame', 'setConfig', 'scores']);
 
 const topPlayers = ref([]);
 const isLoading = ref(true);
+const activeSessions = useActiveSessions();
 
 // ============================================================================
 // COMPUTED
@@ -28,8 +29,17 @@ const containerHeight = computed(() => {
     return ISMOBILE ? 'calc(100vh - 50px)' : '100vh';
 });
 
-// ✅ NUEVO: Computed para online count
+
+// ✅ Computed para online count
 const onlineCount = computed(() => activeSessions.onlineCount.value);
+
+// ✅ Computed para el saludo
+const greeting = computed(() => {
+    if (name) {
+        return `¡Hola, ${name}!`;
+    }
+    return '¡Bienvenido!';
+});
 
 // ============================================================================
 // MÉTODOS
@@ -89,14 +99,7 @@ onMounted(() => {
     loadTopPlayers();
 });
 
-const greeting = computed(() => {
-    if (name) {
-        return `¡Hola, ${name}!`;
-    }
-    return '¡Bienvenido!';
-});
 </script>
-
 <template>
     <div 
         class="menu-container" 
@@ -105,8 +108,16 @@ const greeting = computed(() => {
         <!-- Header -->
         <article class="menu-header">
             <h1 class="shining game_name text-center">TETRIS</h1>
-
+            
+            <!-- Saludo personalizado -->
             <p class="greeting-text">{{ greeting }}</p>
+            
+            <!-- ✅ NUEVO: Contador de jugadores en vivo -->
+            <div v-if="onlineCount > 0" class="online-badge-menu">
+                <span class="online-dot-menu">🔴</span>
+                <span class="online-text-menu">{{ onlineCount }} {{ onlineCount === 1 ? 'jugador en vivo' : 'jugadores en vivo' }}</span>
+            </div>
+  
             
             <!-- Top 5 Table -->
             <article class="top-players-section">
@@ -366,5 +377,38 @@ const greeting = computed(() => {
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(-10px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+/* ✅ NUEVO: Badge de jugadores en vivo */
+.online-badge-menu {
+    @apply flex items-center justify-center gap-2 mx-auto mb-4 px-4 py-2 rounded-full w-max;
+    background: rgba(16, 185, 129, 0.2);
+    border: 2px solid rgba(16, 185, 129, 0.5);
+    backdrop-filter: blur(5px);
+    animation: pulse-badge 2s infinite;
+}
+
+@keyframes pulse-badge {
+    0%, 100% { 
+        box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+    }
+    50% { 
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
+    }
+}
+
+.online-dot-menu {
+    @apply text-sm;
+    animation: pulse-dot 2s infinite;
+}
+
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+.online-text-menu {
+    @apply text-sm md:text-base font-bold;
+    color: #10b981;
 }
 </style>

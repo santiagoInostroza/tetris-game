@@ -460,7 +460,7 @@ function draw(deltaTime) {
                                     #{{ player.position || (activeSessions.activePlayers.value.findIndex(p => p.player_id === player.player_id) + 1) }}
                                 </span>
                                 <span class="online-name-v" :title="player.player_name">
-                                    {{ player.player_id === playerID ? 'TÚ' : player.player_name }}
+                                    {{ player.player_name }}
                                 </span>
                                 <span class="online-score-v">{{ player.current_score.toLocaleString() }}</span>
                             </div>
@@ -591,7 +591,7 @@ function draw(deltaTime) {
                 <div v-if="activeSessions.onlineCount.value > 0" class="online-panel-desktop">
                     <div class="online-header-desktop">
                         <span class="online-dot">🔴</span>
-                        <span class="online-count-desktop">{{ activeSessions.onlineCount.value }}</span>
+                        <span class="online-count-desktop">{{ activeSessions.onlineCount.value }} EN VIVO</span>
                     </div>
                     
                     <div class="online-list-desktop">
@@ -608,7 +608,7 @@ function draw(deltaTime) {
                                 #{{ player.position || (activeSessions.activePlayers.value.findIndex(p => p.player_id === player.player_id) + 1) }}
                             </div>
                             <div class="online-name-desktop" :title="player.player_name">
-                                {{ player.player_id === playerID ? 'TÚ' : player.player_name }}
+                                {{ player.player_name }}
                             </div>
                             <div class="online-score-desktop">
                                 {{ player.current_score.toLocaleString() }}
@@ -1249,7 +1249,6 @@ function draw(deltaTime) {
 .divider-text-v {
     @apply text-white/50 text-xs;
 }
-
 /* ============================================================================
    PANEL JUGADORES ONLINE - DESKTOP
    ============================================================================ */
@@ -1288,8 +1287,9 @@ function draw(deltaTime) {
     border-radius: 10px;
 }
 
+/* ✅ CAMBIO: Layout horizontal en desktop */
 .online-item-desktop {
-    @apply flex flex-col gap-0.5 p-2 border-b text-white;
+    @apply flex flex-row items-center gap-2 p-2 border-b text-white;
     border-color: rgba(255, 255, 255, 0.1);
     background: rgba(0, 0, 0, 0.15);
     transition: all 0.2s;
@@ -1309,19 +1309,20 @@ function draw(deltaTime) {
 }
 
 .online-rank-desktop {
-    @apply font-bold text-center;
+    @apply font-bold flex-shrink-0 w-8 text-left;
     color: #10b981;
-    font-size: 12px;
-}
-
-.online-name-desktop {
-    @apply truncate text-center font-semibold;
     font-size: 11px;
 }
 
+.online-name-desktop {
+    @apply truncate flex-1 text-left font-semibold;
+    font-size: 10px;
+}
+
 .online-score-desktop {
-    @apply font-bold text-center;
-    font-size: 12px;
+    @apply font-bold flex-shrink-0 text-right;
+    font-size: 11px;
+    min-width: 40px;
 }
 
 .online-divider-desktop {

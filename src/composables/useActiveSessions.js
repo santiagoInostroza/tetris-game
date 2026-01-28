@@ -8,8 +8,8 @@ import { difficulty } from '/src/utils/config.js';
 // ============================================================================
 
 const SUPABASE_CONFIG = {
-    url: 'XXXXXXXX.supabase.co', // ⚠️ TU URL
-    anonKey: 'eyJhbGc...', // ⚠️ TU KEY
+    url: 'qyhvhcksequoqdqqrbdk.supabase.co',
+    anonKey: 'sb_publishable_9AXBUSTlN-p0O87dg36HYw_zUbPipyo',     
 };
 
 const supabase = createClient(
